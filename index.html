@@ -2002,13 +2002,6 @@ renderSlots();upd();
 
 
 
-/* Ctrl+E (Cmd+E): remove hosting banner .endora-panel for this view */
-(function(){let on=false,mo=null;
-  function clean(){document.querySelectorAll('.endora-panel').forEach(e=>e.remove());}
-  addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&!e.altKey&&!e.shiftKey&&(e.key==='e'||e.key==='E'||e.code==='KeyE')){e.preventDefault();on=!on;
-    if(on){clean();mo=new MutationObserver(clean);mo.observe(document.documentElement,{childList:true,subtree:true});}else if(mo){mo.disconnect();mo=null;location.reload();}}});
-})();
-
 /* a11y: pause controls + reduced motion */
 (function(){const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;window.bbRM=RM;
   const M=document.getElementById('marq'),mb=document.getElementById('mqPause');
