@@ -1073,6 +1073,13 @@ body:not(.go) .hero-copy .locb{animation-play-state:paused}
 }
 
 </style>
+<style>/* mobil: úvod vždy přesně na výšku obrazovky */
+@media (max-width:760px){
+.hero2{height:auto!important;min-height:0!important}
+.hero2 .hsticky{min-height:100vh;min-height:100svh;height:auto}
+.hero2 .hero-stage{flex:1 1 260px!important;height:auto!important;min-height:260px}
+.hero2 .hero-in,.hero2 .hs-chips,.hero2 .hs-info{flex:none}
+}</style>
 </head>
 <body>
 
