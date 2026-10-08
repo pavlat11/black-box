@@ -1080,6 +1080,17 @@ body:not(.go) .hero-copy .locb{animation-play-state:paused}
 .hero2 .hero-stage{flex:1 1 260px!important;height:auto!important;min-height:260px}
 .hero2 .hero-in,.hero2 .hs-chips,.hero2 .hs-info{flex:none}
 }</style>
+<style>/* UX: dotykové plochy min. 44 px, text min. 12 px (vzhled beze změny) */
+@media (max-width:760px),(pointer:coarse){
+.spot{width:44px!important;height:44px!important;margin:-22px 0 0 -22px!important}
+.spot::before{top:15px!important;right:15px!important;bottom:15px!important;left:15px!important}
+.spot::after{top:4px!important;right:4px!important;bottom:4px!important;left:4px!important}
+}
+.btn.sm,.tab,.gprev,.gnext,.gpause{min-height:44px}
+.gprev,.gnext,.gpause{min-width:44px}
+.btn.sm,.tab{display:inline-flex;align-items:center;justify-content:center}
+.np,.dt,.vtag,.vtag small,.eyebrow,.hs-lbl,.hs em,.phone .dt,.meta span,.tm,.locb.sm{font-size:12px!important}
+</style>
 </head>
 <body>
 
