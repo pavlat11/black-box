@@ -2136,7 +2136,7 @@ function edges(geo,m,x,y,z,ry){const e=new T.LineSegments(new T.EdgesGeometry(ge
 const wallM=new T.MeshBasicMaterial({color:0x0a0820,side:T.DoubleSide});
 /* windows layout */
 const WW=1.0,WH=1.0,xs=[-2,0,2],wy=f=>f*FH+FH*.55;
-const bbX=0,bbY=wy(1),cubeP=new T.Vector3(0,bbY-.05,D/2-.6);
+const bbX=0,bbY=wy(1),cubeP=new T.Vector3(0,FH+.95,D/2-1.0);
 /* front wall with a hole for the Black Box window */
 const sh=new T.Shape();sh.moveTo(-W/2,0);sh.lineTo(W/2,0);sh.lineTo(W/2,H);sh.lineTo(-W/2,H);sh.lineTo(-W/2,0);
 const hole=new T.Path();hole.moveTo(bbX-WW/2,bbY-WH/2);hole.lineTo(bbX+WW/2,bbY-WH/2);hole.lineTo(bbX+WW/2,bbY+WH/2);hole.lineTo(bbX-WW/2,bbY+WH/2);hole.lineTo(bbX-WW/2,bbY-WH/2);sh.holes.push(hole);
@@ -2162,19 +2162,38 @@ warm.sort(()=>Math.random()-.5);warm.forEach((p,i)=>p.userData.t=1.5+i*(3.2/warm
 const room=new T.Mesh(new T.BoxGeometry(1.9,FH-.08,1.9),new T.MeshStandardMaterial({color:0x2a1460,roughness:.9,side:T.BackSide}));room.position.set(0,FH*1.5,D/2-.96);S.add(room);
 edges(new T.PlaneGeometry(WW,WH),new T.LineBasicMaterial({color:0xd6b0ff}),bbX,bbY,D/2+.01);
 const glass=new T.Mesh(new T.PlaneGeometry(WW,WH),new T.MeshBasicMaterial({color:0x8b3dff,transparent:true,opacity:.12,depthWrite:false}));glass.position.set(bbX,bbY,D/2+.006);S.add(glass);
-const cube=new T.Mesh(new T.BoxGeometry(.46,.46,.46),new T.MeshStandardMaterial({color:0x8b3dff,emissive:0x4b16c9,emissiveIntensity:.85,metalness:.35,roughness:.3}));
-cube.position.copy(cubeP);S.add(cube);
+const cube=new T.Mesh(new T.BoxGeometry(.2,.2,.2),new T.MeshStandardMaterial({color:0x8b3dff,emissive:0x5a1fd6,emissiveIntensity:1,metalness:.3,roughness:.3}));
+cube.position.set(0,FH+1.36,.3);S.add(cube);
 const cubeE=new T.LineSegments(new T.EdgesGeometry(cube.geometry),new T.LineBasicMaterial({color:0xf1e6ff}));cube.add(cubeE);
+/* two people */
+const skin=new T.MeshBasicMaterial({color:0x090616});
+function lathe(pts,sx,sz){const sp=new T.SplineCurve(pts.map(p=>new T.Vector2(p[0],p[1]))).getPoints(pts.length*6);sp[0].x=0;sp[sp.length-1].x=0;const g=new T.LatheGeometry(sp,40);g.scale(sx||1,1,sz||1);return g;}
+const MAN=[[0,0],[.06,0],[.065,.04],[.055,.22],[.065,.42],[.1,.5],[.105,.6],[.098,.68],[.13,.82],[.145,.875],[.12,.91],[.042,.93],[.036,.975],[.06,1.005],[.074,1.05],[.07,1.1],[.046,1.14],[0,1.155]];
+const WOM=[[0,0],[.05,0],[.055,.04],[.05,.22],[.07,.42],[.115,.52],[.1,.6],[.082,.69],[.11,.8],[.12,.85],[.1,.885],[.036,.905],[.032,.945],[.056,.975],[.068,1.015],[.064,1.06],[.042,1.095],[0,1.11]];
+function person(x,lean,prof,female){const g=new T.Group();
+  g.add(new T.Mesh(lathe(prof,1,.62),skin));
+  const top=prof[10][1];
+  const armG=lathe([[0,0],[.02,.01],[.026,.06],[.03,.2],[.028,.32],[.022,.38],[0,.4]]);
+  const outer=new T.Mesh(armG,skin);outer.position.set(-lean*(female?.115:.135),top-.4,0);outer.rotation.z=-lean*.08;g.add(outer);
+  const inner=new T.Mesh(armG,skin);inner.position.set(lean*(female?.1:.12),top-.38,.01);inner.rotation.z=lean*.5;g.add(inner);
+  if(female){const bun=new T.Mesh(new T.SphereGeometry(.045,16,12),skin);bun.position.set(0,1.06,-.05);g.add(bun);}
+  g.position.set(x,FH,D/2-1.0);g.rotation.z=lean*.03;S.add(g);return g;}
+const p1=person(-.13,1,MAN,false),p2=person(.13,-1,WOM,true);
+/* bed edge + starry room ceiling */
+const bed=new T.LineSegments(new T.EdgesGeometry(new T.BoxGeometry(1.2,.22,.7)),new T.LineBasicMaterial({color:0x9a6cff,transparent:true,opacity:.6}));bed.position.set(0,FH+.11,.55);S.add(bed);
+const rs=[];for(let i=0;i<70;i++)rs.push((Math.random()-.5)*1.8,FH*2-.06,D/2-1.9+Math.random()*1.85);
+const rg=new T.BufferGeometry();rg.setAttribute('position',new T.Float32BufferAttribute(rs,3));
+S.add(new T.Points(rg,new T.PointsMaterial({color:0xffffff,size:.018,transparent:true,opacity:.9})));
 S.add(new T.AmbientLight(0x6a5aa8,.55));
-const pl=new T.PointLight(0xb066ff,2.4,5,1.6);pl.position.set(cubeP.x,cubeP.y+.3,cubeP.z+.5);S.add(pl);
-const kl=new T.PointLight(0xffffff,.8,4);kl.position.set(.6,cubeP.y+.7,cubeP.z+.9);S.add(kl);
+const pl=new T.PointLight(0xb066ff,3.2,3.2,1.4);pl.position.set(0,FH+1.0,.25);S.add(pl);const pl2=new T.PointLight(0x7a5cff,.7,3);pl2.position.set(0,FH+.9,D/2-.2);S.add(pl2);
+
 /* glow sprites */
 const gc=document.createElement('canvas');gc.width=gc.height=128;const gx=gc.getContext('2d');const gr=gx.createRadialGradient(64,64,0,64,64,64);
 gr.addColorStop(0,'rgba(255,255,255,1)');gr.addColorStop(.25,'rgba(255,255,255,.55)');gr.addColorStop(1,'rgba(255,255,255,0)');gx.fillStyle=gr;gx.fillRect(0,0,128,128);
 const gtex=new T.CanvasTexture(gc);
 function glow(col,s,x,y,z,o){const m=new T.SpriteMaterial({map:gtex,color:col,transparent:true,opacity:o,blending:T.AdditiveBlending,depthWrite:false});const sp=new T.Sprite(m);sp.scale.set(s,s,1);sp.position.set(x,y,z);S.add(sp);return sp;}
-const g1=glow(0xa855ff,1.6,cubeP.x,cubeP.y,cubeP.z,.9);
-const g2=glow(0x8b3dff,3.2,bbX,bbY,D/2+.15,.55);
+const g1=glow(0xa855ff,2.2,0,FH+.95,.2,.95);const g3=glow(0xc58bff,.6,0,FH+1.36,.3,.9);
+const g2=glow(0x8b3dff,3.2,bbX,bbY,D/2+.15,.35);
 /* ground + stars */
 const grid=new T.GridHelper(80,80,GOLD,GOLD);grid.material.transparent=true;grid.material.opacity=.09;S.add(grid);
 edges(new T.PlaneGeometry(60,.001),dimM,0,0,D/2+2.2).rotation.x=-Math.PI/2;
@@ -2182,10 +2201,10 @@ const sg=new T.BufferGeometry(),sp=[];for(let i=0;i<700;i++){const th=Math.rando
 sg.setAttribute('position',new T.Float32BufferAttribute(sp,3));
 S.add(new T.Points(sg,new T.PointsMaterial({color:0xffffff,size:.28,transparent:true,opacity:.8,fog:false})));
 /* camera path */
-const path=new T.CatmullRomCurve3([new T.Vector3(0,cubeP.y+.03,D/2+1.6),new T.Vector3(.25,cubeP.y+.15,D/2+3.2),new T.Vector3(2,cubeP.y+.9,8.6),new T.Vector3(4.6,4.2,12.8)]);
+const path=new T.CatmullRomCurve3([new T.Vector3(0,cubeP.y-.02,D/2+1.15),new T.Vector3(.15,cubeP.y+.05,D/2+2.6),new T.Vector3(1.8,cubeP.y+.9,8.4),new T.Vector3(4.6,4.2,12.8)]);
 const endT=new T.Vector3(0,2.3,0),look=new T.Vector3();
 const DUR=7,ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
-const subs=[[.5,'Pátek, 22:00'],[2.7,'Ostatní odcházejí.'],[5,'Celá budova je jen vaše.']];
+const subs=[[.5,'Pátek, 22:00. Jen vy dva.'],[2.7,'Ostatní odcházejí.'],[5,'Celá budova je jen vaše.']];
 let t0=0,run=false,vis=false,raf=0,curSub=-1;
 const wash=document.getElementById('goldWash'),pv=new T.Vector3(),pu=new T.Vector3();
 window.bb3dGold=true;
@@ -2195,8 +2214,8 @@ function frame(now){
   if(k<1){path.getPoint(k,C.position);look.copy(cubeP).lerp(endT,ease(Math.min(1,k*1.25)));}
   else{const a=Math.sin((t-DUR-.3)*.12)*.35,base=path.getPoint(1),r=Math.hypot(base.x,base.z),a0=Math.atan2(base.x,base.z);C.position.set(Math.sin(a0+a)*r,base.y,Math.cos(a0+a)*r);look.copy(endT);}
   C.fov=30+10*k;C.updateProjectionMatrix();C.lookAt(look);
-  cube.rotation.y=t*.5;cube.rotation.x=.55+Math.sin(t*.7)*.08;
-  const pulse=.85+Math.sin(t*2.2)*.15;g1.material.opacity=.9*pulse;g2.material.opacity=.5*pulse;
+  cube.rotation.y=t*.5;cube.rotation.x=.55+Math.sin(t*.7)*.08;p1.rotation.z=.03+Math.sin(t*.9)*.006;p2.rotation.z=-.03+Math.sin(t*.9+1)*.006;
+  const pulse=.85+Math.sin(t*2.2)*.15;g1.material.opacity=.95*pulse;g3.material.opacity=.8*pulse;g2.material.opacity=.32*pulse;
   for(const p of warm){const u=t-p.userData.t;p.material.opacity=u<0?.75:u<.5?.75*(Math.random()>.5?1:.2):Math.max(0,.75-(u-.5)*1.5);}
   let s=-1;subs.forEach((x,i)=>{if(t>=x[0])s=i;});if(s!==curSub){curSub=s;sub.classList.remove('on');if(s>=0)setTimeout(()=>{sub.textContent=subs[s][1];sub.classList.add('on');},s===0?0:450);}
   film.classList.toggle('end',t>DUR+.6);
