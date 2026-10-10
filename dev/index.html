@@ -1143,7 +1143,7 @@ body:not(.go) .hero-copy .locb{animation-play-state:paused}
 @media (max-width:860px){.gt-in{grid-template-columns:1fr}.gt-r{max-width:300px;order:-1}.gt-feats{grid-template-columns:1fr}}
 @media (prefers-reduced-motion:reduce){.gt-orb,.gt-clock i{animation:none}}
 /* celá stránka do zlata, když je Gold Time na obrazovce */
-.gold-wash{position:fixed;inset:0;z-index:90;pointer-events:none;background:#e9bd6a;mix-blend-mode:color;opacity:0;transition:opacity .6s cubic-bezier(.33,0,.2,1)}
+.gold-wash{position:fixed;inset:0;z-index:90;pointer-events:none;background:#e9bd6a;mix-blend-mode:color;opacity:0;transition:opacity .25s ease-out}
 html.gold .gold-wash{opacity:.88}
 .gold-wash{-webkit-mask-image:radial-gradient(circle at var(--hx,-999px) var(--hy,-999px),transparent 0,transparent var(--hr,0px),#000 calc(var(--hr,0px) * 2.2));mask-image:radial-gradient(circle at var(--hx,-999px) var(--hy,-999px),transparent 0,transparent var(--hr,0px),#000 calc(var(--hr,0px) * 2.2))}
 </style>
@@ -1220,11 +1220,12 @@ html.gold .gold-wash{opacity:.88}
 @media (prefers-reduced-motion:reduce){.vopt.g::after{animation:none}}
 </style>
 <style>/* Gold Time mega title */
-.gt-mega{margin:0 0 clamp(18px,3vw,36px);font:400 clamp(64px,13vw,200px)/.9 var(--display);letter-spacing:-.02em;text-transform:uppercase;white-space:nowrap;
+.gt-mega span{display:inline-block;background:inherit;-webkit-background-clip:text;background-clip:text}
+.gt-mega{display:block;max-width:100%;overflow:hidden;margin:0 0 clamp(18px,3vw,36px);font:400 clamp(44px,9.5vw,170px)/.92 var(--display);letter-spacing:-.02em;text-transform:uppercase;white-space:nowrap;
  background:linear-gradient(100deg,#fff6df 0%,#f0cf85 30%,#b8862e 55%,#f6dc9c 75%,#fff6df 100%) 0 0/220% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;
  filter:drop-shadow(0 10px 40px rgba(240,207,133,.35));animation:gtMega 8s linear infinite}
 @keyframes gtMega{to{background-position:-220% 0}}
-@media (max-width:760px){.gt-mega{font-size:clamp(52px,17vw,88px);white-space:normal}}
+@media (max-width:760px){.gt-mega{white-space:normal}}
 @media (prefers-reduced-motion:reduce){.gt-mega{animation:none}}
 /* mobile hero: headline + place below the photo, photo uncovered */
 @media (max-width:760px){
@@ -1489,7 +1490,7 @@ html.gold .gold-wash{opacity:.88}
   </section>
 
   <section id="goldtime" class="gt" aria-labelledby="gtH">
-    <div class="wrap"><p class="gt-mega" aria-hidden="true">Gold Time</p></div>
+    <div class="wrap"><p class="gt-mega" aria-hidden="true"><span>Gold Time</span></p></div>
     <div class="wrap gt-in">
       <div class="gt-l">
         <span class="eyebrow gt-eb">Gold Time · Pá–So 22–24</span>
@@ -2449,5 +2450,8 @@ size();
 })();
 </script>
 <script>(function(){const i=document.querySelector('.concept-img img'),hi=document.getElementById('heroImg');if(i&&hi){const u=getComputedStyle(hi).backgroundImage.slice(5,-2);if(u)i.src=u;}})();</script>
+<script>/* fit GOLD TIME to its column */(function(){const m=document.querySelector('.gt-mega');if(!m)return;
+function fit(){if(innerWidth<=760){m.style.fontSize='';return;}m.style.fontSize='100px';const w=m.clientWidth,tw=m.firstChild.getBoundingClientRect().width;if(tw&&w)m.style.fontSize=Math.min(190,Math.floor(100*w/tw*.97))+'px';}
+fit();addEventListener('resize',fit);document.fonts&&document.fonts.ready.then(fit);})();</script>
 </body>
 </html>
