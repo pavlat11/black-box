@@ -1298,6 +1298,32 @@ html.gold .gt-aura{opacity:1}
 @media (max-width:760px){.gt-stats{grid-template-columns:1fr;gap:4px}.gs{padding:18px 8px}.gt-rule b{letter-spacing:.2em;font-size:10.5px;white-space:normal;text-align:center}}
 @media (prefers-reduced-motion:reduce){.gt-mega i,.gt-stats .gs,.gt-feats .gt-f,.gt-quote p{opacity:1!important;transform:none!important;filter:none!important;transition:none!important}.gt-rule{opacity:1}.gt-bld.is3d .gt-film::after,.gt-f::before{animation:none}}
 </style>
+<style>/* Gold Time: evening timeline */
+.gt-tl{position:relative;margin-top:clamp(56px,7vw,96px)}
+.tl-steps li.tl-track{position:absolute;opacity:1;transform:none;padding:0;left:5px;right:calc(25% - 20px);top:7px;height:2px;grid-column:1/-1;background:rgba(240,207,133,.18);border-radius:2px}
+.tl-fill{position:absolute;left:0;top:0;bottom:0;width:calc(var(--tlp,0)*100%);background:linear-gradient(90deg,#b98d3e,#f6dc9c);border-radius:2px;box-shadow:0 0 18px rgba(240,207,133,.7)}
+.tl-dot{position:absolute;top:50%;left:calc(var(--tlp,0)*100%);width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;background:#fff6df;box-shadow:0 0 0 4px rgba(240,207,133,.25),0 0 26px 6px rgba(240,207,133,.85)}
+.tl-steps{position:relative;list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+.tl-steps li{position:relative;padding-top:34px}
+.tl-steps li>*{opacity:.35;transition:opacity .9s cubic-bezier(.22,.61,.36,1)}
+.tl-steps li.on>*{opacity:1}
+.tl-steps li.tl-track::before{display:none}
+.tl-steps li::before{content:"";position:absolute;left:0;top:2px;width:12px;height:12px;border-radius:50%;border:1.5px solid rgba(240,207,133,.6);background:#0c0907;transition:background .6s,box-shadow .6s}
+
+.tl-steps li.on::before{background:#f0cf85;box-shadow:0 0 16px rgba(240,207,133,.9)}
+.tl-steps b{display:block;font:300 clamp(30px,3.4vw,46px)/1 var(--display);background:linear-gradient(180deg,#fff6df,#f0cf85 60%,#b98d3e);-webkit-background-clip:text;background-clip:text;color:transparent;font-variant-numeric:tabular-nums}
+.tl-steps h3{margin:12px 0 6px;font-size:17px;color:#fff3d6}
+.tl-steps p{margin:0;color:#cfc5ad;font-size:14.5px;line-height:1.55}
+@media (max-width:760px){
+ .tl-steps li.tl-track{left:5px;right:auto;top:12px;bottom:auto;height:var(--tlh,80%);width:2px}
+ .tl-fill{width:auto;right:0;height:calc(var(--tlp,0)*100%);bottom:auto}
+ .tl-dot{left:50%;top:calc(var(--tlp,0)*100%);margin:-8px 0 0 -8px}
+ .tl-steps{grid-template-columns:1fr;gap:26px}
+ .tl-steps li{padding:0 0 0 34px}
+ .tl-steps li::before{top:6px;left:0}
+}
+@media (prefers-reduced-motion:reduce){.tl-steps li{opacity:1;transform:none;transition:none}}
+</style>
 </head>
 <body>
 
@@ -1596,10 +1622,13 @@ html.gold .gt-aura{opacity:1}
         <p class="gt-cap"><b>22:00 – 24:00</b>Celá budova je prázdná. Uprostřed 1. patra svítí jen Black Box.</p>
       </div>
     </div>
-    <div class="wrap gt-stats" id="gtStats">
-      <div class="gs"><b data-to="0">0</b><span>dalších hostů v budově</span></div>
-      <div class="gs"><b data-to="3">0</b><span>patra jen pro vás</span></div>
-      <div class="gs"><b data-to="120">0</b><span>minut, kdy čas nehraje roli</span></div>
+    <div class="wrap gt-tl" id="gtTl">
+      <ol class="tl-steps"><li class="tl-track" aria-hidden="true"><i class="tl-fill"></i><i class="tl-dot"></i></li>
+        <li><b>22:00</b><h3>Poslední host odchází</h3><p>Dveře se zavřou. Budova patří jen vám.</p></li>
+        <li><b>22:15</b><h3>Šampaňské a vířivka</h3><p>Bublinky ve sklence i ve vodě.</p></li>
+        <li><b>23:00</b><h3>Film pod hvězdami</h3><p>Velké plátno, hvězdný strop, žádný spěch.</p></li>
+        <li><b>24:00</b><h3>Noc patří vám</h3><p>Odcházíte poslední. Nikdo nečeká za dveřmi.</p></li>
+      </ol>
     </div>
     <div class="wrap gt-feats">
       <div class="gt-f"><span class="gt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M17 6l3 3M15 8l2 2"/></svg></span><h3>Jen vy dva v budově</h3><p>Žádní další hosté. Celý prostor i chodba patří jen vám.</p></div>
@@ -2526,7 +2555,7 @@ fit();addEventListener('resize',fit);document.fonts&&document.fonts.ready.then(f
 <script>/* Gold Time wow: reveals, count-up, golden dust */
 (function(){const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
  const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');if(e.target.id==='gtStats')count(e.target);io.unobserve(e.target);}}),{threshold:.35});
- ['.gt-mega','#gtStats','.gt-feats','.gt-quote'].forEach(s=>{const el=document.querySelector(s);if(el)io.observe(el);});
+ ['.gt-mega','#gtTl','.gt-feats','.gt-quote'].forEach(s=>{const el=document.querySelector(s);if(el)io.observe(el);});
  function count(box){box.querySelectorAll('b[data-to]').forEach(b=>{const to=+b.dataset.to;if(RM||!to){b.textContent=to;return;}const t0=performance.now(),D=1600;
    (function f(n){const k=Math.min(1,(n-t0)/D),e=1-Math.pow(1-k,3);b.textContent=Math.round(to*e);if(k<1)requestAnimationFrame(f);})(t0);});}
  const c=document.getElementById('gtDust'),sec=document.getElementById('goldtime');if(!c||!sec||RM)return;const x=c.getContext('2d');let W=0,H=0,P=[],vis=false,raf=0;
@@ -2537,5 +2566,10 @@ fit();addEventListener('resize',fit);document.fonts&&document.fonts.ready.then(f
    if(vis)raf=requestAnimationFrame(draw);}
  new IntersectionObserver(es=>{vis=es[0].isIntersecting;cancelAnimationFrame(raf);if(vis){if(!W)size();raf=requestAnimationFrame(draw);}}).observe(sec);
  addEventListener('resize',()=>{if(vis)size();});})();</script>
+<script>/* Gold Time timeline follows the scroll */
+(function(){const t=document.getElementById('gtTl');if(!t)return;const li=[...t.querySelectorAll('li:not(.tl-track)')];let q=0;
+ function upd(){q=0;const r=t.getBoundingClientRect(),vh=innerHeight;const p=Math.max(0,Math.min(1,(vh*.82-r.top)/(r.height+vh*.35)));
+  t.style.setProperty('--tlp',p.toFixed(4));const L=li[li.length-1];if(L)t.style.setProperty('--tlh',(L.offsetTop-li[0].offsetTop)+'px');li.forEach((l,i)=>l.classList.toggle('on',p>=i/(li.length-1)-.001||matchMedia('(prefers-reduced-motion: reduce)').matches));}
+ addEventListener('scroll',()=>{if(!q)q=requestAnimationFrame(upd);},{passive:true});addEventListener('resize',upd);upd();})();</script>
 </body>
 </html>
