@@ -667,10 +667,7 @@ footer{border-top:1px solid var(--line);padding-block:48px calc(48px + env(safe-
   .spot::before{top:11px;right:11px;bottom:11px;left:11px}
 }
 @media (max-width:560px){.snd .t{display:none}}
-@media (prefers-reduced-motion:reduce){
-  .hero-img,.proj-frame img,.gal img,.aurora,.beam{animation:none!important}
-  .reveal.pre{transform:none}
-}
+
 
 /* ================= V2 ================= */
 .hero2{display:block;height:100svh;min-height:560px;padding:0!important;isolation:isolate}
@@ -782,7 +779,7 @@ footer{border-top:1px solid var(--line);padding-block:48px calc(48px + env(safe-
 .bbloader i{width:140px;height:1px;background:rgba(176,102,255,.2);position:relative;overflow:hidden}
 .bbloader i::after{content:"";position:absolute;top:0;right:0;bottom:0;left:0;width:40%;background:linear-gradient(90deg,transparent,var(--violet),transparent);animation:load 1.3s ease-in-out infinite}
 @keyframes load{from{transform:translateX(-100%)}to{transform:translateX(250%)}}
-@media (prefers-reduced-motion:reduce){.hero2{height:auto}.hsticky{position:relative}}
+
 /* v2 loader (seamless) */
 .bbloader{position:fixed;top:0;right:0;bottom:0;left:0;z-index:400;background:#06051a;display:grid;place-items:center;transition:opacity 1.3s cubic-bezier(.45,0,.25,1),visibility 0s 1.3s}
 .bbloader.done{opacity:0;visibility:hidden}
@@ -1067,10 +1064,7 @@ body:not(.go) .hero-copy .locb{animation-play-state:paused}
 .marquee.paused .mq{animation-play-state:paused!important}
 .marquee{-webkit-mask-image:none;mask-image:none}
 .galnav .gpause{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:rgba(176,102,255,.08);color:var(--chrome);display:grid;place-items:center;cursor:pointer}
-@media (prefers-reduced-motion:reduce){
-  .mq,.hero-img,.proj-frame img,.gal img,.aurora,.beam,.cta-x,.cta-x::before,.cta-x::after,.cta-x .cx-a svg,.swipehint,.gb::before,.vcard::before,.slot.gold,.intro .word b,.hero h1 em,.mhead em,.spec .si,.player .viz span{animation:none!important}
-  *{scroll-behavior:auto!important}
-}
+
 
 </style>
 <style>/* mobil: úvod vždy přesně na výšku obrazovky */
@@ -1113,7 +1107,7 @@ body:not(.go) .hero-copy .locb{animation-play-state:paused}
 .gu-btn{display:inline-flex;align-items:center;gap:10px;min-height:44px;padding:0 20px;border-radius:999px;text-decoration:none;font:700 13px var(--body);letter-spacing:.12em;text-transform:uppercase;color:#1a1206;background:linear-gradient(135deg,#f6dc9c,#e2b65c);box-shadow:0 10px 30px -10px rgba(240,207,133,.8);transition:box-shadow .6s cubic-bezier(.22,.61,.36,1),filter .6s}
 .gu-btn:hover{filter:brightness(1.06);box-shadow:0 14px 40px -10px rgba(240,207,133,1)}
 .gu-btn:focus-visible{outline:2px solid var(--ice);outline-offset:3px}
-@media (prefers-reduced-motion:reduce){.gold-up::before{animation:none}}
+
 .hr.goldrow{border-color:rgba(240,207,133,.45);background:linear-gradient(110deg,rgba(240,207,133,.06),rgba(6,5,26,.65) 60%)}
 .hr.goldrow span{color:#e9d9ae}
 </style>
@@ -1141,7 +1135,7 @@ body:not(.go) .hero-copy .locb{animation-play-state:paused}
 .gt-ic{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;color:var(--gold);background:rgba(240,207,133,.1);border:1px solid rgba(240,207,133,.35)}
 .gt-ic svg{width:20px;height:20px}
 @media (max-width:860px){.gt-in{grid-template-columns:1fr}.gt-r{max-width:300px;order:-1}.gt-feats{grid-template-columns:1fr}}
-@media (prefers-reduced-motion:reduce){.gt-orb,.gt-clock i{animation:none}}
+
 /* celá stránka do zlata, když je Gold Time na obrazovce */
 .gold-wash{position:fixed;inset:0;z-index:90;pointer-events:none;background:#e9bd6a;mix-blend-mode:color;opacity:0;transition:opacity .25s ease-out}
 html.gold .gold-wash{opacity:.88}
@@ -1168,7 +1162,7 @@ html.gold .gold-wash{opacity:.88}
 .gt-cap b{display:block;font:300 22px var(--display);color:var(--gold);letter-spacing:.04em;margin-bottom:4px}
 .gt-bld.play .gt-cap{opacity:1;transform:none}
 @media (max-width:860px){.gt-bld{max-width:340px}}
-@media (prefers-reduced-motion:reduce){.gt-cam svg{transform:scale(1);transition:none}.gt-bld .ln{stroke-dashoffset:0;transition:none}.gt-bld .tags,.gt-cap{opacity:1;transform:none;transition:none}.gt-bld .bb-halo,.gt-bld .bb-cube{animation:none}.gt-bld.play .win{animation:none}}
+
 </style>
 <style>/* Gold Time – filmová 3D scéna */
 .gt-film{position:relative;width:100%;aspect-ratio:1/1.12;border-radius:22px;overflow:hidden;background:radial-gradient(120% 80% at 50% 100%,#140d33,#05040f 70%);box-shadow:0 40px 120px -40px rgba(176,102,255,.45),inset 0 0 0 1px rgba(240,207,133,.18)}
@@ -1217,7 +1211,7 @@ html.gold .gold-wash{opacity:.88}
 .vopt.g:hover{border-color:rgba(240,207,133,.85)!important}
 .vopt.g[aria-pressed="true"]{border-color:#f0cf85!important;background:linear-gradient(135deg,rgba(240,207,133,.32),rgba(40,28,10,.7) 65%)!important;box-shadow:0 0 0 1px #f0cf85,0 22px 60px -20px rgba(240,207,133,.9)!important}
 .vopt:not(.g)[aria-pressed="true"]{border-color:var(--violet)!important;box-shadow:0 0 0 1px var(--violet),0 18px 50px -24px rgba(176,102,255,.9)!important}
-@media (prefers-reduced-motion:reduce){.vopt.g::after{animation:none}}
+
 </style>
 <style>/* Gold Time mega title */
 .gt-mega span{display:inline-block;background:inherit;-webkit-background-clip:text;background-clip:text}
@@ -1226,7 +1220,7 @@ html.gold .gold-wash{opacity:.88}
  filter:drop-shadow(0 10px 40px rgba(240,207,133,.35));animation:gtMega 8s linear infinite}
 @keyframes gtMega{to{background-position:-220% 0}}
 
-@media (prefers-reduced-motion:reduce){.gt-mega{animation:none}}
+
 /* mobile hero: headline + place below the photo, photo uncovered */
 @media (max-width:760px){
  .hero2 .mhead{display:none!important}
@@ -1296,7 +1290,7 @@ html.gold .gt-aura{opacity:1}
 .gt-quote p{font:300 clamp(22px,3vw,40px)/1.25 var(--display);color:#efe6cf;max-width:22em;margin:0 auto}
 .gt-quote em{font-style:normal;background:linear-gradient(100deg,#fff3d6,#f0cf85 45%,#c9a24e);-webkit-background-clip:text;background-clip:text;color:transparent}
 @media (max-width:760px){.gt-stats{grid-template-columns:1fr;gap:4px}.gs{padding:18px 8px}.gt-rule b{letter-spacing:.2em;font-size:10.5px;white-space:normal;text-align:center}}
-@media (prefers-reduced-motion:reduce){.gt-mega i,.gt-stats .gs,.gt-feats .gt-f,.gt-quote p{opacity:1!important;transform:none!important;filter:none!important;transition:none!important}.gt-rule{opacity:1}.gt-bld.is3d .gt-film::after,.gt-f::before{animation:none}}
+
 </style>
 <style>/* Gold Time: evening timeline */
 .gt-tl{position:relative;margin-top:clamp(56px,7vw,96px)}
@@ -1322,7 +1316,7 @@ html.gold .gt-aura{opacity:1}
  .tl-steps li{padding:0 0 0 34px}
  .tl-steps li::before{top:6px;left:0}
 }
-@media (prefers-reduced-motion:reduce){.tl-steps li{opacity:1;transform:none;transition:none}}
+
 </style>
 <style>/* voucher v2: clearly fillable card */
 .vmid{display:flex;flex-direction:column;gap:12px}
@@ -1357,7 +1351,7 @@ html.gold .gt-aura{opacity:1}
 .vs2 em{font-style:normal;color:var(--ice);font-weight:700}
 @media (min-width:761px){.vs2 span::before{content:"← ";color:var(--ice)}}
 @media (max-width:760px){.vs2 span::before{content:"↑ ";color:var(--ice)}.vtip{top:auto;bottom:56px;transform:none;animation:vtipM 2.4s cubic-bezier(.45,0,.55,1) infinite}@keyframes vtipM{0%,100%{transform:none}50%{transform:translateY(-6px)}}}
-@media (prefers-reduced-motion:reduce){.vtip{animation:none}}
+
 </style>
 <style>
 .vf{position:relative}
@@ -1365,8 +1359,36 @@ html.gold .gt-aura{opacity:1}
 .vtip::after{left:auto!important;right:18px}
 @keyframes vtipB2{0%,100%{translate:0 0}50%{translate:0 -5px}}
 @media (max-width:760px){.vcard{aspect-ratio:auto!important;min-height:0;gap:18px}.vmid{margin-top:30px}.vtip{font-size:11px;padding:6px 11px 6px 9px}}
-@media (prefers-reduced-motion:reduce){.vtip{animation:none!important}}
+
 </style>
+<style>@media (hover:none){
+.pill.tv{border-color:rgba(176,102,255,.8);color:#fff;box-shadow:0 0 22px -4px rgba(176,102,255,.8)}
+.pill.tv::before{transform:scaleX(1)}
+.pill.tv::after{animation:pillSheen .9s .15s ease-out forwards}
+.concept-img.tv img{transform:scale(1.06)}
+.feat.tv{background:var(--panel);border-color:var(--line)}
+.gal button.tv img{transform:scale(1.07);filter:brightness(1.12)}
+.gal button.tv::after{box-shadow:0 0 0 1px rgba(176,102,255,.7) inset}
+.qa summary.tv{color:#fff}
+.sl.tv::after{opacity:1}
+.sl:not(.g[aria-pressed="true"]).tv{border-color:rgba(176,102,255,.55)!important}
+.sl.tv{box-shadow:0 18px 50px -24px rgba(109,40,255,.75),0 0 0 1px rgba(176,102,255,.12)}
+.spec.tv .si,.step.tv .n{color:#fff;text-shadow:0 0 12px var(--violet)}
+.spec.tv .si{background:linear-gradient(135deg,rgba(176,102,255,.45),rgba(143,227,255,.2))}
+.player.tv .pl-btn{box-shadow:0 0 0 6px rgba(255,255,255,.08),0 0 30px rgba(176,102,255,.6)}
+.for.tv .big{filter:drop-shadow(0 0 18px rgba(176,102,255,.55))}
+.occ span.tv{border-color:rgba(176,102,255,.7);color:var(--chrome);background:rgba(176,102,255,.12)}
+.qa.tv{background:linear-gradient(90deg,rgba(176,102,255,.07),transparent 80%)}
+.qa.tv summary i{border-color:var(--violet);box-shadow:0 0 14px rgba(176,102,255,.5)}
+.qa.tv summary{transform:translateX(8px)}
+.hr.tv{border-color:rgba(176,102,255,.55);background:rgba(20,14,56,.8)}
+.gold-up.tv{border-color:rgba(240,207,133,.8);box-shadow:0 30px 90px -30px rgba(240,207,133,.75),inset 0 1px 0 rgba(255,236,190,.2)}
+.gt-f.tv{border-color:rgba(240,207,133,.6);box-shadow:0 20px 60px -30px rgba(240,207,133,.6)}
+.vopt.g.tv{border-color:rgba(240,207,133,.85)!important}
+.gt-f.tv::before{opacity:1}
+.gt-f.tv::after{opacity:1}
+.gt-f.tv .gt-ic{box-shadow:0 0 30px -4px rgba(240,207,133,.7)}
+}</style>
 </head>
 <body>
 
@@ -2202,7 +2224,7 @@ if('IntersectionObserver' in window&&!reduce){const io2=new IntersectionObserver
   document.querySelectorAll('.rv,.fact,.hr,.pill,.slot').forEach(el=>{el.classList.add('rv');const sib=[...el.parentElement.children].indexOf(el);el.style.setProperty('--d',(sib*.09)+'s');if(el.getBoundingClientRect().top>innerHeight){el.classList.add('pre');io2.observe(el);}});}
 /* mobile gallery carousel: auto-advances, swipe, arrows, dots */
 (function(){const G=document.getElementById('gal'),N=document.getElementById('galNav'),D=N.querySelector('.gdots'),items=[...G.children],DUR=1800,HOLD=5000;
-  D.innerHTML=items.map(()=>'<i></i>').join('');const dots=[...D.children];let cur=0,inView=false,anim=false,nextAt=0,holdUntil=0,touching=false,stopped=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  D.innerHTML=items.map(()=>'<i></i>').join('');const dots=[...D.children];let cur=0,inView=false,anim=false,nextAt=0,holdUntil=0,touching=false,stopped=false;
   const gp=document.getElementById('gPause');const setG=s=>{stopped=s;gp.setAttribute('aria-pressed',s);gp.setAttribute('aria-label',s?'Spustit automatické přepínání':'Zastavit automatické přepínání');gp.innerHTML=s?'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 5v14l12-7z"/></svg>':'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>';D.classList.toggle('paused',s);if(!s)nextAt=performance.now()+DUR;};gp.addEventListener('click',()=>setG(!stopped));
   const mob=()=>innerWidth<=760,now=()=>performance.now();
   function mark(i){cur=i;dots.forEach((d,j)=>d.classList.toggle('on',j===i));const a=dots[i];a.classList.remove('on');void a.offsetWidth;a.classList.add('on');}
@@ -2296,7 +2318,7 @@ addEventListener('keydown',e=>{if(lb.hidden)return;if(e.key==='Escape')close();i
 
 
 /* a11y: pause controls + reduced motion */
-(function(){const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;window.bbRM=RM;
+(function(){const RM=false;window.bbRM=RM;
   const M=document.getElementById('marq'),mb=document.getElementById('mqPause');
   const setM=p=>{M.classList.toggle('paused',p);mb.setAttribute('aria-pressed',p);mb.setAttribute('aria-label',p?'Spustit běžící text':'Zastavit běžící text');mb.innerHTML=p?'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 5v14l12-7z"/></svg>':'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>';};
   mb.addEventListener('click',()=>setM(!M.classList.contains('paused')));if(RM)setM(true);
@@ -2315,7 +2337,7 @@ new MutationObserver(()=>{const g=r.classList.contains('gold');if(g&&!on){on=tru
 const box=document.getElementById('gtBld');if(!box||!window.THREE)return;
 let ok=false;try{const c=document.createElement('canvas');ok=!!(c.getContext('webgl')||c.getContext('experimental-webgl'));}catch(e){}
 if(!ok)return;
-const T=THREE,RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const T=THREE,RM=false;
 const film=document.createElement('div');film.className='gt-film';
 film.innerHTML='<canvas></canvas><div class="vig"></div><div class="lb t"></div><div class="lb b"></div><div class="sub" aria-hidden="true"></div><div class="gclk" aria-hidden="true"><b>21:59</b><i>:40</i><span>PÁ</span></div><div class="fade"></div>';
 const camWrap=box.querySelector('.gt-cam');camWrap.style.display='none';box.insertBefore(film,camWrap);box.classList.add('is3d');
@@ -2632,12 +2654,12 @@ size();
 function fit(){m.style.fontSize='100px';const w=m.clientWidth,tw=m.firstChild.getBoundingClientRect().width;if(tw&&w)m.style.fontSize=Math.min(190,Math.floor(100*w/tw*.97))+'px';}
 fit();addEventListener('resize',fit);document.fonts&&document.fonts.ready.then(fit);})();</script>
 <script>/* Gold Time wow: reveals, count-up, golden dust */
-(function(){const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+(function(){const RM=false;
  const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');if(e.target.id==='gtStats')count(e.target);io.unobserve(e.target);}}),{threshold:.35});
  ['.gt-mega','#gtTl','.gt-feats','.gt-quote'].forEach(s=>{const el=document.querySelector(s);if(el)io.observe(el);});
  function count(box){box.querySelectorAll('b[data-to]').forEach(b=>{const to=+b.dataset.to;if(RM||!to){b.textContent=to;return;}const t0=performance.now(),D=1600;
    (function f(n){const k=Math.min(1,(n-t0)/D),e=1-Math.pow(1-k,3);b.textContent=Math.round(to*e);if(k<1)requestAnimationFrame(f);})(t0);});}
- const c=document.getElementById('gtDust'),sec=document.getElementById('goldtime');if(!c||!sec||RM)return;const x=c.getContext('2d');let W=0,H=0,P=[],vis=false,raf=0;
+ const c=document.getElementById('gtDust'),sec=document.getElementById('goldtime');if(!c||!sec)return;const x=c.getContext('2d');let W=0,H=0,P=[],vis=false,raf=0;
  function size(){const d=Math.min(devicePixelRatio||1,2);W=c.clientWidth;H=c.clientHeight;c.width=W*d;c.height=H*d;x.setTransform(d,0,0,d,0,0);
    const n=Math.round(Math.min(140,W*H/9000));P=Array.from({length:n},()=>({x:Math.random()*W,y:Math.random()*H,r:.4+Math.random()*1.8,v:.15+Math.random()*.45,w:Math.random()*6.28,a:.25+Math.random()*.6}));}
  function draw(){x.clearRect(0,0,W,H);for(const p of P){p.y-=p.v;p.w+=.01;p.x+=Math.sin(p.w)*.25;if(p.y<-10){p.y=H+10;p.x=Math.random()*W;}
@@ -2648,7 +2670,11 @@ fit();addEventListener('resize',fit);document.fonts&&document.fonts.ready.then(f
 <script>/* Gold Time timeline follows the scroll */
 (function(){const t=document.getElementById('gtTl');if(!t)return;const li=[...t.querySelectorAll('li:not(.tl-track)')];let q=0;
  function upd(){q=0;const r=t.getBoundingClientRect(),vh=innerHeight;const p=Math.max(0,Math.min(1,(vh*.82-r.top)/(r.height+vh*.35)));
-  t.style.setProperty('--tlp',p.toFixed(4));const L=li[li.length-1];if(L)t.style.setProperty('--tlh',(L.offsetTop-li[0].offsetTop)+'px');li.forEach((l,i)=>l.classList.toggle('on',p>=i/(li.length-1)-.001||matchMedia('(prefers-reduced-motion: reduce)').matches));}
+  t.style.setProperty('--tlp',p.toFixed(4));const L=li[li.length-1];if(L)t.style.setProperty('--tlh',(L.offsetTop-li[0].offsetTop)+'px');li.forEach((l,i)=>l.classList.toggle('on',p>=i/(li.length-1)-.001||false));}
  addEventListener('scroll',()=>{if(!q)q=requestAnimationFrame(upd);},{passive:true});addEventListener('resize',upd);upd();})();</script>
+<script>/* touch: play hover effects when a card is in the middle of the screen */
+(function(){if(!matchMedia('(hover:none)').matches)return;const S=[".sl", ".spec", ".step", ".feat", ".for", ".player", ".hr", ".gold-up", ".gt-f", ".concept-img", ".gal button", ".vopt.g", ".occ span", ".pill", ".qa"];const els=[...document.querySelectorAll(S.join(','))];if(!els.length)return;
+ const io=new IntersectionObserver(es=>es.forEach(e=>{e.target.classList.toggle('tv',e.isIntersecting);if(e.isIntersecting&&e.target.classList.contains('sl')){const r=e.target.getBoundingClientRect();e.target.style.setProperty('--mx',(r.width/2)+'px');e.target.style.setProperty('--my',(r.height*.35)+'px');}}),{rootMargin:'-30% 0px -30% 0px'});
+ els.forEach(el=>io.observe(el));})();</script>
 </body>
 </html>
