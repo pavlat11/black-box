@@ -2218,7 +2218,7 @@ const scrW=2.7,scrH=1.52,scr=new T.Mesh(new T.PlaneGeometry(scrW,scrH),new T.Mes
 const scrFrame=new T.Mesh(new T.BoxGeometry(scrW+.08,scrH+.08,.02),new T.MeshStandardMaterial({color:0x0b0b10,roughness:.4}));scrFrame.position.set(0,FL+1.62,BK+.015);S.add(scrFrame);
 const scrL=new T.PointLight(0x7a8cff,2.2,6,1.3);scrL.position.set(0,FL+1.5,BK+1.2);S.add(scrL);
 /* King Size bed */
-const sheet=new T.MeshStandardMaterial({color:0x2a2440,roughness:.85}),baseM=new T.MeshStandardMaterial({color:0x0c0b12,roughness:.5});
+const sheet=new T.MeshStandardMaterial({color:0x15121f,roughness:.8}),baseM=new T.MeshStandardMaterial({color:0x0c0b12,roughness:.5});
 const bedZ=RCZ+.35;
 const base=new T.Mesh(new T.BoxGeometry(2.2,.3,2.3),baseM);base.position.set(-.35,FL+.17,bedZ);S.add(base);
 const glowStrip=new T.Mesh(new T.BoxGeometry(2.24,.02,2.34),ledB);glowStrip.position.set(-.35,FL+.03,bedZ);S.add(glowStrip);
@@ -2233,29 +2233,39 @@ function waterTex(){const c=document.createElement('canvas');c.width=c.height=25
   x.strokeStyle='rgba(255,255,255,.25)';for(let i=0;i<14;i++){x.beginPath();x.arc(128+Math.random()*40-20,128+Math.random()*40-20,20+i*8,0,Math.PI*2);x.stroke();}return sRGB(new T.CanvasTexture(c));}
 const water=new T.Mesh(new T.CircleGeometry(.66,48),new T.MeshBasicMaterial({map:waterTex(),toneMapped:false}));water.rotation.x=-Math.PI/2;water.position.set(tubX,FL+.52,tubZ);S.add(water);
 const tubL=new T.PointLight(0x7a5cff,1.4,3,1.5);tubL.position.set(tubX,FL+.9,tubZ);S.add(tubL);
-/* the couple: smooth 3D figures sitting on the bed, seen from behind */
-function lth(pts,seg){const sp=new T.SplineCurve(pts.map(p=>new T.Vector2(p[0],p[1]))).getPoints(pts.length*8);sp[0].x=0;sp[sp.length-1].x=0;return new T.LatheGeometry(sp,seg||40);}
-const skinM=new T.MeshStandardMaterial({color:0x8a6352,roughness:.6}),hairM=new T.MeshStandardMaterial({color:0x1b130f,roughness:.55}),hairW=new T.MeshStandardMaterial({color:0x2a1912,roughness:.5});
-const shirtM=new T.MeshStandardMaterial({color:0x26242e,roughness:.7}),dressM=new T.MeshStandardMaterial({color:0x3a1d52,roughness:.45,metalness:.1});
-function torso(m,w,h,dz){const g=lth([[0,0],[w*.92,.02],[w*.86,h*.35],[w,h*.78],[w*1.04,h*.9],[w*.7,h*.99],[0,h]]);g.scale(1,1,dz);return new T.Mesh(g,m);}
-function limb(m,r,l){const g=lth([[0,0],[r,.02],[r,l-.02],[0,l]],20);return new T.Mesh(g,m);}
-const couple=new T.Group();const sY=FL+.56;
-const man=new T.Group();man.position.set(-.25,sY,bedZ-.55);couple.add(man);
-man.add(torso(shirtM,.2,.6,.62));
-const mN=limb(skinM,.055,.14);mN.position.y=.58;man.add(mN);
-const mH=new T.Mesh(new T.SphereGeometry(.112,32,24),hairM);mH.scale.set(.92,1.08,1);mH.position.y=.82;man.add(mH);
-[-1,1].forEach(sd=>{const e=new T.Mesh(new T.SphereGeometry(.026,12,10),skinM);e.scale.set(.6,1,.9);e.position.set(sd*.1,.8,0);man.add(e);});
-const mL=limb(shirtM,.05,.34);mL.position.set(-.215,.53,0);mL.rotation.z=Math.PI-.06;man.add(mL);
-const mR=new T.Group();mR.position.set(.2,.55,0);man.add(mR);const ua=limb(shirtM,.05,.3);ua.rotation.z=-2.55;mR.add(ua);
-const fa=limb(shirtM,.044,.3);fa.position.set(.14,-.25,.07);fa.rotation.z=-1.62;mR.add(fa);
-const her=new T.Group();her.position.set(.16,sY,bedZ-.52);couple.add(her);
-her.add(torso(dressM,.17,.54,.66));
-const hN=limb(skinM,.046,.12);hN.position.y=.52;her.add(hN);
-const hHead=new T.Group();hHead.position.set(0,.62,0);hHead.rotation.z=.3;her.add(hHead);
-const hh=new T.Mesh(new T.SphereGeometry(.1,32,24),hairW);hh.scale.set(.92,1.1,1);hh.position.y=.11;hHead.add(hh);
-const hair=new T.Mesh(lth([[0,0],[.075,.02],[.12,.1],[.125,.22],[.11,.34],[.06,.4],[0,.41]],32),hairW);hair.scale.set(1,1,.45);hair.position.set(-.03,.3,.06);hair.rotation.z=.1;her.add(hair);
-[-1,1].forEach(sd=>{const a=limb(dressM,.04,.32);a.position.set(sd*.165,.49,0);a.rotation.z=Math.PI-sd*.08;her.add(a);});
-S.add(couple);
+/* a hint of the two of them: champagne for two, robes and petals on the bed */
+function lth(pts,seg){const sp=new T.SplineCurve(pts.map(p=>new T.Vector2(p[0],p[1]))).getPoints(pts.length*8);return new T.LatheGeometry(sp,seg||40);}
+const couple=new T.Group();const top=FL+.565;couple.position.set(-.35,top,bedZ-.35);S.add(couple);
+/* tray */
+const tray=new T.Mesh(new T.CylinderGeometry(.34,.32,.025,48),new T.MeshStandardMaterial({color:0xd9b46a,roughness:.25,metalness:.9}));tray.position.y=.012;couple.add(tray);
+/* flutes */
+const glassMat=new T.MeshStandardMaterial({color:0xf4f0ff,roughness:.05,metalness:.1,transparent:true,opacity:.28,side:T.DoubleSide,depthWrite:false});
+const rimMat=new T.LineBasicMaterial({color:0xffffff,transparent:true,opacity:.7});
+const wineMat=new T.MeshStandardMaterial({color:0xf2cf74,emissive:0x9a6a12,emissiveIntensity:.55,roughness:.15,metalness:.2,transparent:true,opacity:.92});
+function flute(x,z,tilt){const g=new T.Group();g.position.set(x,.025,z);g.rotation.z=tilt;couple.add(g);
+  const prof=[[0,0],[.045,.002],[.04,.006],[.006,.012],[.005,.13],[.012,.15],[.028,.18],[.034,.25],[.033,.32],[.03,.33]];
+  const glass=new T.Mesh(new T.LatheGeometry(prof.map(p=>new T.Vector2(p[0],p[1])),40),glassMat);g.add(glass);
+  const liq=new T.Mesh(lth([[0,.155],[.022,.17],[.029,.21],[.031,.27],[0,.27]],32),wineMat);g.add(liq);
+  const r=[];for(let i=0;i<=40;i++){const a=i/40*Math.PI*2;r.push(new T.Vector3(Math.cos(a)*.03,.33,Math.sin(a)*.03));}
+  g.add(new T.Line(new T.BufferGeometry().setFromPoints(r),rimMat));
+  const bub=[];for(let i=0;i<26;i++)bub.push((Math.random()-.5)*.03,.17+Math.random()*.1,(Math.random()-.5)*.03);
+  const bg=new T.BufferGeometry();bg.setAttribute('position',new T.Float32BufferAttribute(bub,3));
+  const bp=new T.Points(bg,new T.PointsMaterial({color:0xfff6dc,size:.006,transparent:true,opacity:.9,toneMapped:false}));g.add(bp);g.userData.b=bp;return g;}
+const f1=flute(-.06,.02,-.12),f2=flute(.06,.02,.12);
+/* bottle in an ice bucket */
+const bucket=new T.Mesh(new T.CylinderGeometry(.12,.1,.24,40,1,true),new T.MeshStandardMaterial({color:0xc4c8d4,roughness:.22,metalness:.55,side:T.DoubleSide}));bucket.position.set(.22,.145,-.12);couple.add(bucket);
+const bottle=new T.Mesh(lth([[0,0],[.065,0],[.068,.2],[.06,.26],[.028,.31],[.022,.42],[.025,.44],[0,.445]],36),new T.MeshStandardMaterial({color:0x10261a,roughness:.15,metalness:.3}));bottle.position.set(.22,.05,-.12);bottle.rotation.z=-.22;couple.add(bottle);
+const foil=new T.Mesh(new T.CylinderGeometry(.026,.03,.08,24),new T.MeshStandardMaterial({color:0xd9b46a,roughness:.3,metalness:.9}));foil.position.set(.22+Math.sin(.22)*.4,.05+Math.cos(.22)*.4,-.12);foil.rotation.z=-.22;couple.add(foil);
+/* two folded robes */
+const robeM=new T.MeshStandardMaterial({color:0xf3f0f7,roughness:1});
+[-.62,-.15].forEach((x,i)=>{const r=new T.Mesh(new T.BoxGeometry(.42,.09,.32),robeM);r.position.set(x+.35-.6,FL+.61,bedZ+.45);r.rotation.y=i?-.08:.06;S.add(r);
+  const belt=new T.Mesh(new T.BoxGeometry(.43,.02,.05),new T.MeshStandardMaterial({color:0xe6e1ee,roughness:1}));belt.position.set(r.position.x,FL+.66,bedZ+.45);belt.rotation.y=r.rotation.y;S.add(belt);});
+/* rose petals */
+const petM=new T.MeshStandardMaterial({color:0x6e0718,roughness:.5,side:T.DoubleSide});
+for(let i=0;i<46;i++){const t=Math.random()*Math.PI*2,rr=.45+Math.random()*.45;const p=new T.Mesh(new T.CircleGeometry(.022+Math.random()*.012,10),petM);
+  p.rotation.set(-Math.PI/2+(Math.random()-.5)*.5,0,Math.random()*6);p.scale.set(1,.7,1);p.position.set(-.35+Math.cos(t)*rr*.9,FL+.568,bedZ-.35+Math.sin(t)*rr*.7);S.add(p);}
+const rose=new T.PointLight(0xffc6a0,.6,2,1.5);rose.position.set(-.35,FL+1.0,bedZ-.1);S.add(rose);
+
 const refl=new T.Group();refl.visible=false;S.add(refl);
 const cube=new T.Mesh(new T.BoxGeometry(.2,.2,.2),new T.MeshStandardMaterial({color:0x8b3dff,emissive:0x6a2bff,emissiveIntensity:1.4,metalness:.3,roughness:.3}));cube.position.set(0,FL+2.75,BK+.5);S.add(cube);
 cube.add(new T.LineSegments(new T.EdgesGeometry(cube.geometry),new T.LineBasicMaterial({color:0xf1e6ff})));
@@ -2297,8 +2307,8 @@ const sg=new T.BufferGeometry(),sp=[];for(let i=0;i<900;i++){const th=Math.rando
 sg.setAttribute('position',new T.Float32BufferAttribute(sp,3));S.add(new T.Points(sg,new T.PointsMaterial({color:0xffffff,size:.5,transparent:true,opacity:.85,fog:false})));
 
 /* ---------- camera & timeline ---------- */
-const focus=new T.Vector3(0,FL+1.1,RCZ-.6);
-const path=new T.CatmullRomCurve3([new T.Vector3(0,FL+1.32,RCZ+2.2),new T.Vector3(.6,FL+2.0,RCZ+6.5),new T.Vector3(4,FL+2.9,7),new T.Vector3(12.5,7.2,20.5)]);
+const focus=new T.Vector3(-.3,FL+.78,RCZ+.0);
+const path=new T.CatmullRomCurve3([new T.Vector3(.1,FL+1.3,RCZ+1.25),new T.Vector3(.6,FL+2.0,RCZ+6.5),new T.Vector3(4,FL+2.9,7),new T.Vector3(12.5,7.2,20.5)]);
 const endT=new T.Vector3(0,4.6,-5.5),look=new T.Vector3(),orbC=new T.Vector3(0,0,-D/2);
 const DUR=8,ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
 const subs=[[.5,'Pátek, 22:00. Jen vy dva.'],[3,'Ostatní odcházejí.'],[5.6,'Celá budova je jen vaše.']];
@@ -2315,7 +2325,7 @@ function frame(now){
   else{const a=Math.sin((t-DUR-.3)*.1)*.28;C.position.set(orbC.x+Math.sin(endA+a)*endR,endP.y,orbC.z+Math.cos(endA+a)*endR);look.copy(endT);}
   setX(Math.min(.4,Math.max(.05,.4*Math.pow(Math.max(0,(k-.55)/.42),1.5))));C.fov=38+8*k;C.updateProjectionMatrix();C.lookAt(look);
   cube.rotation.y=t*.45;cube.rotation.x=.55+Math.sin(t*.7)*.08;
-  couple.rotation.z=Math.sin(t*.8)*.005;refl.rotation.z=-couple.rotation.z;dustP.position.y=(t*.03)%.12;dustP.rotation.y=Math.sin(t*.2)*.04;
+  f1.userData.b.position.y=(t*.035)%.06;f2.userData.b.position.y=((t+.7)*.035)%.06;refl.rotation.z=-couple.rotation.z;dustP.position.y=(t*.03)%.12;dustP.rotation.y=Math.sin(t*.2)*.04;
   const pulse=.88+Math.sin(t*2)*.12;gCube.material.opacity=.9*pulse;gWin.material.opacity=.45*pulse*Math.min(1,k*2);
   for(const m of warm){if(!m.userData.lit){m.opacity=0;continue;}const u=t-m.userData.t;m.opacity=u<0?.85:u<.45?(Math.random()>.45?.85:.15):Math.max(0,.85-(u-.45)*1.6);}
   let s=-1;subs.forEach((x,i)=>{if(t>=x[0])s=i;});if(s!==curSub){curSub=s;sub.classList.remove('on');if(s>=0)setTimeout(()=>{sub.textContent=subs[s][1];sub.classList.add('on');},s===0?0:450);}
