@@ -2710,13 +2710,13 @@ fit();addEventListener('resize',fit);document.fonts&&document.fonts.ready.then(f
 <script>/* voucher switch thumb */(function(){const sw=document.querySelector('.vswitch');if(!sw)return;const g=document.getElementById('vo2');const u=()=>sw.classList.toggle('is-gold',g.getAttribute('aria-pressed')==='true');sw.querySelectorAll('.vopt').forEach(b=>b.addEventListener('click',()=>setTimeout(u,0)));u();})();
 /* mobile hero: gentle automatic pan until the visitor touches it (GPU transform, sub-pixel smooth) */
 (function(){const par=document.getElementById('heroPar'),img=document.getElementById('heroImg'),hero=document.getElementById('hero');if(!par||!img||!matchMedia('(pointer:coarse)').matches)return;
- let hold=performance.now()+1800,run=false,base=0,amp=0,t0=0,vis=true,dx=0;img.style.willChange='transform';
- const off=()=>{if(!run)return;run=false;const sl=Math.round(base-dx);img.style.transform='';par.scrollLeft=sl;};
+ let hold=performance.now()+1800,run=false,base=0,amp=0,t0=0,vis=true,dx=0;img.style.willChange='transform,translate';
+ const off=()=>{if(!run)return;run=false;const sl=Math.round(base-dx);img.style.translate='';par.scrollLeft=sl;};
  const stop=()=>{off();hold=performance.now()+6000;};['touchstart','pointerdown','wheel'].forEach(e=>par.addEventListener(e,stop,{passive:true}));
  new IntersectionObserver(es=>{vis=es[0].isIntersecting;if(!vis)off();}).observe(hero);
  (function f(n){requestAnimationFrame(f);if(!vis||n<hold)return;
-  if(!run){const max=par.scrollWidth-par.clientWidth;if(max<20)return;amp=Math.min(max*.42,140);base=Math.max(amp,Math.min(max-amp,par.scrollLeft));par.scrollLeft=base;t0=n;run=true;}
-  const k=Math.min(1,(n-t0)/1500),e=k*k*(3-2*k);dx=-Math.sin((n-t0)/5200)*amp*e;img.style.transform='translate3d('+dx.toFixed(2)+'px,0,0)';})(performance.now());})();</script>
+  if(!run){const max=par.scrollWidth-par.clientWidth;if(max<20)return;amp=Math.min(max*.45,170);base=Math.max(amp,Math.min(max-amp,par.scrollLeft));par.scrollLeft=base;t0=n;run=true;}
+  const k=Math.min(1,(n-t0)/1500),e=k*k*(3-2*k);dx=-Math.sin((n-t0)/3400)*amp*e;img.style.translate=dx.toFixed(2)+'px 0';})(performance.now());})();</script>
 <script>/* "Darovat Gold Time" preselects the Gold voucher */
 document.querySelectorAll('a[href="#poukazy"]').forEach(a=>{if(/gold/i.test(a.textContent))a.addEventListener('click',()=>{const g=document.getElementById('vo2');if(g&&g.getAttribute('aria-pressed')!=='true')g.click();});});
 /* contact: align the Gold Time card with the Gold Time row on the left */
