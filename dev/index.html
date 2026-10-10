@@ -1369,7 +1369,6 @@ html.gold .gt-aura{opacity:1}
 .feat.tv{background:var(--panel);border-color:var(--line)}
 .gal button.tv img{transform:scale(1.07);filter:brightness(1.12)}
 .gal button.tv::after{box-shadow:0 0 0 1px rgba(176,102,255,.7) inset}
-.qa summary.tv{color:#fff}
 .sl.tv::after{opacity:1}
 .sl:not(.g[aria-pressed="true"]).tv{border-color:rgba(176,102,255,.55)!important}
 .sl.tv{box-shadow:0 18px 50px -24px rgba(109,40,255,.75),0 0 0 1px rgba(176,102,255,.12)}
@@ -1378,9 +1377,6 @@ html.gold .gt-aura{opacity:1}
 .player.tv .pl-btn{box-shadow:0 0 0 6px rgba(255,255,255,.08),0 0 30px rgba(176,102,255,.6)}
 .for.tv .big{filter:drop-shadow(0 0 18px rgba(176,102,255,.55))}
 .occ span.tv{border-color:rgba(176,102,255,.7);color:var(--chrome);background:rgba(176,102,255,.12)}
-.qa.tv{background:linear-gradient(90deg,rgba(176,102,255,.07),transparent 80%)}
-.qa.tv summary i{border-color:var(--violet);box-shadow:0 0 14px rgba(176,102,255,.5)}
-.qa.tv summary{transform:translateX(8px)}
 .hr.tv{border-color:rgba(176,102,255,.55);background:rgba(20,14,56,.8)}
 .gold-up.tv{border-color:rgba(240,207,133,.8);box-shadow:0 30px 90px -30px rgba(240,207,133,.75),inset 0 1px 0 rgba(255,236,190,.2)}
 .gt-f.tv{border-color:rgba(240,207,133,.6);box-shadow:0 20px 60px -30px rgba(240,207,133,.6)}
@@ -1426,6 +1422,16 @@ html.gold .gt-aura{opacity:1}
  .vtip svg{width:11px;height:11px}
  .vswitch .vopt{padding:12px 8px!important}
 }
+</style>
+<style>/* mobile order for vouchers: text → how it works → switch → voucher → e-mail */
+@media (max-width:760px){
+ .vform>div:first-child{order:1}.vform>.lead{order:2}.vform>.occ{order:3}
+ .vsteps{order:4}.vswitch{order:5}.vsw-q{order:6}.vcard{order:7!important;margin-block:6px 6px!important}
+ .vform>.field,.vform>.btn,.vform>.vnote{order:8}
+ .vs2 span::before{content:"↓ "!important}
+}
+/* FAQ: plus icon keeps its ring on touch devices */
+@media (hover:none){.qa summary i{border-color:var(--violet)!important;box-shadow:0 0 14px rgba(176,102,255,.45)}}
 </style>
 </head>
 <body>
