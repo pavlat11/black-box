@@ -2708,13 +2708,14 @@ fit();addEventListener('resize',fit);document.fonts&&document.fonts.ready.then(f
  const io=new IntersectionObserver(es=>es.forEach(e=>{e.target.classList.toggle('tv',e.isIntersecting);if(e.isIntersecting&&e.target.classList.contains('sl')){const r=e.target.getBoundingClientRect();e.target.style.setProperty('--mx',(r.width/2)+'px');e.target.style.setProperty('--my',(r.height*.35)+'px');}}),{rootMargin:'-30% 0px -30% 0px'});
  els.forEach(el=>io.observe(el));})();</script>
 <script>/* voucher switch thumb */(function(){const sw=document.querySelector('.vswitch');if(!sw)return;const g=document.getElementById('vo2');const u=()=>sw.classList.toggle('is-gold',g.getAttribute('aria-pressed')==='true');sw.querySelectorAll('.vopt').forEach(b=>b.addEventListener('click',()=>setTimeout(u,0)));u();})();
-/* mobile hero: gentle automatic pan until the visitor touches it */
-(function(){const par=document.getElementById('heroPar'),hero=document.getElementById('hero');if(!par||!matchMedia('(pointer:coarse)').matches)return;
- let hold=performance.now()+1800,base=null,t0=performance.now(),vis=true;
- const stop=()=>{hold=performance.now()+6000;base=null;};['touchstart','pointerdown','wheel'].forEach(e=>par.addEventListener(e,stop,{passive:true}));
- new IntersectionObserver(es=>{vis=es[0].isIntersecting;}).observe(hero);
- (function f(n){requestAnimationFrame(f);if(!vis||n<hold)return;const max=par.scrollWidth-par.clientWidth;if(max<20)return;
-  if(base===null){base=par.scrollLeft;t0=n;}const amp=Math.min(max*.42,140),c=Math.max(amp,Math.min(max-amp,base));
-  par.scrollLeft=c+Math.sin((n-t0)/4200)*amp;})(performance.now());})();</script>
+/* mobile hero: gentle automatic pan until the visitor touches it (GPU transform, sub-pixel smooth) */
+(function(){const par=document.getElementById('heroPar'),img=document.getElementById('heroImg'),hero=document.getElementById('hero');if(!par||!img||!matchMedia('(pointer:coarse)').matches)return;
+ let hold=performance.now()+1800,run=false,base=0,amp=0,t0=0,vis=true,dx=0;img.style.willChange='transform';
+ const off=()=>{if(!run)return;run=false;const sl=Math.round(base-dx);img.style.transform='';par.scrollLeft=sl;};
+ const stop=()=>{off();hold=performance.now()+6000;};['touchstart','pointerdown','wheel'].forEach(e=>par.addEventListener(e,stop,{passive:true}));
+ new IntersectionObserver(es=>{vis=es[0].isIntersecting;if(!vis)off();}).observe(hero);
+ (function f(n){requestAnimationFrame(f);if(!vis||n<hold)return;
+  if(!run){const max=par.scrollWidth-par.clientWidth;if(max<20)return;amp=Math.min(max*.42,140);base=Math.max(amp,Math.min(max-amp,par.scrollLeft));par.scrollLeft=base;t0=n;run=true;}
+  const k=Math.min(1,(n-t0)/1500),e=k*k*(3-2*k);dx=-Math.sin((n-t0)/5200)*amp*e;img.style.transform='translate3d('+dx.toFixed(2)+'px,0,0)';})(performance.now());})();</script>
 </body>
 </html>
