@@ -1433,6 +1433,23 @@ html.gold .gt-aura{opacity:1}
 /* FAQ: plus icon keeps its ring on touch devices */
 @media (hover:none){.qa summary i{border-color:var(--violet)!important;box-shadow:0 0 14px rgba(176,102,255,.45)}}
 </style>
+<style>/* contact phone number */
+.call-num.cn2{display:flex!important;align-items:center;gap:18px;white-space:nowrap;text-decoration:none;margin:4px 0 2px}
+.cn-ic{position:relative;flex:none;width:58px;height:58px;border-radius:50%;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,var(--violet-deep),#9147f5);box-shadow:0 12px 36px -10px rgba(176,102,255,.9)}
+.cn-ic svg{width:24px;height:24px;position:relative;z-index:1;animation:cnRing 3.2s ease-in-out infinite;transform-origin:50% 50%}
+.cn-ic i{position:absolute;inset:0;border-radius:50%;border:1.5px solid rgba(176,102,255,.7);animation:cnWave 2.6s cubic-bezier(.2,.6,.3,1) infinite}
+.cn-ic i+i{animation-delay:1.3s}
+@keyframes cnWave{0%{transform:scale(1);opacity:.9}100%{transform:scale(1.9);opacity:0}}
+@keyframes cnRing{0%,70%,100%{transform:rotate(0)}74%{transform:rotate(-14deg)}78%{transform:rotate(12deg)}82%{transform:rotate(-10deg)}86%{transform:rotate(8deg)}90%{transform:rotate(0)}}
+.cn-t{display:flex;flex-direction:column;line-height:1}
+.cn-t small{font:700 12px var(--body);letter-spacing:.28em;color:var(--violet);margin-bottom:6px}
+.cn-t b{font:300 clamp(30px,3.4vw,46px)/1 var(--display);letter-spacing:.02em;font-variant-numeric:tabular-nums;
+ background:linear-gradient(100deg,#fff 0%,#e9dcff 35%,#b066ff 50%,#e9dcff 65%,#fff 100%) 0 0/250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:cnShine 6s linear infinite}
+@keyframes cnShine{to{background-position:-250% 0}}
+.call-num.cn2:hover .cn-ic{box-shadow:0 14px 44px -8px rgba(176,102,255,1)}
+.call-num.cn2:hover .cn-t b{filter:drop-shadow(0 0 16px rgba(176,102,255,.6))}
+@media (max-width:760px){.cn-ic{width:50px;height:50px}.cn-ic svg{width:21px;height:21px}.call-num.cn2{gap:14px}.cn-t b{font-size:clamp(22px,7vw,28px)}}
+</style>
 </head>
 <body>
 
@@ -1804,7 +1821,7 @@ html.gold .gt-aura{opacity:1}
         </div>
         <div class="book-r book-call">
           <span class="lbl" style="margin-top:0">Rezervace po telefonu</span>
-          <a class="call-num" href="tel:+420773777888">+420 773 777 888</a>
+          <a class="call-num cn2" href="tel:+420773777888" aria-label="Zavolat na +420 773 777 888"><span class="cn-ic" aria-hidden="true"><i></i><i></i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2z"/></svg></span><span class="cn-t"><small>+420</small><b>773&nbsp;777&nbsp;888</b></span></a>
           <p class="call-txt">Zavolejte a domluvíme termín, který vám sedí.</p>
           <a class="btn full call-btn" href="tel:+420773777888"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2z"/></svg>Zavolat a rezervovat</a>
           <div class="gold-up">
