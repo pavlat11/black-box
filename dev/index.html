@@ -2713,7 +2713,7 @@ const halos=[];warm.forEach(m=>{const g=m.userData.g;if(!g)return;const p=new T.
 const focus=new T.Vector3(0,FL+1.0,BK+.6);
 const path=new T.CatmullRomCurve3([new T.Vector3(9.2,6.4,15.5),new T.Vector3(4,FL+2.9,7),new T.Vector3(.6,FL+1.9,RCZ+6.2),new T.Vector3(bedX,FL+1.62,FR-.25)]);
 const endT=new T.Vector3(0,4.6,-5.5),look=new T.Vector3(),orbC=new T.Vector3(0,0,-D/2);
-const DUR=13.6,TA=4.6,TC=7.6,TB=6.4,TE=17.2,TR=4.8,ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+const DUR=13.6,TA=4.6,TC=7.6,TB=6.4,TE=15.4,TR=4.8,ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
 const subs=[[.6,'Pátek večer. V budově je ještě živo.'],[4.6,'22:00. Budova se zamyká.'],[6.3,'Nikdo jiný už tu není.'],[11.6,'Jen vy dva. Do půlnoci.'],[TE+.6,'Celá budova je jen vaše.']];
 let t0=0,run=false,vis=false,raf=0,curSub=-1;
 const wash=document.getElementById('goldWash'),pv=new T.Vector3(),pu=new T.Vector3();
@@ -2726,7 +2726,7 @@ function frame(now){
   const t=run?(now-t0)/1000:0,cl=v=>Math.min(1,Math.max(0,v)),k0=ease(cl((t-TC)/TB)),k=t<TE?k0:k0*(1-ease(cl((t-TE)/TR))),xr=1-k;
   if(t<TC){const a=-.22+.22*ease(cl(t/TC));C.position.set(orbC.x+Math.sin(endA+a)*endR,endP.y,orbC.z+Math.cos(endA+a)*endR);look.copy(endT);}
   else if(k<1){path.getPoint(k,C.position);look.copy(endT).lerp(focus,ease(cl(k*1.15)));}
-  else{const e=path.getPoint(1),q=(t-TC-TB)*.25;C.position.set(e.x+Math.sin(q)*.18,e.y+Math.sin(q*.7)*.05,e.z);look.copy(focus);}
+  else{const e=path.getPoint(1),u=cl((t-TC-TB)/(TE-TC-TB)),en=Math.sin(Math.PI*u);C.position.set(e.x+Math.sin(u*Math.PI*2)*.12*en,e.y+.03*en,e.z);look.copy(focus);}
   setX(t<TC-1.2?1:Math.max(.05,1-.78*ease(cl((t-TC+1.2)/1.4))-.17*cl((k-.35)/.2)));const fk=cl((t-TC+.8)/1)*(1-cl((k-.25)/.15));roomEdge.material.opacity=.95*fk;roomGlow.material.opacity=.16*fk*(.8+.2*Math.sin(t*2));roomBeam.material.opacity=.5*fk*(.85+.15*Math.sin(t*2));tubB.material.opacity=.45+.3*Math.sin(t*5);C.fov=46+12*k;C.updateProjectionMatrix();C.lookAt(look);
   cube.rotation.y=t*.45;{const R0=window.__room;R0.starPts.material.opacity=.75+.25*Math.sin(t*3.1);R0.starPts2.material.opacity=.25+.15*Math.sin(t*2.3+1);R0.scrGlow.material.opacity=.2+.05*Math.sin(t*1.7);}cube.rotation.x=.55+Math.sin(t*.7)*.08;
   f1.userData.b.position.y=(t*.035)%.06;f2.userData.b.position.y=((t+.7)*.035)%.06;refl.rotation.z=-couple.rotation.z;dustP.position.y=(t*.03)%.12;dustP.rotation.y=Math.sin(t*.2)*.04;
