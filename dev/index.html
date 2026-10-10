@@ -1460,6 +1460,7 @@ html.gold .gt-aura{opacity:1}
 .gend .grep{margin-top:16px;font:600 12px var(--body);letter-spacing:.14em;text-transform:uppercase;color:#e9dcc0;background:rgba(240,207,133,.08);border:1px solid rgba(240,207,133,.45);border-radius:999px;padding:9px 16px;cursor:pointer;transition:background .5s,border-color .5s}
 .gend .grep:hover{background:rgba(240,207,133,.18);border-color:#f0cf85}
 </style>
+<style>.gt-film .lb{display:none!important}.gt-film .gclk{top:14px!important}</style>
 </head>
 <body>
 
@@ -2544,8 +2545,8 @@ ledLine(new T.Vector3(RX-SO,FL+RH-SH,BK+SO),new T.Vector3(RX-SO,FL+RH-SH,FR-.05)
   const cur=new T.CatmullRomCurve3(pts);S.add(new T.Mesh(new T.TubeGeometry(cur,80,.012,6),M.ledV));cur.getPoints(28).forEach(p=>bloom(0xb27bff,.42,p.x,p.y,p.z,.3));})();
 /* back wall: slat panels, TV, media wall, speakers */
 const scrW=2.55,scrH=1.44,scrX=0,scrY=FL+1.55;
-bx(.62,RH-SH-.02,.06,M.slat,scrX-scrW/2-.55,FL+(RH-SH)/2,BK+.04);
-bx(.62,RH-SH-.02,.06,M.slat,scrX+scrW/2+.55,FL+(RH-SH)/2,BK+.04);
+bx(.5,RH-SH-.02,.06,M.slat,scrX-scrW/2-.45,FL+(RH-SH)/2,BK+.04);
+bx(.5,RH-SH-.02,.06,M.slat,scrX+scrW/2+.45,FL+(RH-SH)/2,BK+.04);
 bx(scrW+.2,.95,.24,M.dark,scrX,FL+.48,BK+.13);
 const scrFrame=bx(scrW+.06,scrH+.06,.05,new T.MeshStandardMaterial({color:0x05050a,roughness:.3}),scrX,scrY,BK+.05);
 const scr=new T.Mesh(new T.PlaneGeometry(scrW,scrH),new T.MeshBasicMaterial({color:0x4d7cff,toneMapped:false}));scr.position.set(scrX,scrY,BK+.08);S.add(scr);
@@ -2556,14 +2557,14 @@ const scrL=new T.PointLight(0x5a5cff,2.4,8,1.2);scrL.position.set(scrX,scrY,BK+1
 function speaker(x){const g=new T.Group();g.position.set(x,FL,BK+.3);S.add(g);bx(.26,1.08,.3,M.dark,0,.54,0,g);
   [[.86,.045],[.66,.075],[.42,.075]].forEach(([y,r])=>{const d=new T.Mesh(new T.CylinderGeometry(r,r,.02,24),M.metal);d.rotation.x=Math.PI/2;d.position.set(0,y,.155);g.add(d);
     const ring=new T.Mesh(new T.TorusGeometry(r+.006,.004,6,32),new T.MeshBasicMaterial({color:0xc58bff,toneMapped:false}));ring.position.set(0,y,.162);g.add(ring);});}
-speaker(scrX-scrW/2-.22);speaker(scrX+scrW/2+.22);
+speaker(scrX-scrW/2-.2);speaker(scrX+scrW/2+.2);
 /* leather sofas (left of the TV against the back wall and right of the TV) */
 function sofa(x,z,w,ry){const g=new T.Group();g.position.set(x,FL,z);g.rotation.y=ry||0;S.add(g);
   rbx(w,.36,.86,.05,M.leather,0,.25,0,g);rbx(w,.5,.2,.06,M.leather,0,.62,-.34,g);rbx(.2,.55,.86,.06,M.leather,-w/2+.1,.36,0,g);rbx(.2,.55,.86,.06,M.leather,w/2-.1,.36,0,g);
   const n=Math.max(1,Math.round((w-.4)/.7));for(let i=0;i<n;i++){const cw=(w-.4)/n;rbx(cw-.03,.14,.66,.05,M.leather,-w/2+.2+cw*(i+.5),.48,.05,g);}
   [-w/2+.12,w/2-.12].forEach(fx=>[-.33,.33].forEach(fz=>{const f=new T.Mesh(new T.CylinderGeometry(.015,.015,.08,8),M.metal);f.position.set(fx,.04,fz);g.add(f);}));return g;}
-sofa(LX+.95,BK+.55,1.4);
-const s2x=RX-.95;sofa(s2x,BK+.55,1.4);
+sofa(LX+.72,BK+.55,1.2);
+const s2x=RX-.72;sofa(s2x,BK+.55,1.2);
 /* white branch decor (as on the photos) */
 function branches(x,z){const g=new T.Group();g.position.set(x,FL,z);S.add(g);const m=new T.MeshBasicMaterial({color:0xdfe2ff,toneMapped:false});
   const base=new T.Mesh(new T.CylinderGeometry(.06,.08,.05,16),M.dark);base.position.y=.025;g.add(base);
@@ -2572,7 +2573,7 @@ function branches(x,z){const g=new T.Group();g.position.set(x,FL,z);S.add(g);con
   const st=new T.Mesh(new T.CylinderGeometry(.008,.008,.6,6),m);st.position.y=.3;g.add(st);return g;}
 branches(LX+.22,BK+.3);branches(RX-.22,BK+.3);
 /* low black coffee table with an orchid and champagne for two */
-const tblX=LX+.95,tblZ=BK+1.45;
+const tblX=LX+.72,tblZ=BK+1.4;
 const tb=new T.Group();tb.position.set(tblX,FL,tblZ);S.add(tb);
 bx(.72,.04,.5,M.dark,0,.46,0,tb);bx(.66,.03,.44,M.dark,0,.12,0,tb);[[-.33,-.22],[.33,-.22],[-.33,.22],[.33,.22]].forEach(([a,b])=>bx(.04,.46,.04,M.dark,a,.23,b,tb));
 (function(){const v=new T.Mesh(new T.CylinderGeometry(.04,.05,.13,16),new T.MeshStandardMaterial({color:0x10102a,roughness:.1,metalness:.6}));v.position.set(-.22,.545,-.1);tb.add(v);
@@ -2593,7 +2594,7 @@ const foil=new T.Mesh(new T.CylinderGeometry(.022,.026,.07,24),new T.MeshStandar
 const refl=new T.Group();refl.visible=false;S.add(refl);
 const champL=new T.PointLight(0xffd59a,.45,1.4,2);champL.position.set(tblX,FL+.95,tblZ+.2);S.add(champL);
 /* marble alcove in the back-right corner: mirror, AC unit, corner whirlpool */
-const mZ0=BK+1.15,mZ1=FR-2.2,mL=mZ1-mZ0,mC=(mZ0+mZ1)/2;
+const mZ0=BK+1.6,mZ1=FR-.15,mL=mZ1-mZ0,mC=(mZ0+mZ1)/2;
 const mr=new T.Mesh(new T.PlaneGeometry(mL,RH-SH),M.marble);mr.rotation.y=-Math.PI/2;mr.position.set(RX-.02,FL+(RH-SH)/2,mC);S.add(mr);
 bx(.12,RH-SH,.16,M.slat,RX-.06,FL+(RH-SH)/2,mZ0);bx(.12,RH-SH,.16,M.slat,RX-.06,FL+(RH-SH)/2,mZ1);
 bx(.2,.24,.82,M.white,RX-.12,FL+RH-SH-.34,mC);
@@ -2614,7 +2615,7 @@ const bb=[];for(let i=0;i<120;i++){const a=Math.random()*6.28,r=Math.random()*.5
 const bbG=new T.BufferGeometry();bbG.setAttribute('position',new T.Float32BufferAttribute(bb,3));
 const tubB=new T.Points(bbG,new T.PointsMaterial({color:0xece4ff,size:.022,transparent:true,opacity:.75,toneMapped:false}));S.add(tubB);
 /* King Size bed against the right wall, nightstands, towels */
-const bedX=RX-1.1,bedZ=FR-1.15;
+const bedX=0,bedZ=FR-1.15;
 (function(){const g=new T.Group();g.position.set(bedX,FL,bedZ);g.rotation.y=-Math.PI/2;S.add(g);
   rbx(2.2,.42,2.0,.06,M.velvet,0,.21,0,g);
   rbx(2.08,.24,1.9,.08,M.sheet,-.02,.52,0,g);
@@ -2624,7 +2625,7 @@ const bedX=RX-1.1,bedZ=FR-1.15;
   const tp=thr.geometry.attributes.position;for(let i=0;i<tp.count;i++){const x=tp.getX(i),z=tp.getZ(i);tp.setY(i,tp.getY(i)+Math.sin(x*7+z*3)*.012+Math.cos(z*6)*.01);}tp.needsUpdate=true;thr.geometry.computeVertexNormals();
   [[.82,-.5],[.82,.5],[.65,-.22],[.65,.24]].forEach(([x,z],i)=>{const p=rbx(.16,.36,.55,.07,M.pillow,x,.82,z,g);p.rotation.z=.28;});
   [[-.62,-.13],[-.62,.13]].forEach(([x,z])=>{const t=new T.Mesh(new T.CylinderGeometry(.09,.09,.42,20),M.towel);t.rotation.x=Math.PI/2;t.position.set(x,.78,z);g.add(t);});
-  [1.35].forEach(z=>{bx(.5,.5,.42,M.dark,.86,.25,z,g);const tis=bx(.2,.1,.12,M.white,.86,.55,z,g);});})();
+  [-1.35,1.35].forEach(z=>{bx(.5,.5,.42,M.dark,.86,.25,z,g);const tis=bx(.2,.1,.12,M.white,.86,.55,z,g);});})();
 /* dim warm-blue room lighting like on the photos */
 const roomL=new T.PointLight(0x5a5cff,.9,10,1.2);roomL.position.set(0,FL+RH-.4,RCZ);S.add(roomL);
 const fillL=new T.PointLight(0x5a5cff,.45,7,1.4);fillL.position.set(bedX-.5,FL+2.0,bedZ+.6);S.add(fillL);
@@ -2697,8 +2698,8 @@ sg.setAttribute('position',new T.Float32BufferAttribute(sp,3));S.add(new T.Point
 /* warm halo around each lit window */
 const halos=[];warm.forEach(m=>{const g=m.userData.g;if(!g)return;const p=new T.Vector3();g.updateMatrixWorld(true);g.localToWorld(p.set(0,.6,.15));const sp=glow(0xffc070,1.9,p.x,p.y,p.z,0);sp.renderOrder=8;halos.push([sp,m]);});
 /* ---------- camera & timeline ---------- */
-const focus=new T.Vector3(.35,FL+1.0,BK+.6);
-const path=new T.CatmullRomCurve3([new T.Vector3(9.2,6.4,15.5),new T.Vector3(4,FL+2.9,7),new T.Vector3(1.6,FL+1.9,RCZ+6.2),new T.Vector3(bedX-.45,FL+1.62,FR-.25)]);
+const focus=new T.Vector3(0,FL+1.0,BK+.6);
+const path=new T.CatmullRomCurve3([new T.Vector3(9.2,6.4,15.5),new T.Vector3(4,FL+2.9,7),new T.Vector3(.6,FL+1.9,RCZ+6.2),new T.Vector3(bedX,FL+1.62,FR-.25)]);
 const endT=new T.Vector3(0,4.6,-5.5),look=new T.Vector3(),orbC=new T.Vector3(0,0,-D/2);
 const DUR=13.6,TA=4.6,TC=7.6,TB=6.4,ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
 const subs=[[.6,'Pátek večer. V budově je ještě živo.'],[4.6,'22:00. Budova se zamyká.'],[6.3,'Nikdo jiný už tu není.'],[11.6,'Jen vy dva. Do půlnoci.']];
