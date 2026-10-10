@@ -2159,31 +2159,40 @@ for(let f=0;f<3;f++)for(const x of xs){if(x===0&&f<2)continue;win(x,wy(f),D/2+.0
 for(let f=0;f<3;f++)for(const z of[-1,1]){win(-W/2-.01,wy(f),z,Math.PI/2);win(W/2+.01,wy(f),z,Math.PI/2);}
 warm.sort(()=>Math.random()-.5);warm.forEach((p,i)=>p.userData.t=1.5+i*(3.2/warm.length));
 /* Black Box room */
-const room=new T.Mesh(new T.BoxGeometry(1.9,FH-.08,1.9),new T.MeshStandardMaterial({color:0x2a1460,roughness:.9,side:T.BackSide}));room.position.set(0,FH*1.5,D/2-.96);S.add(room);
+const room=new T.Mesh(new T.BoxGeometry(1.9,FH-.08,1.9),new T.MeshStandardMaterial({color:0x2b1466,roughness:.85,side:T.BackSide}));room.position.set(0,FH*1.5,D/2-.96);S.add(room);
 edges(new T.PlaneGeometry(WW,WH),new T.LineBasicMaterial({color:0xd6b0ff}),bbX,bbY,D/2+.01);
 const glass=new T.Mesh(new T.PlaneGeometry(WW,WH),new T.MeshBasicMaterial({color:0x8b3dff,transparent:true,opacity:.12,depthWrite:false}));glass.position.set(bbX,bbY,D/2+.006);S.add(glass);
-const cube=new T.Mesh(new T.BoxGeometry(.2,.2,.2),new T.MeshStandardMaterial({color:0x8b3dff,emissive:0x5a1fd6,emissiveIntensity:1,metalness:.3,roughness:.3}));
-cube.position.set(0,FH+1.36,.3);S.add(cube);
+const cube=new T.Mesh(new T.BoxGeometry(.17,.17,.17),new T.MeshStandardMaterial({color:0x8b3dff,emissive:0x5a1fd6,emissiveIntensity:1,metalness:.3,roughness:.3}));
+cube.position.set(0,FH+1.3,D/2-1.7);S.add(cube);
 const cubeE=new T.LineSegments(new T.EdgesGeometry(cube.geometry),new T.LineBasicMaterial({color:0xf1e6ff}));cube.add(cubeE);
 /* two people */
-const skin=new T.MeshBasicMaterial({color:0x090616});
-function lathe(pts,sx,sz){const sp=new T.SplineCurve(pts.map(p=>new T.Vector2(p[0],p[1]))).getPoints(pts.length*6);sp[0].x=0;sp[sp.length-1].x=0;const g=new T.LatheGeometry(sp,40);g.scale(sx||1,1,sz||1);return g;}
-const MAN=[[0,0],[.06,0],[.065,.04],[.055,.22],[.065,.42],[.1,.5],[.105,.6],[.098,.68],[.13,.82],[.145,.875],[.12,.91],[.042,.93],[.036,.975],[.06,1.005],[.074,1.05],[.07,1.1],[.046,1.14],[0,1.155]];
-const WOM=[[0,0],[.05,0],[.055,.04],[.05,.22],[.07,.42],[.115,.52],[.1,.6],[.082,.69],[.11,.8],[.12,.85],[.1,.885],[.036,.905],[.032,.945],[.056,.975],[.068,1.015],[.064,1.06],[.042,1.095],[0,1.11]];
-function person(x,lean,prof,female){const g=new T.Group();
-  g.add(new T.Mesh(lathe(prof,1,.62),skin));
-  const top=prof[10][1];
-  const armG=lathe([[0,0],[.02,.01],[.026,.06],[.03,.2],[.028,.32],[.022,.38],[0,.4]]);
-  const outer=new T.Mesh(armG,skin);outer.position.set(-lean*(female?.115:.135),top-.4,0);outer.rotation.z=-lean*.08;g.add(outer);
-  const inner=new T.Mesh(armG,skin);inner.position.set(lean*(female?.1:.12),top-.38,.01);inner.rotation.z=lean*.5;g.add(inner);
-  if(female){const bun=new T.Mesh(new T.SphereGeometry(.045,16,12),skin);bun.position.set(0,1.06,-.05);g.add(bun);}
-  g.position.set(x,FH,D/2-1.0);g.rotation.z=lean*.03;S.add(g);return g;}
-const p1=person(-.13,1,MAN,false),p2=person(.13,-1,WOM,true);
-/* bed edge + starry room ceiling */
-const bed=new T.LineSegments(new T.EdgesGeometry(new T.BoxGeometry(1.2,.22,.7)),new T.LineBasicMaterial({color:0x9a6cff,transparent:true,opacity:.6}));bed.position.set(0,FH+.11,.55);S.add(bed);
-const rs=[];for(let i=0;i<70;i++)rs.push((Math.random()-.5)*1.8,FH*2-.06,D/2-1.9+Math.random()*1.85);
+/* the couple: hand-drawn silhouette (SVG path -> THREE.Shape) */
+const COUPLE=["M150 30 C172 30 186 42 188 58 C188 64 190 70 194 76 C196 78 196 81 192 83 C193 86 191 89 192 91 C190 94 190 97 186 100 C184 103 180 104 176 104 C175 108 176 112 178 116 C190 122 198 132 202 148 C206 168 206 190 204 210 C202 232 196 254 188 276 C190 300 191 330 190 360 C189 390 188 420 190 452 L196 462 L160 462 L164 452 C163 420 162 388 160 356 L157 330 L153 356 C150 388 146 420 142 452 L140 462 L104 462 L110 452 C112 424 114 392 113 360 C112 330 110 300 106 276 C100 262 95 246 92 228 C86 196 84 162 90 142 C96 124 112 116 131 112 C132 106 131 101 128 97 C122 90 118 80 117 66 C116 46 128 30 150 30 Z", "M244 54 C268 52 288 68 290 94 C292 124 300 168 296 204 C294 214 284 216 280 206 C276 220 270 232 270 246 C276 300 292 370 308 462 L180 462 C184 400 196 320 206 262 C208 246 204 232 200 220 C192 200 190 168 198 152 C204 142 212 136 216 130 C216 126 214 123 210 121 C204 119 200 115 200 111 C198 109 199 106 199 104 C196 103 193 102 194 99 C197 95 202 90 203 84 C204 70 220 56 244 54 Z", "M190 150 C204 172 226 198 254 214 C268 222 282 224 290 218 C295 214 293 208 287 209 C274 211 260 205 247 194 C228 178 210 158 198 140 Z"];
+function svgShape(d,k){const sh=new T.Shape(),tk=d.match(/[MCLZ]|-?\d*\.?\d+/g);let i=0,c='',cx=0,cy=0;const X=v=>(v-200)*k,Y=v=>(462-v)*k,n=()=>parseFloat(tk[i++]);
+  while(i<tk.length){if(/[MCLZ]/.test(tk[i]))c=tk[i++];
+    if(c==='M'){cx=n();cy=n();sh.moveTo(X(cx),Y(cy));c='L';}
+    else if(c==='L'){cx=n();cy=n();sh.lineTo(X(cx),Y(cy));}
+    else if(c==='C'){const a=n(),b=n(),c2=n(),d2=n();cx=n();cy=n();sh.bezierCurveTo(X(a),Y(b),X(c2),Y(d2),X(cx),Y(cy));}
+    else if(c==='Z'){i++;}}return sh;}
+const K=1.15/432,silM=new T.MeshBasicMaterial({color:0x07040f,side:T.DoubleSide});
+const couple=new T.Group();COUPLE.forEach(d=>couple.add(new T.Mesh(new T.ShapeGeometry(svgShape(d,K),24),silM)));
+couple.position.set(0,FH,D/2-1.0);S.add(couple);
+/* floor reflection */
+const refl=new T.Group();const rM=new T.MeshBasicMaterial({color:0x07040f,transparent:true,opacity:.35,side:T.DoubleSide,depthWrite:false});
+COUPLE.forEach(d=>refl.add(new T.Mesh(new T.ShapeGeometry(svgShape(d,K),12),rM)));refl.scale.y=-.55;refl.position.set(0,FH+.002,D/2-1.0);S.add(refl);
+/* glowing backdrop + floor pool */
+function gradTex(stops){const c=document.createElement('canvas');c.width=c.height=256;const x=c.getContext('2d'),g=x.createRadialGradient(128,118,0,128,128,128);stops.forEach(s=>g.addColorStop(s[0],s[1]));x.fillStyle=g;x.fillRect(0,0,256,256);return new T.CanvasTexture(c);}
+const back=new T.Mesh(new T.PlaneGeometry(1.86,1.5),new T.MeshBasicMaterial({map:gradTex([[0,'#f3c6ff'],[.18,'#c77dff'],[.45,'#7b2dff'],[.8,'#2a0f66'],[1,'#12082e']])}));
+back.position.set(0,FH+.76,D/2-1.9);S.add(back);
+const pool=new T.Mesh(new T.PlaneGeometry(1.86,1.86),new T.MeshBasicMaterial({map:gradTex([[0,'rgba(200,140,255,.85)'],[.4,'rgba(123,45,255,.35)'],[1,'rgba(18,8,46,0)']]),transparent:true,depthWrite:false}));
+pool.rotation.x=-Math.PI/2;pool.position.set(0,FH+.001,D/2-1.1);S.add(pool);
+/* starry room ceiling + floating dust */
+const rs=[];for(let i=0;i<90;i++)rs.push((Math.random()-.5)*1.8,FH*2-.06,D/2-1.9+Math.random()*1.85);
 const rg=new T.BufferGeometry();rg.setAttribute('position',new T.Float32BufferAttribute(rs,3));
-S.add(new T.Points(rg,new T.PointsMaterial({color:0xffffff,size:.018,transparent:true,opacity:.9})));
+S.add(new T.Points(rg,new T.PointsMaterial({color:0xffffff,size:.016,transparent:true,opacity:.9})));
+const dust=[];for(let i=0;i<140;i++)dust.push((Math.random()-.5)*1.7,FH+Math.random()*1.45,D/2-1.85+Math.random()*1.8);
+const dg=new T.BufferGeometry();dg.setAttribute('position',new T.Float32BufferAttribute(dust,3));
+const dustP=new T.Points(dg,new T.PointsMaterial({color:0xe9d4ff,size:.012,transparent:true,opacity:.55,blending:T.AdditiveBlending,depthWrite:false}));S.add(dustP);
 S.add(new T.AmbientLight(0x6a5aa8,.55));
 const pl=new T.PointLight(0xb066ff,3.2,3.2,1.4);pl.position.set(0,FH+1.0,.25);S.add(pl);const pl2=new T.PointLight(0x7a5cff,.7,3);pl2.position.set(0,FH+.9,D/2-.2);S.add(pl2);
 
@@ -2192,7 +2201,7 @@ const gc=document.createElement('canvas');gc.width=gc.height=128;const gx=gc.get
 gr.addColorStop(0,'rgba(255,255,255,1)');gr.addColorStop(.25,'rgba(255,255,255,.55)');gr.addColorStop(1,'rgba(255,255,255,0)');gx.fillStyle=gr;gx.fillRect(0,0,128,128);
 const gtex=new T.CanvasTexture(gc);
 function glow(col,s,x,y,z,o){const m=new T.SpriteMaterial({map:gtex,color:col,transparent:true,opacity:o,blending:T.AdditiveBlending,depthWrite:false});const sp=new T.Sprite(m);sp.scale.set(s,s,1);sp.position.set(x,y,z);S.add(sp);return sp;}
-const g1=glow(0xa855ff,2.2,0,FH+.95,.2,.95);const g3=glow(0xc58bff,.6,0,FH+1.36,.3,.9);
+const g1=glow(0xd9a6ff,1.5,0,FH+.9,D/2-1.6,.8);const g3=glow(0xc58bff,.5,0,FH+1.3,D/2-1.7,.9);
 const g2=glow(0x8b3dff,3.2,bbX,bbY,D/2+.15,.35);
 /* ground + stars */
 const grid=new T.GridHelper(80,80,GOLD,GOLD);grid.material.transparent=true;grid.material.opacity=.09;S.add(grid);
@@ -2201,7 +2210,7 @@ const sg=new T.BufferGeometry(),sp=[];for(let i=0;i<700;i++){const th=Math.rando
 sg.setAttribute('position',new T.Float32BufferAttribute(sp,3));
 S.add(new T.Points(sg,new T.PointsMaterial({color:0xffffff,size:.28,transparent:true,opacity:.8,fog:false})));
 /* camera path */
-const path=new T.CatmullRomCurve3([new T.Vector3(0,cubeP.y-.02,D/2+1.15),new T.Vector3(.15,cubeP.y+.05,D/2+2.6),new T.Vector3(1.8,cubeP.y+.9,8.4),new T.Vector3(4.6,4.2,12.8)]);
+const path=new T.CatmullRomCurve3([new T.Vector3(0,cubeP.y-.04,D/2+1.45),new T.Vector3(.15,cubeP.y+.05,D/2+2.6),new T.Vector3(1.8,cubeP.y+.9,8.4),new T.Vector3(4.6,4.2,12.8)]);
 const endT=new T.Vector3(0,2.3,0),look=new T.Vector3();
 const DUR=7,ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
 const subs=[[.5,'Pátek, 22:00. Jen vy dva.'],[2.7,'Ostatní odcházejí.'],[5,'Celá budova je jen vaše.']];
@@ -2214,8 +2223,8 @@ function frame(now){
   if(k<1){path.getPoint(k,C.position);look.copy(cubeP).lerp(endT,ease(Math.min(1,k*1.25)));}
   else{const a=Math.sin((t-DUR-.3)*.12)*.35,base=path.getPoint(1),r=Math.hypot(base.x,base.z),a0=Math.atan2(base.x,base.z);C.position.set(Math.sin(a0+a)*r,base.y,Math.cos(a0+a)*r);look.copy(endT);}
   C.fov=30+10*k;C.updateProjectionMatrix();C.lookAt(look);
-  cube.rotation.y=t*.5;cube.rotation.x=.55+Math.sin(t*.7)*.08;p1.rotation.z=.03+Math.sin(t*.9)*.006;p2.rotation.z=-.03+Math.sin(t*.9+1)*.006;
-  const pulse=.85+Math.sin(t*2.2)*.15;g1.material.opacity=.95*pulse;g3.material.opacity=.8*pulse;g2.material.opacity=.32*pulse;
+  cube.rotation.y=t*.5;cube.rotation.x=.55+Math.sin(t*.7)*.08;couple.rotation.z=Math.sin(t*.8)*.006;refl.rotation.z=-couple.rotation.z;dustP.position.y=(t*.02)%.08;dustP.rotation.y=Math.sin(t*.2)*.05;
+  const pulse=.85+Math.sin(t*2.2)*.15;g1.material.opacity=.95*pulse;g3.material.opacity=.8*pulse;g2.material.opacity=.32*pulse*k;
   for(const p of warm){const u=t-p.userData.t;p.material.opacity=u<0?.75:u<.5?.75*(Math.random()>.5?1:.2):Math.max(0,.75-(u-.5)*1.5);}
   let s=-1;subs.forEach((x,i)=>{if(t>=x[0])s=i;});if(s!==curSub){curSub=s;sub.classList.remove('on');if(s>=0)setTimeout(()=>{sub.textContent=subs[s][1];sub.classList.add('on');},s===0?0:450);}
   film.classList.toggle('end',t>DUR+.6);
