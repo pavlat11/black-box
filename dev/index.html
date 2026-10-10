@@ -2160,7 +2160,7 @@ addEventListener('keydown',e=>{if(lb.hidden)return;if(e.key==='Escape')close();i
 
 <div class="gold-wash" id="goldWash" aria-hidden="true"></div>
 <script>(function(){const s=document.getElementById('goldtime'),r=document.documentElement;if(!s||!('IntersectionObserver' in window))return;
-new IntersectionObserver(es=>es.forEach(e=>r.classList.toggle('gold',e.isIntersecting)),{rootMargin:'-38% 0px -38% 0px'}).observe(s);})();</script>
+let q=0;const chk=()=>{q=0;const b=s.getBoundingClientRect(),vh=innerHeight;r.classList.toggle('gold',b.top<vh*.85&&b.bottom>vh*.15);};addEventListener('scroll',()=>{if(!q)q=requestAnimationFrame(chk);},{passive:true});addEventListener('resize',chk);chk();})();</script>
 <script>(function(){const b=document.getElementById('gtBld');if(!b||!('IntersectionObserver' in window)){b&&b.classList.add('play');return;}
 new IntersectionObserver(es=>es.forEach(e=>{if(e.intersectionRatio>=.5)b.classList.add('play');else if(!e.isIntersecting)b.classList.remove('play');}),{threshold:[0,.5]}).observe(b);})();</script>
 <script>(function(){const w=document.getElementById('goldWash'),c=document.querySelector('#gtBld .bb-win'),r=document.documentElement;if(!w||!c)return;let on=false;
