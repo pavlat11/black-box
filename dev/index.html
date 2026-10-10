@@ -1096,6 +1096,27 @@ body:not(.go) .hero-copy .locb{animation-play-state:paused}
 @media (max-width:760px){.cb b{flex-basis:100%}}
 .foot-tel{color:var(--chrome);text-decoration:none;font-weight:600;font-variant-numeric:tabular-nums;transition:color .6s}.foot-tel:hover{color:var(--violet)}
 </style>
+<style>/* Gold Time upsell */
+.gold-up{position:relative;margin-top:22px;padding:22px 22px 20px;border-radius:20px;overflow:hidden;isolation:isolate;
+ background:radial-gradient(120% 140% at 100% 0%,rgba(240,207,133,.20),transparent 55%),linear-gradient(160deg,#16112e,#0c0a24 70%);
+ border:1px solid rgba(240,207,133,.45);box-shadow:0 24px 70px -30px rgba(240,207,133,.55),inset 0 1px 0 rgba(255,236,190,.15);
+ transition:border-color .8s cubic-bezier(.22,.61,.36,1),box-shadow .8s cubic-bezier(.22,.61,.36,1)}
+.gold-up::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(110deg,transparent 35%,rgba(255,232,180,.13) 50%,transparent 65%) 0 0/250% 100%;animation:guSheen 7s cubic-bezier(.45,0,.25,1) infinite}
+@keyframes guSheen{0%,35%{background-position:120% 0}100%{background-position:-120% 0}}
+.gold-up:hover{border-color:rgba(240,207,133,.8);box-shadow:0 30px 90px -30px rgba(240,207,133,.75),inset 0 1px 0 rgba(255,236,190,.2)}
+.gu-top{display:flex;align-items:center;gap:10px}
+.gu-ic{width:34px;height:34px;flex:none;border-radius:10px;display:grid;place-items:center;color:var(--gold);background:rgba(240,207,133,.1);border:1px solid rgba(240,207,133,.35)}
+.gu-ic svg{width:18px;height:18px}
+.gu-k{font:700 12px var(--body);letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
+.gu-t{display:block;margin-top:14px;font:400 clamp(22px,2.2vw,28px)/1.15 var(--display);background:linear-gradient(100deg,#fff3d6,#f0cf85 45%,#c9a24e);-webkit-background-clip:text;background-clip:text;color:transparent}
+.gu-p{margin:8px 0 16px;color:#d9cfb6;line-height:1.6;font-size:15px}
+.gu-btn{display:inline-flex;align-items:center;gap:10px;min-height:44px;padding:0 20px;border-radius:999px;text-decoration:none;font:700 13px var(--body);letter-spacing:.12em;text-transform:uppercase;color:#1a1206;background:linear-gradient(135deg,#f6dc9c,#e2b65c);box-shadow:0 10px 30px -10px rgba(240,207,133,.8);transition:box-shadow .6s cubic-bezier(.22,.61,.36,1),filter .6s}
+.gu-btn:hover{filter:brightness(1.06);box-shadow:0 14px 40px -10px rgba(240,207,133,1)}
+.gu-btn:focus-visible{outline:2px solid var(--ice);outline-offset:3px}
+@media (prefers-reduced-motion:reduce){.gold-up::before{animation:none}}
+.hr.goldrow{border-color:rgba(240,207,133,.45);background:linear-gradient(110deg,rgba(240,207,133,.06),rgba(6,5,26,.65) 60%)}
+.hr.goldrow span{color:#e9d9ae}
+</style>
 </head>
 <body>
 
@@ -1402,7 +1423,7 @@ body:not(.go) .hero-copy .locb{animation-play-state:paused}
           <div class="hours">
             <div class="hr"><b>Ne – Čt</b><span>11:00 – 19:00</span></div>
             <div class="hr"><b>Pá – So</b><span>10:00 – 24:00</span></div>
-            <div class="hr"><b style="color:var(--gold)">Gold Time</b><span>Pá – So 22:00 – 24:00</span></div>
+            <div class="hr goldrow"><b style="color:var(--gold)">Gold Time</b><span>Pá – So 22:00 – 24:00</span></div>
           </div>
         </div>
         <div class="book-r book-call">
@@ -1414,6 +1435,12 @@ body:not(.go) .hero-copy .locb{animation-play-state:paused}
           <div class="cblocks">
             <div class="cb"><b>Ne – Čt</b><span>11–13</span><span>14–16</span><span>17–19</span></div>
             <div class="cb"><b>Pá – So</b><span>10–12</span><span>13–15</span><span>16–18</span><span>19–21</span><span class="g">22–24 <small>Gold Time</small></span></div>
+          </div>
+          <div class="gold-up">
+            <div class="gu-top"><span class="gu-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 019.5 4a8 8 0 1010.5 10.5z"/><path d="M17 3v3M15.5 4.5h3"/></svg></span><span class="gu-k">Gold Time · Pá–So 22–24</span></div>
+            <strong class="gu-t">Noc začíná tady.</strong>
+            <p class="gu-p">Poslední blok večera. Nejhlubší tma, nejvíc klidu a město už spí. Jen dva termíny v týdnu.</p>
+            <a class="gu-btn" href="tel:+420773777888">Zamluvit Gold Time <span aria-hidden="true">→</span></a>
           </div>
         </div>
       </div>
