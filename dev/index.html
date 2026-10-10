@@ -2743,6 +2743,16 @@ let t0=0,run=false,vis=false,raf=0,curSub=-1;
 const wash=document.getElementById('goldWash'),pv=new T.Vector3(),pu=new T.Vector3();
 window.bb3dGold=true;
 const farDir=path.getPoint(0).sub(new T.Vector3(0,4.5,-D/2)).multiplyScalar(.42);const endP=path.getPoint(0),endR=Math.hypot(endP.x-orbC.x,endP.z-orbC.z),endA=Math.atan2(endP.x-orbC.x,endP.z-orbC.z);
+/* moon – upper left of the final wide shot */
+(function(){const camEnd=path.getPoint(0).add(farDir),tgt=endT.clone().add(new T.Vector3(0,-1.6,0)),f=tgt.clone().sub(camEnd).normalize(),up=new T.Vector3(0,1,0),left=up.clone().cross(f).normalize();
+ const pos=camEnd.clone().addScaledVector(f,120).addScaledVector(left,34).addScaledVector(up,30);
+ const mc=document.createElement('canvas');mc.width=mc.height=512;const x=mc.getContext('2d');
+ let g=x.createRadialGradient(256,256,60,256,256,256);g.addColorStop(0,'rgba(220,225,255,.55)');g.addColorStop(.35,'rgba(170,170,255,.18)');g.addColorStop(1,'rgba(150,140,255,0)');x.fillStyle=g;x.fillRect(0,0,512,512);
+ g=x.createRadialGradient(236,236,10,256,256,92);g.addColorStop(0,'#fbfaf2');g.addColorStop(.7,'#e9e6da');g.addColorStop(1,'#cfcbbd');x.fillStyle=g;x.beginPath();x.arc(256,256,92,0,6.283);x.fill();
+ x.save();x.beginPath();x.arc(256,256,92,0,6.283);x.clip();[[220,220,22],[290,250,14],[250,300,18],[300,200,10],[210,280,9],[275,310,8]].forEach(([cx,cy,r])=>{x.fillStyle='rgba(150,148,140,.35)';x.beginPath();x.arc(cx,cy,r,0,6.283);x.fill();});
+ const sh=x.createLinearGradient(160,160,360,360);sh.addColorStop(0,'rgba(0,0,0,0)');sh.addColorStop(1,'rgba(20,20,60,.35)');x.fillStyle=sh;x.fillRect(0,0,512,512);x.restore();
+ const moon=new T.Sprite(new T.SpriteMaterial({map:sRGB(new T.CanvasTexture(mc)),transparent:true,depthWrite:false,fog:false,toneMapped:false}));moon.scale.set(26,26,1);moon.position.copy(pos);S.add(moon);
+ const ml=new T.DirectionalLight(0xc8ccff,.25);ml.position.copy(pos);S.add(ml);})();
 [wallM,trimM,plinM,roofM,glassM].forEach(m=>{m.transparent=true;XR.push(m);});
 function setX(o){XR.forEach(m=>{m.opacity=o;m.depthWrite=o>.97;});frameM.opacity=.85*o;}
 function size(){const w=film.clientWidth,h=film.clientHeight;if(!w||!h)return;R.setSize(w,h,false);C.aspect=w/h;C.updateProjectionMatrix();}
