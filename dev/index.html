@@ -2793,5 +2793,11 @@ document.querySelectorAll('a[href="#poukazy"]').forEach(a=>{if(/gold/i.test(a.te
 (function(){const card=document.querySelector('.book-call .gold-up'),row=document.querySelector('.hr.goldrow');if(!card||!row)return;
  function al(){card.style.marginTop='';if(innerWidth<=760)return;const d=row.getBoundingClientRect().bottom-card.getBoundingClientRect().bottom;if(d>0)card.style.marginTop=(parseFloat(getComputedStyle(card).marginTop)+d)+'px';}
  al();addEventListener('resize',al);document.fonts&&document.fonts.ready.then(al);addEventListener('load',al);})();</script>
+<script>/* keep the film cut-out of the gold filter glued to the film every frame */
+(function(){const w=document.getElementById('goldWash'),r=document.documentElement;if(!w)return;let last='';
+ (function f(){requestAnimationFrame(f);const on=r.classList.contains('gold')||getComputedStyle(w).opacity>0.01;if(!on)return;
+  const el=document.querySelector('.gt-film')||document.getElementById('gtBld');if(!el)return;const c=el.getBoundingClientRect(),nv=document.getElementById('nav'),hb=nv?nv.getBoundingClientRect().bottom:0,top=Math.max(c.top,hb),hh=Math.max(0,c.bottom-top);
+  const k=c.left.toFixed(1)+'|'+top.toFixed(1)+'|'+c.width.toFixed(1)+'|'+hh.toFixed(1);if(k===last)return;last=k;
+  w.style.setProperty('--fx',c.left+'px');w.style.setProperty('--fy',top+'px');w.style.setProperty('--fw',c.width+'px');w.style.setProperty('--fh',hh+'px');})();})();</script>
 </body>
 </html>
