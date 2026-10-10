@@ -1145,6 +1145,30 @@ body:not(.go) .hero-copy .locb{animation-play-state:paused}
 /* celá stránka do zlata, když je Gold Time na obrazovce */
 .gold-wash{position:fixed;inset:0;z-index:90;pointer-events:none;background:#e9bd6a;mix-blend-mode:color;opacity:0;transition:opacity 1.6s cubic-bezier(.45,0,.25,1)}
 html.gold .gold-wash{opacity:.88}
+.gold-wash{-webkit-mask-image:radial-gradient(circle at var(--hx,-999px) var(--hy,-999px),transparent 0,transparent var(--hr,0px),#000 calc(var(--hr,0px) * 2.2));mask-image:radial-gradient(circle at var(--hx,-999px) var(--hy,-999px),transparent 0,transparent var(--hr,0px),#000 calc(var(--hr,0px) * 2.2))}
+</style>
+<style>/* Gold Time – animace budovy */
+.gt-bld{position:relative;width:100%;max-width:440px;aspect-ratio:auto;display:block}
+.gt-cam{position:relative;overflow:hidden;transform:translateZ(0);-webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent),linear-gradient(180deg,transparent,#000 8%,#000 92%,transparent);-webkit-mask-composite:source-in;mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent),linear-gradient(180deg,transparent,#000 8%,#000 92%,transparent);mask-composite:intersect}
+.gt-cam svg{display:block;width:100%;height:auto;transform-origin:50% 52.4%;transform:scale(6.2);transition:transform 3.6s cubic-bezier(.7,0,.2,1)}
+.gt-bld.play .gt-cam svg{transform:scale(1)}
+.gt-bld .ln{stroke-dasharray:1;stroke-dashoffset:1;transition:stroke-dashoffset 2.4s cubic-bezier(.45,0,.25,1) 1.1s}
+.gt-bld.play .ln{stroke-dashoffset:0}
+.gt-bld .win{fill:#ffd88a;opacity:.0;transition:opacity 1s ease}
+.gt-bld.play .win{animation:winOff 2.2s ease var(--d) both}
+@keyframes winOff{0%{opacity:0}25%{opacity:.5}100%{opacity:0}}
+.gt-bld .bb-win{fill:rgba(176,102,255,.22);stroke:#c58bff;stroke-width:1.2}
+.gt-bld .bb-halo{animation:bbPulse 4s cubic-bezier(.45,0,.55,1) infinite;transform-origin:200px 254px}
+@keyframes bbPulse{0%,100%{opacity:.8;transform:scale(1)}50%{opacity:1;transform:scale(1.08)}}
+.gt-bld .bb-cube{animation:bbFloat 5s cubic-bezier(.45,0,.55,1) infinite}
+@keyframes bbFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.6px)}}
+.gt-bld .tags{opacity:0;transition:opacity 1.2s ease 3.4s}
+.gt-bld.play .tags{opacity:1}
+.gt-cap{margin-top:16px;text-align:center;color:#d9cfb6;font-size:15px;line-height:1.6;opacity:0;transform:translateY(8px);transition:opacity 1.2s ease 3.6s,transform 1.2s cubic-bezier(.22,.61,.36,1) 3.6s}
+.gt-cap b{display:block;font:300 22px var(--display);color:var(--gold);letter-spacing:.04em;margin-bottom:4px}
+.gt-bld.play .gt-cap{opacity:1;transform:none}
+@media (max-width:860px){.gt-bld{max-width:340px}}
+@media (prefers-reduced-motion:reduce){.gt-cam svg{transform:scale(1);transition:none}.gt-bld .ln{stroke-dashoffset:0;transition:none}.gt-bld .tags,.gt-cap{opacity:1;transform:none;transition:none}.gt-bld .bb-halo,.gt-bld .bb-cube{animation:none}.gt-bld.play .win{animation:none}}
 </style>
 </head>
 <body>
@@ -1408,10 +1432,38 @@ html.gold .gold-wash{opacity:.88}
         <p class="lead gt-lead">V posledním bloku večera už v budově nikdo jiný není. Žádní další hosté, nikdo za zdí. Jen vy dva, tma a hvězdné nebe.</p>
         <div class="gt-cta"><a class="gu-btn" href="tel:+420773777888">Zamluvit Gold Time <span aria-hidden="true">→</span></a><a class="gt-link" href="#poukazy">Darovat Gold Time</a></div>
       </div>
-      <div class="gt-r" aria-hidden="true">
-        <div class="gt-orb"></div>
-        <div class="gt-clock"><span>22</span><i>:</i><span>00</span></div>
-        <div class="gt-sub">až do půlnoci</div>
+      <div class="gt-r gt-bld" id="gtBld" aria-hidden="true">
+        <div class="gt-cam">
+          <svg viewBox="-10 60 420 370" fill="none">
+            <defs>
+              <radialGradient id="bbGlow" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#b066ff" stop-opacity=".95"/><stop offset=".45" stop-color="#7a2cff" stop-opacity=".45"/><stop offset="1" stop-color="#6d28ff" stop-opacity="0"/></radialGradient>
+            </defs>
+            <circle class="bb-halo" cx="200" cy="254" r="70" fill="url(#bbGlow)"/>
+            <g class="lines" stroke="#f0cf85" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+              <path class="ln" pathLength="1" d="M30 400H370"/>
+              <path class="ln" pathLength="1" d="M80 400V110H320V400"/>
+              <path class="ln" pathLength="1" d="M70 110H330"/>
+              <path class="ln" pathLength="1" d="M150 110V94H250V110"/>
+              <path class="ln" pathLength="1" d="M80 200H320M80 300H320"/>
+              <path class="ln" pathLength="1" d="M186 400V342H214V400"/>
+              <rect class="ln" pathLength="1" x="102" y="132" width="36" height="44" rx="2"/><rect class="ln" pathLength="1" x="182" y="132" width="36" height="44" rx="2"/><rect class="ln" pathLength="1" x="262" y="132" width="36" height="44" rx="2"/><rect class="ln" pathLength="1" x="102" y="232" width="36" height="44" rx="2"/><rect class="ln" pathLength="1" x="262" y="232" width="36" height="44" rx="2"/><rect class="ln" pathLength="1" x="102" y="332" width="36" height="44" rx="2"/><rect class="ln" pathLength="1" x="262" y="332" width="36" height="44" rx="2"/>
+            </g>
+            <g class="wins"><rect class="win" style="--d:0.90s" x="102" y="332" width="36" height="44" rx="2"/><rect class="win" style="--d:1.18s" x="102" y="132" width="36" height="44" rx="2"/><rect class="win" style="--d:1.46s" x="102" y="232" width="36" height="44" rx="2"/><rect class="win" style="--d:1.74s" x="262" y="332" width="36" height="44" rx="2"/><rect class="win" style="--d:2.02s" x="182" y="132" width="36" height="44" rx="2"/><rect class="win" style="--d:2.30s" x="262" y="232" width="36" height="44" rx="2"/><rect class="win" style="--d:2.58s" x="262" y="132" width="36" height="44" rx="2"/></g>
+            <rect class="bb-win" x="182" y="232" width="36" height="44" rx="2"/>
+            <g class="bb-cube">
+              <polygon points="200,240 212,247 200,254 188,247" fill="#cf9bff"/>
+              <polygon points="188,247 200,254 200,268 188,261" fill="#8b3dff"/>
+              <polygon points="212,247 212,261 200,268 200,254" fill="#5a1fd6"/>
+              <path d="M200 240L212 247V261L200 268L188 261V247ZM200 254V268M200 254L212 247M200 254L188 247" stroke="#efe2ff" stroke-width=".7" stroke-linejoin="round" fill="none"/>
+            </g>
+            <g class="tags" font-family="Manrope,system-ui,sans-serif" font-weight="700" letter-spacing="1.6">
+              <text x="72" y="160" text-anchor="end" font-size="9" fill="#b3a98f">2. PATRO</text>
+              <text x="72" y="258" text-anchor="end" font-size="9" fill="#f0cf85">1. PATRO</text>
+              <text x="72" y="358" text-anchor="end" font-size="9" fill="#b3a98f">PŘÍZEMÍ</text>
+            </g>
+          </svg>
+        </div>
+        <p class="gt-cap"><b>22:00 – 24:00</b>Celá budova je prázdná. Svítí jen Black Box v 1. patře.</p>
       </div>
     </div>
     <div class="wrap gt-feats">
@@ -2045,5 +2097,10 @@ addEventListener('keydown',e=>{if(lb.hidden)return;if(e.key==='Escape')close();i
 <div class="gold-wash" id="goldWash" aria-hidden="true"></div>
 <script>(function(){const s=document.getElementById('goldtime'),r=document.documentElement;if(!s||!('IntersectionObserver' in window))return;
 new IntersectionObserver(es=>es.forEach(e=>r.classList.toggle('gold',e.isIntersecting)),{rootMargin:'-38% 0px -38% 0px'}).observe(s);})();</script>
+<script>(function(){const b=document.getElementById('gtBld');if(!b||!('IntersectionObserver' in window)){b&&b.classList.add('play');return;}
+new IntersectionObserver(es=>es.forEach(e=>{if(e.intersectionRatio>=.5)b.classList.add('play');else if(!e.isIntersecting)b.classList.remove('play');}),{threshold:[0,.5]}).observe(b);})();</script>
+<script>(function(){const w=document.getElementById('goldWash'),c=document.querySelector('#gtBld .bb-win'),r=document.documentElement;if(!w||!c)return;let on=false;
+function f(){const b=c.getBoundingClientRect();w.style.setProperty('--hx',(b.left+b.width/2)+'px');w.style.setProperty('--hy',(b.top+b.height/2)+'px');w.style.setProperty('--hr',(Math.max(b.width,b.height)*.75)+'px');if(on)requestAnimationFrame(f);}
+new MutationObserver(()=>{const g=r.classList.contains('gold');if(g&&!on){on=true;f();}else if(!g&&on){setTimeout(()=>{if(!r.classList.contains('gold'))on=false;},1800);}}).observe(r,{attributes:true,attributeFilter:['class']});})();</script>
 </body>
 </html>
