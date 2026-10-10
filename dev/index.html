@@ -2717,5 +2717,11 @@ fit();addEventListener('resize',fit);document.fonts&&document.fonts.ready.then(f
  (function f(n){requestAnimationFrame(f);if(!vis||n<hold)return;
   if(!run){const max=par.scrollWidth-par.clientWidth;if(max<20)return;amp=Math.min(max*.42,140);base=Math.max(amp,Math.min(max-amp,par.scrollLeft));par.scrollLeft=base;t0=n;run=true;}
   const k=Math.min(1,(n-t0)/1500),e=k*k*(3-2*k);dx=-Math.sin((n-t0)/5200)*amp*e;img.style.transform='translate3d('+dx.toFixed(2)+'px,0,0)';})(performance.now());})();</script>
+<script>/* "Darovat Gold Time" preselects the Gold voucher */
+document.querySelectorAll('a[href="#poukazy"]').forEach(a=>{if(/gold/i.test(a.textContent))a.addEventListener('click',()=>{const g=document.getElementById('vo2');if(g&&g.getAttribute('aria-pressed')!=='true')g.click();});});
+/* contact: align the Gold Time card with the Gold Time row on the left */
+(function(){const card=document.querySelector('.book-call .gold-up'),row=document.querySelector('.hr.goldrow');if(!card||!row)return;
+ function al(){card.style.marginTop='';if(innerWidth<=760)return;const d=row.getBoundingClientRect().bottom-card.getBoundingClientRect().bottom;if(d>0)card.style.marginTop=(parseFloat(getComputedStyle(card).marginTop)+d)+'px';}
+ al();addEventListener('resize',al);document.fonts&&document.fonts.ready.then(al);addEventListener('load',al);})();</script>
 </body>
 </html>
