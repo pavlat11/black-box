@@ -1182,6 +1182,15 @@ html.gold .gold-wash{opacity:.88}
 .gt-film.end .sub{opacity:0}
 .gt-film .fade{position:absolute;inset:0;background:#000;z-index:4;opacity:1;transition:opacity 1.4s ease;pointer-events:none}
 .gt-film.run .fade{opacity:0}
+.gt-film .gclk{position:absolute;top:calc(9% + 14px);right:16px;z-index:3;display:flex;align-items:baseline;gap:2px;padding:8px 14px;border-radius:12px;background:rgba(5,4,12,.55);border:1px solid rgba(255,255,255,.14);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);font-variant-numeric:tabular-nums;color:#f3eefc;opacity:0;transition:opacity 1s ease .4s,color .8s,border-color .8s,box-shadow .8s}
+.gt-film.run .gclk{opacity:1}
+.gt-film .gclk b{font:300 22px/1 var(--display);letter-spacing:.04em}
+.gt-film .gclk i{font:500 13px var(--body);font-style:normal;opacity:.7;width:2.1em}
+.gt-film .gclk span{font:700 10px var(--body);letter-spacing:.2em;margin-left:6px;opacity:.6}
+.gt-film .gclk.gold{color:var(--gold);border-color:rgba(240,207,133,.6);box-shadow:0 0 30px -6px rgba(240,207,133,.8)}
+.gt-film .gclk.hit b{animation:ckHit 1.2s cubic-bezier(.22,.61,.36,1)}
+@keyframes ckHit{0%{text-shadow:0 0 0 rgba(240,207,133,0)}40%{text-shadow:0 0 22px rgba(240,207,133,1)}100%{text-shadow:0 0 0 rgba(240,207,133,0)}}
+.gt-film.end .gclk{top:14px}
 .gt-bld.is3d{max-width:480px}
 @media (max-width:860px){.gt-bld.is3d{max-width:420px}}
 </style>
@@ -2123,9 +2132,9 @@ let ok=false;try{const c=document.createElement('canvas');ok=!!(c.getContext('we
 if(!ok)return;
 const T=THREE,RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const film=document.createElement('div');film.className='gt-film';
-film.innerHTML='<canvas></canvas><div class="vig"></div><div class="lb t"></div><div class="lb b"></div><div class="sub" aria-hidden="true"></div><div class="fade"></div>';
+film.innerHTML='<canvas></canvas><div class="vig"></div><div class="lb t"></div><div class="lb b"></div><div class="sub" aria-hidden="true"></div><div class="gclk" aria-hidden="true"><b>21:59</b><i>:52</i><span>PÁ</span></div><div class="fade"></div>';
 const camWrap=box.querySelector('.gt-cam');camWrap.style.display='none';box.insertBefore(film,camWrap);box.classList.add('is3d');
-const cv=film.querySelector('canvas'),sub=film.querySelector('.sub');
+const cv=film.querySelector('canvas'),sub=film.querySelector('.sub'),clk=film.querySelector('.gclk'),ckH=clk.querySelector('b'),ckS=clk.querySelector('i');let lastSec=-1;
 const R=new T.WebGLRenderer({canvas:cv,antialias:true,alpha:true});R.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
 R.outputEncoding=T.sRGBEncoding;R.toneMapping=T.ACESFilmicToneMapping;R.toneMappingExposure=.95;
 const S=new T.Scene();S.fog=new T.FogExp2(0x0a0918,0.022);
@@ -2199,7 +2208,7 @@ warm.push(addWindow(-2.6,1.05,-.2,1.3,1.3,0,false,false).wm);warm.push(addWindow
   const dl=new T.PointLight(0xffc98a,1.1,5,1.6);dl.position.set(0,2.9,.6);S.add(dl);})();
 /* side windows */
 COLS.forEach(z=>ROWS.forEach(r=>{warm.push(addWindow(W/2-.2,r[0],-z,r[2],r[1],Math.PI/2,false,false).wm);warm.push(addWindow(-W/2+.2,r[0],-z,r[2],r[1],-Math.PI/2,false,false).wm);}));
-warm.forEach((m,i)=>{m.userData={t:1.5+Math.random()*3.4,lit:Math.random()<.78};});
+warm.forEach((m,i)=>{m.userData={t:2.15+Math.random()*3.2,lit:Math.random()<.85};});
 
 /* ---------- Black Box hall behind the middle arched window ---------- */
 const FL=3.3,RW=4.6,RH=3.25,RD=4.6,RCZ=-D/2,RZ=RCZ+RD/2-.3;
@@ -2375,6 +2384,8 @@ function frame(now){
   const pulse=.88+Math.sin(t*2)*.12;gCube.material.opacity=.9*pulse;gWin.material.opacity=(.45+.45*Math.min(1,Math.max(0,(k-.5)/.4)))*pulse*Math.min(1,k*2);gWin.scale.setScalar(7+5*Math.min(1,Math.max(0,(k-.5)/.4)));
   for(const m of warm){if(!m.userData.lit){m.opacity=0;continue;}const u=t-m.userData.t;m.opacity=u<0?.85:u<.45?(Math.random()>.45?.85:.15):Math.max(0,.85-(u-.45)*1.6);}
   let s=-1;subs.forEach((x,i)=>{if(t>=x[0])s=i;});if(s!==curSub){curSub=s;sub.classList.remove('on');if(s>=0)setTimeout(()=>{sub.textContent=subs[s][1];sub.classList.add('on');},s===0?0:450);}
+  {const sec=Math.floor(21*3600+59*60+52+t*4),hh=Math.floor(sec/3600)%24,mm=Math.floor(sec/60)%60,ss=sec%60;if(sec!==lastSec){lastSec=sec;ckH.textContent=String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');ckS.textContent=':'+String(ss).padStart(2,'0');}
+   clk.classList.toggle('gold',sec>=79200);clk.classList.toggle('hit',sec>=79200&&sec<79206);}
   film.classList.toggle('end',t>DUR+.6);
   R.render(S,C);
   if(wash&&document.documentElement.classList.contains('gold')){const b=cv.getBoundingClientRect();pv.copy(focus).project(C);pu.copy(focus).add(new T.Vector3(0,1+1.8*k,0)).project(C);
