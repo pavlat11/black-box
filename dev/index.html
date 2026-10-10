@@ -1451,13 +1451,13 @@ html.gold .gt-aura{opacity:1}
 @media (max-width:760px){.cn-ic{width:50px;height:50px}.cn-ic svg{width:21px;height:21px}.call-num.cn2{gap:14px}.cn-t b{font-size:clamp(22px,7vw,28px)}}
 </style>
 <style>/* film finale */
-.gt-film .gend{position:absolute;left:0;right:0;bottom:0;z-index:4;padding:60px 24px 28px;text-align:center;background:linear-gradient(180deg,transparent,rgba(5,4,15,.75) 45%,rgba(5,4,15,.92));opacity:0;transform:translateY(14px);transition:opacity 1.4s ease,transform 1.4s cubic-bezier(.22,.61,.36,1);pointer-events:none}
+.gt-film .gend{position:absolute;left:0;right:0;bottom:0;z-index:4;padding:34px 20px 18px;text-align:center;background:linear-gradient(180deg,transparent,rgba(5,4,15,.6) 40%,rgba(5,4,15,.85));opacity:0;transform:translateY(14px);transition:opacity 1.4s ease,transform 1.4s cubic-bezier(.22,.61,.36,1);pointer-events:none}
 .gt-film.fin .gend{opacity:1;transform:none;pointer-events:auto}
 .gt-film.fin .sub{opacity:0!important}
 .gend small{display:block;font:700 11px var(--body);letter-spacing:.28em;text-transform:uppercase;color:var(--gold)}
-.gend b{display:block;margin-top:10px;font:400 clamp(22px,2.6vw,30px)/1.15 var(--display);color:#fff}
+.gend b{display:block;margin-top:8px;font:400 clamp(18px,2vw,24px)/1.15 var(--display);color:#fff}
 .gend em{font-style:normal;background:linear-gradient(100deg,#fff3d6,#f0cf85 45%,#c9a24e);-webkit-background-clip:text;background-clip:text;color:transparent}
-.gend .grep{margin-top:16px;font:600 12px var(--body);letter-spacing:.14em;text-transform:uppercase;color:#e9dcc0;background:rgba(240,207,133,.08);border:1px solid rgba(240,207,133,.45);border-radius:999px;padding:9px 16px;cursor:pointer;transition:background .5s,border-color .5s}
+.gend .grep{margin-top:10px;font:600 12px var(--body);letter-spacing:.14em;text-transform:uppercase;color:#e9dcc0;background:rgba(240,207,133,.08);border:1px solid rgba(240,207,133,.45);border-radius:999px;padding:9px 16px;cursor:pointer;transition:background .5s,border-color .5s}
 .gend .grep:hover{background:rgba(240,207,133,.18);border-color:#f0cf85}
 </style>
 <style>.gt-film .lb{display:none!important}.gt-film .gclk{top:14px!important}</style>
@@ -2704,8 +2704,8 @@ const halos=[];warm.forEach(m=>{const g=m.userData.g;if(!g)return;const p=new T.
 const focus=new T.Vector3(0,FL+1.0,BK+.6);
 const path=new T.CatmullRomCurve3([new T.Vector3(9.2,6.4,15.5),new T.Vector3(4,FL+2.9,7),new T.Vector3(.6,FL+1.9,RCZ+6.2),new T.Vector3(bedX,FL+1.62,FR-.25)]);
 const endT=new T.Vector3(0,4.6,-5.5),look=new T.Vector3(),orbC=new T.Vector3(0,0,-D/2);
-const DUR=13.6,TA=4.6,TC=7.6,TB=6.4,ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
-const subs=[[.6,'Pátek večer. V budově je ještě živo.'],[4.6,'22:00. Budova se zamyká.'],[6.3,'Nikdo jiný už tu není.'],[11.6,'Jen vy dva. Do půlnoci.']];
+const DUR=13.6,TA=4.6,TC=7.6,TB=6.4,TE=17.2,TR=4.8,ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+const subs=[[.6,'Pátek večer. V budově je ještě živo.'],[4.6,'22:00. Budova se zamyká.'],[6.3,'Nikdo jiný už tu není.'],[11.6,'Jen vy dva. Do půlnoci.'],[TE+.6,'Celá budova je jen vaše.']];
 let t0=0,run=false,vis=false,raf=0,curSub=-1;
 const wash=document.getElementById('goldWash'),pv=new T.Vector3(),pu=new T.Vector3();
 window.bb3dGold=true;
@@ -2714,7 +2714,7 @@ const endP=path.getPoint(0),endR=Math.hypot(endP.x-orbC.x,endP.z-orbC.z),endA=Ma
 function setX(o){XR.forEach(m=>{m.opacity=o;m.depthWrite=o>.97;});frameM.opacity=.85*o;}
 function size(){const w=film.clientWidth,h=film.clientHeight;if(!w||!h)return;R.setSize(w,h,false);C.aspect=w/h;C.updateProjectionMatrix();}
 function frame(now){
-  const t=run?(now-t0)/1000:0,cl=v=>Math.min(1,Math.max(0,v)),k=ease(cl((t-TC)/TB)),xr=1-k;
+  const t=run?(now-t0)/1000:0,cl=v=>Math.min(1,Math.max(0,v)),k0=ease(cl((t-TC)/TB)),k=t<TE?k0:k0*(1-ease(cl((t-TE)/TR))),xr=1-k;
   if(t<TC){const a=-.22+.22*ease(cl(t/TC));C.position.set(orbC.x+Math.sin(endA+a)*endR,endP.y,orbC.z+Math.cos(endA+a)*endR);look.copy(endT);}
   else if(k<1){path.getPoint(k,C.position);look.copy(endT).lerp(focus,ease(cl(k*1.15)));}
   else{const e=path.getPoint(1),q=(t-TC-TB)*.25;C.position.set(e.x+Math.sin(q)*.18,e.y+Math.sin(q*.7)*.05,e.z);look.copy(focus);}
@@ -2732,8 +2732,8 @@ function frame(now){
   STORY.people.forEach(p=>{const u=(t-p.t)/6.5;p.g.visible=u>0&&u<1;if(!p.g.visible)return;p.g.position.copy(p.a).lerp(p.b,u);p.g.rotation.y=Math.atan2(p.b.x-p.a.x,p.b.z-p.a.z);const sw=Math.sin(t*7+p.t*3)*.38;p.legs[0].rotation.x=sw;p.legs[1].rotation.x=-sw;p.g.position.y=Math.abs(Math.sin(t*7+p.t*3))*.03;});
   {const lk=cl((t-TA)/.35)*(1-cl((t-TC+.6)/.6));lockSp.material.opacity=lk;lockSp.scale.setScalar(1.5*(1+.3*(1-cl((t-TA)/.35))));lockGlow.material.opacity=lk*(.55+.25*Math.sin(t*4));}
   STORY.labels.forEach(o=>{o.sp.material.opacity=cl((t-o.t)/.5)*(1-cl((k-.12)/.1));});
-  film.classList.toggle('end',t>DUR+.6);film.classList.toggle('fin',t>TC+TB+2.2);
-  if(window.__room){scr.material.color.setScalar(1-.45*cl((t-TC-TB-1.6)/2));}
+  film.classList.toggle('end',t>DUR+.6);film.classList.toggle('fin',t>TE+TR+.3);
+  if(window.__room){scr.material.color.setScalar(1);}
   R.render(S,C);
   if(wash&&document.documentElement.classList.contains('gold')){const b=cv.getBoundingClientRect();pv.copy(focus).project(C);pu.copy(focus).add(new T.Vector3(0,1+1.8*k,0)).project(C);
     const x=b.left+(pv.x+1)/2*b.width,y=b.top+(1-pv.y)/2*b.height,r=Math.abs((pv.y-pu.y)/2*b.height);
