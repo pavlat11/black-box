@@ -2404,7 +2404,7 @@ addEventListener('keydown',e=>{if(lb.hidden)return;if(e.key==='Escape')close();i
 
 <div class="gold-wash" id="goldWash" aria-hidden="true"></div>
 <script>(function(){const s=document.getElementById('goldtime'),r=document.documentElement;if(!s||!('IntersectionObserver' in window))return;
-let q=0;const w=document.getElementById('goldWash');const chk=()=>{q=0;const b=s.getBoundingClientRect(),vh=innerHeight;const mg=document.querySelector('.gt-mega'),mt=mg?mg.getBoundingClientRect().top:b.top;const pv=document.getElementById('navsteva'),pb=pv?pv.getBoundingClientRect().bottom:0,nb=(document.getElementById('nav')||{getBoundingClientRect:()=>({bottom:0})}).getBoundingClientRect().bottom;r.classList.toggle('gold',(mt<vh*.45||pb<nb+40)&&pb<nb+140&&(()=>{const fe=document.querySelector('.gt-feats');return (fe?fe.getBoundingClientRect().bottom:b.bottom)>vh*.5;})());const f=document.querySelector('.gt-film')||document.getElementById('gtBld');if(f&&w){const c=f.getBoundingClientRect(),nv=document.getElementById('nav'),hb=nv?nv.getBoundingClientRect().bottom:0,top=Math.max(c.top,hb),hh=Math.max(0,c.bottom-top);w.style.setProperty('--fx',c.left+'px');w.style.setProperty('--fy',top+'px');w.style.setProperty('--fw',c.width+'px');w.style.setProperty('--fh',hh+'px');}};addEventListener('scroll',()=>{if(!q)q=requestAnimationFrame(chk);},{passive:true});addEventListener('resize',chk);chk();})();</script>
+let q=0;const w=document.getElementById('goldWash');const chk=()=>{q=0;const b=s.getBoundingClientRect(),vh=innerHeight;const mg=document.querySelector('.gt-mega'),mt=mg?mg.getBoundingClientRect().top:b.top;const pv=document.getElementById('navsteva'),pb=pv?pv.getBoundingClientRect().bottom:0,nb=(document.getElementById('nav')||{getBoundingClientRect:()=>({bottom:0})}).getBoundingClientRect().bottom;r.classList.toggle('gold',(mt<vh*.45||pb<nb+40)&&pb<nb+140&&(()=>{const fe=document.querySelector('.gt-feats');return (fe?fe.getBoundingClientRect().bottom:b.bottom)>vh*.5;})());const f=document.querySelector('.gt-film')||document.getElementById('gtBld');if(f&&w&&!window.__gwStatic){const c=f.getBoundingClientRect(),nv=document.getElementById('nav'),hb=nv?nv.getBoundingClientRect().bottom:0,top=Math.max(c.top,hb),hh=Math.max(0,c.bottom-top);w.style.setProperty('--fx',c.left+'px');w.style.setProperty('--fy',top+'px');w.style.setProperty('--fw',c.width+'px');w.style.setProperty('--fh',hh+'px');}};addEventListener('scroll',()=>{if(!q)q=requestAnimationFrame(chk);},{passive:true});addEventListener('resize',chk);chk();})();</script>
 <script>(function(){const b=document.getElementById('gtBld');if(!b||!('IntersectionObserver' in window)){b&&b.classList.add('play');return;}
 new IntersectionObserver(es=>es.forEach(e=>{if(e.intersectionRatio>=.5)b.classList.add('play');else if(!e.isIntersecting)b.classList.remove('play');}),{threshold:[0,.5]}).observe(b);})();</script>
 <script>(function(){const w=document.getElementById('goldWash'),c=document.querySelector('#gtBld .bb-win'),r=document.documentElement;if(!w||!c)return;let on=false;
@@ -2867,11 +2867,27 @@ document.querySelectorAll('a[href="#poukazy"]').forEach(a=>{if(/gold/i.test(a.te
  al();addEventListener('resize',al);document.fonts&&document.fonts.ready.then(al);addEventListener('load',al);})();</script>
 <script>/* keep the film cut-out of the gold filter glued to the film every frame */
 (function(){const w=document.getElementById('goldWash'),r=document.documentElement;if(!w)return;let last='';
- (function f(){requestAnimationFrame(f);const on=r.classList.contains('gold')||getComputedStyle(w).opacity>0.01;if(!on)return;
+ (function f(){if(window.__gwStatic)return;requestAnimationFrame(f);const on=r.classList.contains('gold')||getComputedStyle(w).opacity>0.01;if(!on)return;
   const el=document.querySelector('.gt-film')||document.getElementById('gtBld');if(!el)return;const c=el.getBoundingClientRect(),nv=document.getElementById('nav'),hb=nv?nv.getBoundingClientRect().bottom:0,top=Math.max(c.top,hb),hh=Math.max(0,c.bottom-top);
   const k=c.left.toFixed(1)+'|'+top.toFixed(1)+'|'+c.width.toFixed(1)+'|'+hh.toFixed(1);if(k===last)return;last=k;
   w.style.setProperty('--fx',c.left+'px');w.style.setProperty('--fy',top+'px');w.style.setProperty('--fw',c.width+'px');w.style.setProperty('--fh',hh+'px');
   const R=parseFloat(getComputedStyle(el).borderTopLeftRadius)||0,W=c.width,H=hh,rt=top>c.top+.5?0:R,mk=W+'|'+H+'|'+rt;if(mk!==w.__mk&&W>0&&H>0){w.__mk=mk;const d='M'+rt+' 0H'+(W-rt)+'Q'+W+' 0 '+W+' '+rt+'V'+(H-R)+'Q'+W+' '+H+' '+(W-R)+' '+H+'H'+R+'Q0 '+H+' 0 '+(H-R)+'V'+rt+'Q0 0 '+rt+' 0Z';
    w.style.setProperty('--fm','url("data:image/svg+xml,'+encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' width='"+W+"' height='"+H+"'><path d='"+d+"'/></svg>")+'")');}})();})();</script>
+<style>.gold-wash.gw-abs{position:absolute!important;left:0!important;right:auto!important;bottom:auto!important;width:100%!important;top:var(--gwt,0px)!important;height:var(--gwh,0px)!important}</style>
+<script>/* phones: gold filter scrolls natively with the page, film cut-out never moves -> no flicker */
+(function(){if(!matchMedia('(max-width:760px), (pointer:coarse)').matches)return;window.__gwStatic=true;
+ const w=document.getElementById('goldWash'),s=document.getElementById('goldtime');if(!w||!s)return;w.classList.add('gw-abs');let last='',mk='';
+ function upd(){const el=document.querySelector('.gt-film')||document.getElementById('gtBld');if(!el)return;const sy=scrollY,sr=s.getBoundingClientRect(),vh=Math.max(innerHeight,screen.height||0);
+  w.style.setProperty('--gwh','0px');const docH=document.documentElement.scrollHeight;
+  const top=Math.max(0,sr.top+sy-vh),h=Math.min(sr.bottom+sy+vh,docH)-top;
+  const c=el.getBoundingClientRect(),R=parseFloat(getComputedStyle(el).borderTopLeftRadius)||0,fx=c.left,fy=c.top+sy-top,W=c.width,H=c.height;
+  w.style.setProperty('--gwt',top+'px');w.style.setProperty('--gwh',h+'px');
+  const k=[fx,fy,W,H].map(v=>v.toFixed(1)).join('|');if(k===last)return;last=k;
+  w.style.setProperty('--fx',fx+'px');w.style.setProperty('--fy',fy+'px');w.style.setProperty('--fw',W+'px');w.style.setProperty('--fh',H+'px');
+  const m=W.toFixed(0)+'|'+H.toFixed(0)+'|'+R;if(m!==mk&&W>0&&H>0){mk=m;const d='M'+R+' 0H'+(W-R)+'Q'+W+' 0 '+W+' '+R+'V'+(H-R)+'Q'+W+' '+H+' '+(W-R)+' '+H+'H'+R+'Q0 '+H+' 0 '+(H-R)+'V'+R+'Q0 0 '+R+' 0Z';
+   w.style.setProperty('--fm','url("data:image/svg+xml,'+encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' width='"+W+"' height='"+H+"'><path d='"+d+"'/></svg>")+'")');}}
+ upd();addEventListener('load',upd);addEventListener('resize',upd);document.fonts&&document.fonts.ready.then(upd);
+ if('ResizeObserver' in window){const ro=new ResizeObserver(upd);ro.observe(s);ro.observe(document.body);const b=document.getElementById('gtBld');b&&ro.observe(b);}
+ let n=0;const t=setInterval(()=>{upd();if(++n>20)clearInterval(t);},500);})();</script>
 </body>
 </html>
