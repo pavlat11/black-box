@@ -2768,7 +2768,7 @@ const farDir=path.getPoint(0).sub(new T.Vector3(0,4.5,-D/2)).multiplyScalar(.42)
  for(let py=0;py<N;py++)for(let px=0;px<N;px++){const u=(px-C)/MR,v=(py-C)/MR,rr=u*u+v*v;if(rr>1)continue;
   const nz=fbm(u*3.2+11,v*3.2+5),nf=fbm(u*14,v*14);
   const wu=u+(fbm(u*2.4+3,v*2.4+9)-.5)*.42,wv=v+(fbm(u*2.4+17,v*2.4+1)-.5)*.42;let m=0;for(const [mx,my,ms] of MA){const d=Math.hypot(wu-mx,wv-my)/(ms*1.3);m+=Math.exp(-d*d*1.6);}m=fd(Math.min(1,Math.max(0,(m-.3)/.8)))*(.8+fbm(u*6,v*6)*.4);
-  let b=.84-m*.3+(nf-.5)*.12+(nz-.5)*.12+(fbm(u*30,v*30)-.5)*.06;
+  let b=.84+(nf-.5)*.12+(nz-.5)*.12+(fbm(u*30,v*30)-.5)*.06;
   for(const c of CR){const d=Math.hypot(u-c[0],v-c[1])/c[2];if(d<1.3){const sh=((u-c[0])+(v-c[1]))/c[2]*.5;if(d<.85)b+=(.025*sh-.025)*(1-m*.4);else if(d<1.1)b+=.05-.04*sh;else b+=.015;}
    if(c[3]){const ang=Math.atan2(v-c[1],u-c[0]),ray=Math.pow(Math.max(0,Math.sin(ang*9+c[0]*40)),18);if(d>1&&d<8)b+=ray*.12*(1-d/8);}}
   const mu=Math.sqrt(1-rr),limb=.55+.45*Math.pow(mu,.5);b*=limb;b=Math.max(0,Math.min(1,b));
