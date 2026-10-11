@@ -1515,6 +1515,16 @@ html.gold .gt-aura{opacity:1}
  .gt-endb{width:100%}.gt-endb .gu-btn{width:100%;justify-content:center}
 }
 </style>
+<style>/* Gold Time v3: osa + výzva v jednom bloku */
+.gt-tlbox{border-color:rgba(240,207,133,.4)!important;background:radial-gradient(ellipse at 100% 100%,rgba(240,207,133,.16),transparent 55%),linear-gradient(160deg,rgba(240,207,133,.06),rgba(8,6,20,.6) 55%)!important;box-shadow:0 30px 90px -45px rgba(240,207,133,.6)}
+.gt-tlfoot{display:flex;align-items:center;justify-content:space-between;gap:20px 40px;flex-wrap:wrap;margin-top:clamp(28px,3.4vw,40px);padding-top:clamp(22px,2.6vw,30px);border-top:1px solid rgba(240,207,133,.22)}
+.gt-tlfoot .gt-q{margin:0;font:300 clamp(20px,2vw,28px)/1.25 var(--display);color:#efe6cf}
+.gt-tlfoot .gt-q em{font-style:normal;background:linear-gradient(100deg,#fff3d6,#f0cf85 45%,#c9a24e);-webkit-background-clip:text;background-clip:text;color:transparent}
+.gt-tlfoot .gt-endb{flex-direction:row;align-items:center;gap:22px}
+.gt-endt{display:flex;flex-direction:column;gap:2px}
+.gt-endt .gt-tel{font-size:20px}
+@media (max-width:760px){.gt-tlfoot .gt-endb{flex-direction:column;align-items:stretch;gap:14px;width:100%}.gt-endt{align-items:center}}
+</style>
 </head>
 <body>
 
@@ -1824,17 +1834,14 @@ html.gold .gt-aura{opacity:1}
         <li><b>22:15</b><h3>Vířivka pro dva</h3><p>Hřejivá voda, bublinky a světlo pod hladinou.</p></li>
         <li><b>23:00</b><h3>Hudba pod hvězdami</h3><p>Vaše oblíbená hudba a hvězdné nebe nad postelí.</p></li>
         <li><b>24:00</b><h3>Noc patří vám</h3><p>Odcházíte poslední. Nikdo nečeká za dveřmi.</p></li>
-      </ol></div>
-    </div>
-    <div class="wrap gt-quote gt-end">
-      <div class="gt-endc">
+      </ol>
+      <div class="gt-tlfoot">
         <p class="gt-q">„Když zhasne poslední okno, <em>začíná váš večer.</em>“</p>
         <div class="gt-endb">
           <a class="gu-btn" href="tel:+420737222266">Zamluvit Gold Time <span aria-hidden="true">→</span></a>
-          <a class="gt-tel" href="tel:+420737222266">+420 737 22 22 66</a>
-          <small>Jen 2 termíny v týdnu · volejte s předstihem</small>
+          <span class="gt-endt"><a class="gt-tel" href="tel:+420737222266">+420 737 22 22 66</a><small>Jen 2 termíny v týdnu</small></span>
         </div>
-      </div>
+      </div></div>
     </div>
   </section>
 
