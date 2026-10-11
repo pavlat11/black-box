@@ -264,12 +264,6 @@ body.lo.moved .dk-ui{opacity:.35}
 .bbdark small{display:block;text-shadow:0 2px 12px #000;font-family:var(--body);font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-top:18px}
 body.lo .bbdark{opacity:1;pointer-events:auto}
 body.lo .bbdark p{opacity:1}
-.dk-gold{position:absolute;left:0;right:0;top:calc(50% + max(11vmin,62px) + 28px);text-align:center;padding-inline:24px;pointer-events:none;opacity:0;transform:translateY(14px);transition:opacity 1.4s ease,transform 1.4s ease}
-body.lo-gold .dk-gold{opacity:1;transform:none}
-.dk-gt{font-family:var(--display);font-weight:300;font-size:clamp(20px,2.6vw,32px);line-height:1.3;color:var(--chrome);text-shadow:0 4px 24px #000;text-wrap:balance}
-.dk-gt b{font-weight:500;color:#e9cf8f}
-.bbdark .dk-cta{width:auto;margin-top:22px;padding:13px 22px;font-size:12px;cursor:pointer;pointer-events:none}
-body.lo-gold .bbdark .dk-cta{pointer-events:auto}
 .dk-hs{position:absolute;left:0;top:0;opacity:0;pointer-events:none;white-space:nowrap;font:600 12px var(--body);letter-spacing:.18em;text-transform:uppercase;color:#fff;padding:7px 13px 7px 11px;border-radius:999px;background:rgba(6,5,26,.62);border:1px solid rgba(200,170,255,.5);box-shadow:0 0 24px -4px rgba(176,102,255,.7);text-shadow:0 1px 8px #000;will-change:opacity,transform}
 .dk-hs::before{content:"✦";color:#e9cf8f;margin-right:7px}
 @media (max-width:760px){.dk-hs{font-size:10.5px;padding:6px 10px 6px 9px}}
@@ -1996,7 +1990,7 @@ html.gold .gt-aura{opacity:1}
   <div class="mfoot"><button type="button" class="msnd" id="mSnd" aria-pressed="false"><span class="bars"><span></span><span></span><span></span><span></span></span><span class="mt">Zapnout atmosféru</span><small>ambientní hudba</small></button><a class="btn" href="#rezervace">Rezervovat zážitek</a><span style="font-size:13px;color:var(--muted)">Tábor · Od Slunce · Ne–Čt 11–19 · Pá–So 10–24</span></div>
 </div>
 <div class="bbfade" aria-hidden="true"></div>
-<div class="bbdark" id="dark" role="dialog" aria-label="Zhasnutý prostor"><canvas id="torch"></canvas><div class="dk-ui"><p>Tady čas neexistuje.</p><small id="dkHint">Posviťte si myší · kliknutím rozsvítíte</small></div><div class="dk-gold" aria-live="polite"><div class="dk-gt"><b>Gold Time.</b> V celé budově jen vy dva.</div><a class="btn sm dk-cta" href="tel:+420737222266">Zavolat 737 22 22 66</a></div><button class="btn ghost sm dk-close" id="dkClose" type="button">Rozsvítit</button></div>
+<div class="bbdark" id="dark" role="dialog" aria-label="Zhasnutý prostor"><canvas id="torch"></canvas><div class="dk-ui"><p>Tady čas neexistuje.</p><small id="dkHint">Posviťte si myší · kliknutím rozsvítíte</small></div><button class="btn ghost sm dk-close" id="dkClose" type="button">Rozsvítit</button></div>
 <div class="cur" id="cur" aria-hidden="true"></div><div class="cur-dot" id="curDot" aria-hidden="true"></div>
 <div class="bblb" id="lb" hidden role="dialog" aria-label="Galerie">
   <button class="lb-close" id="lbClose" type="button" aria-label="Zavřít galerii">×</button>
@@ -2367,7 +2361,7 @@ function drawHot(t){
 /* lights out story: LED line → constellation cube → Gold Time */
 const SV=[];for(let i=0;i<6;i++){const a=(-90+60*i)*Math.PI/180;SV.push([Math.cos(a),Math.sin(a)]);}SV.push([0,0]);
 const SE=[[0,1],[1,2],[2,3],[3,4],[4,5],[5,0],[6,5],[6,1],[6,3],[5,3]];
-let SS=[],goldT=0;const ez=k=>k<=0?0:k>=1?1:k*k*(3-2*k);
+let SS=[];const ez=k=>k<=0?0:k>=1?1:k*k*(3-2*k);
 function storyInit(){SS=SV.map(()=>({x:tW*(.15+Math.random()*.7),y:tH*(.05+Math.random()*.35)}));}
 function drawStory(t){
   const d=tW/innerWidth,e=(t-tStart)/1000,fade=exitT?1-Math.min(1,(t-exitT)/700):1;if(fade<=0||!SS.length)return;
@@ -2387,13 +2381,13 @@ function drawStory(t){
     P.forEach(([x,y])=>{const r=9*d,g=tg.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,`rgba(255,255,255,${sa*fade})`);g.addColorStop(.25,`rgba(220,190,255,${.6*sa*fade})`);g.addColorStop(1,'rgba(176,102,255,0)');tg.fillStyle=g;tg.fillRect(x-r,y-r,2*r,2*r);});}
   tg.restore();}
 function lightsOff(){exitT=0;document.body.classList.add('lo');document.body.classList.remove('moved');setTimeout(()=>document.body.classList.remove('going'),800);if(tKey!==innerWidth+'x'+innerHeight)tSize();mkC.getContext('2d').clearRect(0,0,tW,tH);
-  const d=tW/innerWidth;gx=px=tW/2;gy=py=tH*.55;lastMove=0;tStart=performance.now();if(reduce)tStart-=8000;storyInit();TUB.a=0;HS.forEach(h=>h.a=0);clearTimeout(goldT);document.body.classList.remove('lo-gold');goldT=setTimeout(()=>{if(document.body.classList.contains('lo'))document.body.classList.add('lo-gold');},reduce?0:4300);tOn=true;requestAnimationFrame(tLoop);
+  const d=tW/innerWidth;gx=px=tW/2;gy=py=tH*.55;lastMove=0;tStart=performance.now();if(reduce)tStart-=8000;storyInit();TUB.a=0;HS.forEach(h=>h.a=0);tOn=true;requestAnimationFrame(tLoop);
   document.getElementById('dkHint').textContent=matchMedia('(hover:none)').matches?'Posviťte si prstem · klepnutím rozsvítíte':'Posviťte si myší · kliknutím rozsvítíte';document.getElementById('dkClose').focus({preventScroll:true});}
-function lightsOn(){clearTimeout(goldT);document.body.classList.remove('lo','lo-gold');document.getElementById('lightsBtn').classList.remove('off');ciBox.classList.remove('dim');setTimeout(()=>{if(!document.body.classList.contains('lo')){tOn=false;exitT=0;}},1300);}
+function lightsOn(){document.body.classList.remove('lo');document.getElementById('lightsBtn').classList.remove('off');ciBox.classList.remove('dim');setTimeout(()=>{if(!document.body.classList.contains('lo')){tOn=false;exitT=0;}},1300);}
 function startExit(x,y){if(exitT)return;const d=tW/innerWidth;ex=x*d;ey=y*d;exitT=performance.now();}
 dark.addEventListener('pointermove',e=>{const d=tW/innerWidth;gx=e.clientX*d;gy=e.clientY*d;lastMove=performance.now();document.body.classList.add('moved');});
 dark.addEventListener('pointerdown',e=>{const d=tW/innerWidth;gx=e.clientX*d;gy=e.clientY*d;lastMove=performance.now();dnX=e.clientX;dnY=e.clientY;dnT=performance.now();});
-dark.addEventListener('pointerup',e=>{if(e.target.closest('.dk-close,.dk-cta'))return;if(Math.hypot(e.clientX-dnX,e.clientY-dnY)<12&&performance.now()-dnT<400)startExit(e.clientX,e.clientY);});
+dark.addEventListener('pointerup',e=>{if(e.target.closest('.dk-close'))return;if(Math.hypot(e.clientX-dnX,e.clientY-dnY)<12&&performance.now()-dnT<400)startExit(e.clientX,e.clientY);});
 addEventListener('resize',()=>{if(tOn){tSize();storyInit();}});
 {const warm=()=>{const f=()=>{if(!tOn&&tImg.width)tSize();};if(window.requestIdleCallback)requestIdleCallback(f,{timeout:2000});else setTimeout(f,1500);};if(tImg.complete)warm();else tImg.addEventListener('load',warm);}
 function clickSnd(){try{const A=window.__bbAC||(window.__bbAC=new (window.AudioContext||window.webkitAudioContext)());if(A.state==='suspended')A.resume();const t=A.currentTime+.005,n=Math.round(.035*A.sampleRate),buf=A.createBuffer(1,n,A.sampleRate),c=buf.getChannelData(0);for(let i=0;i<n;i++)c[i]=(Math.random()*2-1)*Math.pow(1-i/n,7);
