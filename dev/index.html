@@ -2747,7 +2747,7 @@ const path=new T.CatmullRomCurve3([new T.Vector3(9.2,6.4,15.5),new T.Vector3(4,F
 const endT=new T.Vector3(0,4.6,-5.5),look=new T.Vector3(),orbC=new T.Vector3(0,0,-D/2);
 const DUR=13.6,TA=4.6,TC=7.6,TB=6.4,TE=18.2,TR=5.2,ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
 const subs=[[.6,'Pátek večer. V budově je ještě živo.'],[4.6,'22:00. Budova se zamyká.'],[6.3,'Nikdo jiný už tu není.'],[11.6,'Jen vy dva. Do půlnoci.'],[TE+.6,'Celá budova je jen vaše.']];
-let t0=0,run=false,vis=false,raf=0,curSub=-1,RMp=RM;
+let t0=0,run=false,vis=false,raf=0,curSub=-1,RMp=false;
 const wash=document.getElementById('goldWash'),pv=new T.Vector3(),pu=new T.Vector3();
 window.bb3dGold=true;
 const farDir=path.getPoint(0).sub(new T.Vector3(0,4.5,-D/2)).multiplyScalar(.42);const endP=path.getPoint(0),endR=Math.hypot(endP.x-orbC.x,endP.z-orbC.z),endA=Math.atan2(endP.x-orbC.x,endP.z-orbC.z);
@@ -2811,8 +2811,7 @@ function frame(now){
 }
 function start(){if(RMp){run=true;t0=performance.now()-(TE+TR+1)*1000;film.classList.add('run');size();frame(performance.now());return;}
   run=true;t0=performance.now();film.classList.add('run');film.classList.remove('end');curSub=-1;sub.classList.remove('on');}
-const grepB=film.querySelector('.grep');if(RM)grepB.textContent='▶ Přehrát film';
-grepB.addEventListener('click',()=>{if(RMp){RMp=false;grepB.textContent='↻ Přehrát znovu';}film.classList.remove('fin','end');start();cancelAnimationFrame(raf);if(vis)raf=requestAnimationFrame(frame);});
+const grepB=film.querySelector('.grep');grepB.addEventListener('click',()=>{if(RMp){RMp=false;grepB.textContent='↻ Přehrát znovu';}film.classList.remove('fin','end');start();cancelAnimationFrame(raf);if(vis)raf=requestAnimationFrame(frame);});
 function reset(){run=false;film.classList.remove('run','end','fin');sub.classList.remove('on');curSub=-1;}
 new IntersectionObserver(es=>es.forEach(e=>{vis=e.isIntersecting;
   if(e.intersectionRatio>=.5&&!run)start();
