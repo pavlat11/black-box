@@ -1471,6 +1471,7 @@ html.gold .gt-aura{opacity:1}
  background:rgba(8,6,20,.7)!important;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid rgba(240,207,133,.5);box-shadow:0 14px 40px -12px rgba(0,0,0,.85),0 0 30px -10px rgba(240,207,133,.5)}
 .gt-film.fin .gend{transform:translate(-50%,0)!important}
 @media (max-width:760px){.gt-film .sub{font-size:12.5px!important;padding:7px 14px}}
+@media (max-width:760px),(pointer:coarse){.gt-film{-webkit-mask-image:none!important;mask-image:none!important}}
 </style>
 </head>
 <body>
@@ -2409,7 +2410,8 @@ new IntersectionObserver(es=>es.forEach(e=>{if(e.intersectionRatio>=.5)b.classLi
 <script>(function(){const w=document.getElementById('goldWash'),c=document.querySelector('#gtBld .bb-win'),r=document.documentElement;if(!w||!c)return;let on=false;
 function f(){if(window.bb3dGold){if(on)requestAnimationFrame(f);return;}const b=c.getBoundingClientRect();w.style.setProperty('--hx',(b.left+b.width/2)+'px');w.style.setProperty('--hy',(b.top+b.height/2)+'px');w.style.setProperty('--hr',(Math.max(b.width,b.height)*.75)+'px');if(on)requestAnimationFrame(f);}
 new MutationObserver(()=>{const g=r.classList.contains('gold');if(g&&!on){on=true;f();}else if(!g&&on){setTimeout(()=>{if(!r.classList.contains('gold'))on=false;},1800);}}).observe(r,{attributes:true,attributeFilter:['class']});})();</script>
-<script>(function(){
+<script>window.__gtFallback=function(){const b=document.getElementById('gtBld');if(!b)return;const f=b.querySelector('.gt-film');if(f)f.remove();const c=b.querySelector('.gt-cam');if(c)c.style.display='';b.classList.remove('is3d');window.bb3dGold=false;b.classList.remove('play');requestAnimationFrame(()=>requestAnimationFrame(()=>b.classList.add('play')));};
+(function(){try{
 const box=document.getElementById('gtBld');if(!box||!window.THREE)return;
 let ok=false;try{const c=document.createElement('canvas');ok=!!(c.getContext('webgl')||c.getContext('experimental-webgl'));}catch(e){}
 if(!ok)return;
@@ -2418,7 +2420,11 @@ const film=document.createElement('div');film.className='gt-film';
 film.innerHTML='<canvas></canvas><div class="vig"></div><div class="lb t"></div><div class="lb b"></div><div class="sub" aria-hidden="true"></div><div class="gclk" aria-hidden="true"><b>21:59</b><i>:40</i><span>PÁ</span></div><div class="gend"><small>Gold Time · Pá–So 22:00 – 24:00</small><b>Celá budova.<br><em>Jen pro vás dva.</em></b><button type="button" class="grep">↻ Přehrát znovu</button></div><div class="fade"></div>';
 const camWrap=box.querySelector('.gt-cam');camWrap.style.display='none';box.insertBefore(film,camWrap);box.classList.add('is3d');
 const cv=film.querySelector('canvas'),sub=film.querySelector('.sub'),clk=film.querySelector('.gclk'),ckH=clk.querySelector('b'),ckS=clk.querySelector('i');let lastSec=-1;
-const R=new T.WebGLRenderer({canvas:cv,antialias:true,alpha:true});R.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+const MOB=matchMedia('(max-width:760px), (pointer:coarse)').matches;
+let R;try{R=new T.WebGLRenderer({canvas:cv,antialias:!MOB,alpha:true,powerPreference:MOB?'default':'high-performance'});}catch(e){window.__gtFallback();return;}
+if(!R.getContext()){window.__gtFallback();return;}
+R.setPixelRatio(Math.min(window.devicePixelRatio||1,MOB?1.5:2));
+cv.addEventListener('webglcontextlost',e=>{e.preventDefault();try{cancelAnimationFrame(raf);vis=false;}catch(_){}window.__gtFallback();},false);
 R.outputEncoding=T.sRGBEncoding;R.toneMapping=T.ACESFilmicToneMapping;R.toneMappingExposure=.95;
 const S=new T.Scene();S.fog=new T.FogExp2(0x0a0918,0.022);
 const C=new T.PerspectiveCamera(34,1,0.05,400);
@@ -2774,7 +2780,7 @@ const farDir=path.getPoint(0).sub(new T.Vector3(0,4.5,-D/2)).multiplyScalar(.42)
  const ml=new T.DirectionalLight(0xc8ccff,.25);ml.position.copy(pos);S.add(ml);})();
 [wallM,trimM,plinM,roofM,glassM].forEach(m=>{m.transparent=true;XR.push(m);});
 function setX(o){XR.forEach(m=>{m.opacity=o;m.depthWrite=o>.97;});frameM.opacity=.85*o;}
-function size(){const w=film.clientWidth,h=film.clientHeight;if(!w||!h)return;R.setSize(w,h,false);C.aspect=w/h;C.updateProjectionMatrix();}
+let lw=0,lh=0;function size(){const w=film.clientWidth,h=film.clientHeight;if(!w||!h||(w===lw&&h===lh))return;lw=w;lh=h;R.setSize(w,h,false);C.aspect=w/h;C.updateProjectionMatrix();}
 function frame(now){
   const t=run?(now-t0)/1000:0,cl=v=>Math.min(1,Math.max(0,v)),k0=ease(cl((t-TC)/TB)),k=t<TE?k0:k0*(1-ease(cl((t-TE)/TR))),xr=1-k;
   if(t<TC){const a=-.22+.22*ease(cl(t/TC));C.position.set(orbC.x+Math.sin(endA+a)*endR,endP.y,orbC.z+Math.cos(endA+a)*endR);look.copy(endT);}
@@ -2814,7 +2820,7 @@ new IntersectionObserver(es=>es.forEach(e=>{vis=e.isIntersecting;
 }),{threshold:[0,.5]}).observe(film);
 if('ResizeObserver' in window)new ResizeObserver(()=>{size();if(!vis||RM)R.render(S,C);}).observe(film);
 size();
-})();
+}catch(err){console.error('Gold Time film:',err);window.__gtFallback();}})();
 </script>
 <script>(function(){const i=document.querySelector('.concept-img img'),hi=document.getElementById('heroImg');if(i&&hi){const u=getComputedStyle(hi).backgroundImage.slice(5,-2);if(u)i.src=u;}})();</script>
 <script>/* fit GOLD TIME to its column */(function(){const m=document.querySelector('.gt-mega');if(!m)return;
