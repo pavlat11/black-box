@@ -1167,6 +1167,8 @@ html.gold .gold-wash{opacity:.88}
 <style>/* Gold Time – filmová 3D scéna */
 .gt-film{position:relative;width:100%;aspect-ratio:1/1.12;border-radius:22px;overflow:hidden;background:radial-gradient(120% 80% at 50% 100%,#140d33,#05040f 70%);box-shadow:0 40px 120px -40px rgba(176,102,255,.45),inset 0 0 0 1px rgba(240,207,133,.18)}
 .gt-film canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.gt-film{clip-path:inset(0 round 22px);-webkit-mask-image:-webkit-radial-gradient(#fff,#000);isolation:isolate}
+.gt-film canvas{border-radius:inherit}
 .gt-film .vig{position:absolute;inset:0;z-index:1;pointer-events:none;background:radial-gradient(120% 90% at 50% 50%,transparent 55%,rgba(0,0,0,.65))}
 .gt-film .lb{position:absolute;left:0;right:0;height:9%;background:#000;z-index:2;transition:transform 1.6s cubic-bezier(.65,0,.25,1)}
 .gt-film .lb.t{top:0}.gt-film .lb.b{bottom:0}
@@ -1230,7 +1232,7 @@ html.gold .gold-wash{opacity:.88}
 }
 </style>
 <style>/* gold wash: whole page gold, only the film keeps its own colours */
-.gold-wash{-webkit-mask-image:linear-gradient(#000,#000),linear-gradient(#000,#000)!important;mask-image:linear-gradient(#000,#000),linear-gradient(#000,#000)!important;
+.gold-wash{-webkit-mask-image:linear-gradient(#000,#000),var(--fm,linear-gradient(#000,#000))!important;mask-image:linear-gradient(#000,#000),var(--fm,linear-gradient(#000,#000))!important;
  -webkit-mask-size:100% 100%,var(--fw,0px) var(--fh,0px);mask-size:100% 100%,var(--fw,0px) var(--fh,0px);
  -webkit-mask-position:0 0,var(--fx,-9999px) var(--fy,-9999px);mask-position:0 0,var(--fx,-9999px) var(--fy,-9999px);
  -webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-composite:xor;mask-composite:exclude}
@@ -2743,15 +2745,32 @@ let t0=0,run=false,vis=false,raf=0,curSub=-1;
 const wash=document.getElementById('goldWash'),pv=new T.Vector3(),pu=new T.Vector3();
 window.bb3dGold=true;
 const farDir=path.getPoint(0).sub(new T.Vector3(0,4.5,-D/2)).multiplyScalar(.42);const endP=path.getPoint(0),endR=Math.hypot(endP.x-orbC.x,endP.z-orbC.z),endA=Math.atan2(endP.x-orbC.x,endP.z-orbC.z);
-/* moon – upper left of the final wide shot */
+/* moon – upper left of the final wide shot (procedural, near-side layout) */
 (function(){const camEnd=path.getPoint(0).add(farDir),tgt=endT.clone().add(new T.Vector3(0,-1.6,0)),f=tgt.clone().sub(camEnd).normalize(),up=new T.Vector3(0,1,0),left=up.clone().cross(f).normalize();
- const pos=camEnd.clone().addScaledVector(f,120).addScaledVector(left,34).addScaledVector(up,30);
- const mc=document.createElement('canvas');mc.width=mc.height=512;const x=mc.getContext('2d');
- let g=x.createRadialGradient(256,256,60,256,256,256);g.addColorStop(0,'rgba(220,225,255,.55)');g.addColorStop(.35,'rgba(170,170,255,.18)');g.addColorStop(1,'rgba(150,140,255,0)');x.fillStyle=g;x.fillRect(0,0,512,512);
- g=x.createRadialGradient(236,236,10,256,256,92);g.addColorStop(0,'#fbfaf2');g.addColorStop(.7,'#e9e6da');g.addColorStop(1,'#cfcbbd');x.fillStyle=g;x.beginPath();x.arc(256,256,92,0,6.283);x.fill();
- x.save();x.beginPath();x.arc(256,256,92,0,6.283);x.clip();[[220,220,22],[290,250,14],[250,300,18],[300,200,10],[210,280,9],[275,310,8]].forEach(([cx,cy,r])=>{x.fillStyle='rgba(150,148,140,.35)';x.beginPath();x.arc(cx,cy,r,0,6.283);x.fill();});
- const sh=x.createLinearGradient(160,160,360,360);sh.addColorStop(0,'rgba(0,0,0,0)');sh.addColorStop(1,'rgba(20,20,60,.35)');x.fillStyle=sh;x.fillRect(0,0,512,512);x.restore();
- const moon=new T.Sprite(new T.SpriteMaterial({map:sRGB(new T.CanvasTexture(mc)),transparent:true,depthWrite:false,fog:false,toneMapped:false}));moon.scale.set(26,26,1);moon.position.copy(pos);S.add(moon);
+ const pos=camEnd.clone().addScaledVector(f,120).addScaledVector(left,30).addScaledVector(up,38);
+ const N=512,C=N/2,MR=118,mc=document.createElement('canvas');mc.width=mc.height=N;const x=mc.getContext('2d');
+ let sd=7;const rnd=()=>(sd=(sd*16807)%2147483647)/2147483647;
+ const P=new Uint8Array(512);for(let i=0;i<256;i++)P[i]=i;for(let i=255;i>0;i--){const j=Math.floor(rnd()*(i+1));[P[i],P[j]]=[P[j],P[i]];}for(let i=0;i<256;i++)P[i+256]=P[i];
+ const fd=t=>t*t*(3-2*t),hs=(a,b)=>P[P[a&255]+(b&255)]/255;
+ const vn=(u,v)=>{const a=Math.floor(u),b=Math.floor(v),fu=fd(u-a),fv=fd(v-b);return (hs(a,b)*(1-fu)+hs(a+1,b)*fu)*(1-fv)+(hs(a,b+1)*(1-fu)+hs(a+1,b+1)*fu)*fv;};
+ const fbm=(u,v)=>{let s=0,a=.5;for(let o=0;o<5;o++){s+=a*vn(u,v);u*=2.03;v*=2.03;a*=.5;}return s;};
+ /* maria roughly where they are on the real near side (u,v in -1..1, v down) */
+ const MA=[[-.30,-.38,.34],[-.05,-.30,.16],[.14,-.36,.20],[.30,-.06,.24],[.62,-.28,.12],[.50,.20,.15],[.34,.34,.10],[-.58,-.02,.40],[-.46,.34,.26],[-.16,.30,.18],[-.68,.46,.12],[-.02,-.60,.12],[.10,.06,.10]];
+ const CR=[];for(let i=0;i<34;i++){const r=Math.pow(rnd(),3)*.055+.01,a=rnd()*6.283,d=Math.sqrt(rnd())*.95;CR.push([Math.cos(a)*d,Math.sin(a)*d,r]);}
+ CR.push([-.12,.64,.035,1]);CR.push([-.40,.02,.028,1]);
+ const im=x.createImageData(N,N),D=im.data;
+ for(let py=0;py<N;py++)for(let px=0;px<N;px++){const u=(px-C)/MR,v=(py-C)/MR,rr=u*u+v*v;if(rr>1)continue;
+  const nz=fbm(u*3.2+11,v*3.2+5),nf=fbm(u*14,v*14);
+  const wu=u+(fbm(u*2.4+3,v*2.4+9)-.5)*.42,wv=v+(fbm(u*2.4+17,v*2.4+1)-.5)*.42;let m=0;for(const [mx,my,ms] of MA){const d=Math.hypot(wu-mx,wv-my)/(ms*1.3);m+=Math.exp(-d*d*1.6);}m=fd(Math.min(1,Math.max(0,(m-.3)/.8)))*(.8+fbm(u*6,v*6)*.4);
+  let b=.84-m*.3+(nf-.5)*.12+(nz-.5)*.12+(fbm(u*30,v*30)-.5)*.06;
+  for(const c of CR){const d=Math.hypot(u-c[0],v-c[1])/c[2];if(d<1.3){const sh=((u-c[0])+(v-c[1]))/c[2]*.5;if(d<.85)b+=(.025*sh-.025)*(1-m*.4);else if(d<1.1)b+=.05-.04*sh;else b+=.015;}
+   if(c[3]){const ang=Math.atan2(v-c[1],u-c[0]),ray=Math.pow(Math.max(0,Math.sin(ang*9+c[0]*40)),18);if(d>1&&d<8)b+=ray*.12*(1-d/8);}}
+  const mu=Math.sqrt(1-rr),limb=.55+.45*Math.pow(mu,.5);b*=limb;b=Math.max(0,Math.min(1,b));
+  const e=Math.min(1,(1-Math.sqrt(rr))*MR/1.2),o=(py*N+px)*4;D[o]=b*248;D[o+1]=b*244;D[o+2]=b*232;D[o+3]=255*e;}
+ x.putImageData(im,0,0);
+ const hc=document.createElement('canvas');hc.width=hc.height=N;const h=hc.getContext('2d');
+ let g=h.createRadialGradient(C,C,MR*.9,C,C,C);g.addColorStop(0,'rgba(225,228,245,.32)');g.addColorStop(.25,'rgba(190,195,235,.12)');g.addColorStop(1,'rgba(160,165,230,0)');h.fillStyle=g;h.fillRect(0,0,N,N);h.drawImage(mc,0,0);
+ const moon=new T.Sprite(new T.SpriteMaterial({map:sRGB(new T.CanvasTexture(hc)),transparent:true,depthWrite:false,fog:false,toneMapped:false}));moon.scale.set(24,24,1);moon.position.copy(pos);S.add(moon);
  const ml=new T.DirectionalLight(0xc8ccff,.25);ml.position.copy(pos);S.add(ml);})();
 [wallM,trimM,plinM,roofM,glassM].forEach(m=>{m.transparent=true;XR.push(m);});
 function setX(o){XR.forEach(m=>{m.opacity=o;m.depthWrite=o>.97;});frameM.opacity=.85*o;}
@@ -2845,6 +2864,8 @@ document.querySelectorAll('a[href="#poukazy"]').forEach(a=>{if(/gold/i.test(a.te
  (function f(){requestAnimationFrame(f);const on=r.classList.contains('gold')||getComputedStyle(w).opacity>0.01;if(!on)return;
   const el=document.querySelector('.gt-film')||document.getElementById('gtBld');if(!el)return;const c=el.getBoundingClientRect(),nv=document.getElementById('nav'),hb=nv?nv.getBoundingClientRect().bottom:0,top=Math.max(c.top,hb),hh=Math.max(0,c.bottom-top);
   const k=c.left.toFixed(1)+'|'+top.toFixed(1)+'|'+c.width.toFixed(1)+'|'+hh.toFixed(1);if(k===last)return;last=k;
-  w.style.setProperty('--fx',c.left+'px');w.style.setProperty('--fy',top+'px');w.style.setProperty('--fw',c.width+'px');w.style.setProperty('--fh',hh+'px');})();})();</script>
+  w.style.setProperty('--fx',c.left+'px');w.style.setProperty('--fy',top+'px');w.style.setProperty('--fw',c.width+'px');w.style.setProperty('--fh',hh+'px');
+  const R=parseFloat(getComputedStyle(el).borderTopLeftRadius)||0,W=c.width,H=hh,rt=top>c.top+.5?0:R,mk=W+'|'+H+'|'+rt;if(mk!==w.__mk&&W>0&&H>0){w.__mk=mk;const d='M'+rt+' 0H'+(W-rt)+'Q'+W+' 0 '+W+' '+rt+'V'+(H-R)+'Q'+W+' '+H+' '+(W-R)+' '+H+'H'+R+'Q0 '+H+' 0 '+(H-R)+'V'+rt+'Q0 0 '+rt+' 0Z';
+   w.style.setProperty('--fm','url("data:image/svg+xml,'+encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' width='"+W+"' height='"+H+"'><path d='"+d+"'/></svg>")+'")');}})();})();</script>
 </body>
 </html>
