@@ -255,7 +255,7 @@ section[id]{scroll-margin-top:84px}
 .cur-dot{position:fixed;left:0;top:0;z-index:201;pointer-events:none;width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;background:#fff;box-shadow:0 0 10px var(--violet);opacity:0}
 body.mv .cur,body.mv .cur-dot{opacity:1}
 @media (hover:none){.cur,.cur-dot{display:none}}
-.bbdark{position:fixed;top:0;right:0;bottom:0;left:0;z-index:90;background:#000;opacity:0;pointer-events:none;transition:opacity .45s ease;cursor:none;touch-action:none}
+.bbdark{position:fixed;top:0;right:0;bottom:0;left:0;z-index:90;background:#000;opacity:0;pointer-events:none;transition:opacity .7s ease;cursor:none;touch-action:none}
 #torch{position:absolute;top:0;right:0;bottom:0;left:0;width:100%;height:100%}
 .dk-ui{position:absolute;left:0;right:0;top:calc(env(safe-area-inset-top,0px) + 8vh);text-align:center;padding-inline:24px;pointer-events:none;transition:opacity 1.2s}
 body.lo.moved .dk-ui{opacity:.35}
@@ -270,10 +270,6 @@ body.lo-gold .dk-gold{opacity:1;transform:none}
 .dk-gt b{font-weight:500;color:#e9cf8f}
 .bbdark .dk-cta{width:auto;margin-top:22px;padding:13px 22px;font-size:12px;cursor:pointer;pointer-events:none}
 body.lo-gold .bbdark .dk-cta{pointer-events:auto}
-.dk-mq{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 78px);overflow:hidden;pointer-events:none;opacity:0;transition:opacity 1.2s .8s;-webkit-mask-image:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent);mask-image:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent)}
-body.lo .dk-mq{opacity:1}
-.dk-mq .mq span{font-size:clamp(26px,4vw,56px)}
-body:not(.lo) .dk-mq .mq{animation-play-state:paused}
 .switch{display:inline-flex;align-items:center;gap:14px;margin-top:30px;padding:10px 20px 10px 10px;border-radius:999px;border:1px solid var(--line);background:rgba(176,102,255,.06);color:var(--chrome);font:600 14px var(--body);cursor:pointer;transition:border-color .3s,background .3s}
 .switch{position:relative;transition:border-color .3s,background .3s,box-shadow .4s}
 .switch:hover{border-color:var(--violet);background:rgba(176,102,255,.14);box-shadow:0 0 30px -6px rgba(245,215,126,.55)}
@@ -287,7 +283,7 @@ body:not(.lo) .dk-mq .mq{animation-play-state:paused}
 .switch .k{transition:background .5s,box-shadow .5s}
 .switch .k::after{content:"";position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.4);transition:right .45s cubic-bezier(.5,0,.2,1)}
 .switch.off .k{background:#2a2550;box-shadow:none}.switch.off .k::after{right:23px}
-.bbfade{position:fixed;top:0;right:0;bottom:0;left:0;z-index:89;background:#000;opacity:0;pointer-events:none;transition:opacity .3s ease}
+.bbfade{position:fixed;top:0;right:0;bottom:0;left:0;z-index:89;background:#000;opacity:0;pointer-events:none;transition:opacity .9s cubic-bezier(.45,0,.55,1)}
 body.going .bbfade{opacity:1}
 .tilt{transform-style:preserve-3d;transition:transform .5s cubic-bezier(.2,.7,.2,1)}
 .snd{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:transparent;color:var(--muted);font:700 11px var(--body);letter-spacing:.16em;text-transform:uppercase;border-radius:999px;padding:10px 14px;cursor:pointer;transition:color .3s,border-color .3s}
@@ -337,10 +333,10 @@ body.menu{overflow:hidden}
 .concept-img .switch{position:absolute;top:16px;right:16px;z-index:3;margin:0;background:rgba(6,5,26,.55);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-color:rgba(255,255,255,.2)}
 .concept-img:has(.wsw:hover) img{filter:brightness(.38) saturate(.8)}
 .concept-img:has(.wsw:hover) .ci-stars{opacity:.6}
-.concept-img.dim img{filter:brightness(.04) saturate(.6);transition:filter .12s linear}
+.concept-img.dim img{filter:brightness(.05) saturate(.6);transition:filter .7s ease}
 @keyframes ciOff{0%{filter:brightness(.4)}18%{filter:brightness(1.05)}30%{filter:brightness(.12)}44%{filter:brightness(.6)}58%,100%{filter:brightness(.05) saturate(.6)}}
 .ci-stars{position:absolute;top:0;right:0;bottom:0;left:0;z-index:2;pointer-events:none;opacity:0;transition:opacity .8s}
-.concept-img.dim .ci-stars{opacity:1;transition:opacity .2s}
+.concept-img.dim .ci-stars{opacity:1;transition:opacity .6s .25s}
 .ci-stars i{position:absolute;width:2px;height:2px;border-radius:50%;background:#fff;box-shadow:0 0 6px 1px rgba(255,255,255,.8);animation:ciTw 2.6s ease-in-out infinite}
 @keyframes ciTw{0%,100%{opacity:.15}50%{opacity:1}}
 .wsw{position:absolute;right:26px;top:50%;transform:translateY(-50%);z-index:3;display:flex;flex-direction:column;align-items:center;gap:14px;padding:0;margin:0;background:none;border:0;cursor:pointer;color:#fff;font:700 13px var(--body);letter-spacing:.24em;text-transform:uppercase;-webkit-tap-highlight-color:transparent}
@@ -1997,7 +1993,7 @@ html.gold .gt-aura{opacity:1}
   <div class="mfoot"><button type="button" class="msnd" id="mSnd" aria-pressed="false"><span class="bars"><span></span><span></span><span></span><span></span></span><span class="mt">Zapnout atmosféru</span><small>ambientní hudba</small></button><a class="btn" href="#rezervace">Rezervovat zážitek</a><span style="font-size:13px;color:var(--muted)">Tábor · Od Slunce · Ne–Čt 11–19 · Pá–So 10–24</span></div>
 </div>
 <div class="bbfade" aria-hidden="true"></div>
-<div class="bbdark" id="dark" role="dialog" aria-label="Zhasnutý prostor"><canvas id="torch"></canvas><div class="dk-ui"><p>Tady čas neexistuje.</p><small id="dkHint">Posviťte si myší · kliknutím rozsvítíte</small></div><div class="dk-gold" aria-live="polite"><div class="dk-gt"><b>Gold Time.</b> V celé budově jen vy dva.</div><a class="btn sm dk-cta" href="tel:+420737222266">Zavolat 737 22 22 66</a></div><div class="dk-mq" aria-hidden="true"></div><button class="btn ghost sm dk-close" id="dkClose" type="button">Rozsvítit</button></div>
+<div class="bbdark" id="dark" role="dialog" aria-label="Zhasnutý prostor"><canvas id="torch"></canvas><div class="dk-ui"><p>Tady čas neexistuje.</p><small id="dkHint">Posviťte si myší · kliknutím rozsvítíte</small></div><div class="dk-gold" aria-live="polite"><div class="dk-gt"><b>Gold Time.</b> V celé budově jen vy dva.</div><a class="btn sm dk-cta" href="tel:+420737222266">Zavolat 737 22 22 66</a></div><button class="btn ghost sm dk-close" id="dkClose" type="button">Rozsvítit</button></div>
 <div class="cur" id="cur" aria-hidden="true"></div><div class="cur-dot" id="curDot" aria-hidden="true"></div>
 <div class="bblb" id="lb" hidden role="dialog" aria-label="Galerie">
   <button class="lb-close" id="lbClose" type="button" aria-label="Zavřít galerii">×</button>
@@ -2334,7 +2330,7 @@ const dark=document.getElementById('dark'),tcv=document.getElementById('torch'),
 const tImg=new Image();tImg.src=getComputedStyle(heroImg).backgroundImage.slice(5,-2);
 let exitT=0,ex=0,ey=0,dnX=0,dnY=0,dnT=0,tOn=false,tW=0,tH=0,brC,dkC,mkC,tmC,px=0,py=0,gx=0,gy=0,lastMove=0,TS=[],tStart=0;
 const mk=()=>document.createElement('canvas');
-function tSize(){const d=Math.min(devicePixelRatio||1,1.5);tW=Math.round(innerWidth*d);tH=Math.round(innerHeight*d);tcv.width=tW;tcv.height=tH;
+let tKey='';function tSize(){tKey=innerWidth+'x'+innerHeight;const d=Math.min(devicePixelRatio||1,1.5);tW=Math.round(innerWidth*d);tH=Math.round(innerHeight*d);tcv.width=tW;tcv.height=tH;
   [brC,dkC,mkC,tmC]=[mk(),mk(),mk(),mk()];[brC,dkC,mkC,tmC].forEach(c=>{c.width=tW;c.height=tH;});
   const s=Math.max(tW/tImg.width,tH/tImg.height),iw=tImg.width*s,ih=tImg.height*s,ox=(tW-iw)/2,oy=(tH-ih)*.45;
   const b=brC.getContext('2d');b.drawImage(tImg,ox,oy,iw,ih);b.globalCompositeOperation='lighter';b.globalAlpha=.12;b.drawImage(tImg,ox,oy,iw,ih);
@@ -2373,7 +2369,7 @@ function drawStory(t){
       tg.beginPath();tg.moveTo(A[0],A[1]);tg.lineTo(A[0]+(B[0]-A[0])*lk,A[1]+(B[1]-A[1])*lk);tg.stroke();});
     P.forEach(([x,y])=>{const r=9*d,g=tg.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,`rgba(255,255,255,${sa*fade})`);g.addColorStop(.25,`rgba(220,190,255,${.6*sa*fade})`);g.addColorStop(1,'rgba(176,102,255,0)');tg.fillStyle=g;tg.fillRect(x-r,y-r,2*r,2*r);});}
   tg.restore();}
-function lightsOff(){exitT=0;document.body.classList.remove('going');document.body.classList.add('lo');document.body.classList.remove('moved');tSize();mkC.getContext('2d').clearRect(0,0,tW,tH);
+function lightsOff(){exitT=0;document.body.classList.add('lo');document.body.classList.remove('moved');setTimeout(()=>document.body.classList.remove('going'),800);if(tKey!==innerWidth+'x'+innerHeight)tSize();mkC.getContext('2d').clearRect(0,0,tW,tH);
   const d=tW/innerWidth;gx=px=tW/2;gy=py=tH*.55;lastMove=0;tStart=performance.now();if(reduce)tStart-=8000;storyInit();clearTimeout(goldT);document.body.classList.remove('lo-gold');goldT=setTimeout(()=>{if(document.body.classList.contains('lo'))document.body.classList.add('lo-gold');},reduce?0:4300);tOn=true;requestAnimationFrame(tLoop);
   document.getElementById('dkHint').textContent=matchMedia('(hover:none)').matches?'Posviťte si prstem · klepnutím rozsvítíte':'Posviťte si myší · kliknutím rozsvítíte';document.getElementById('dkClose').focus({preventScroll:true});}
 function lightsOn(){clearTimeout(goldT);document.body.classList.remove('lo','lo-gold');document.getElementById('lightsBtn').classList.remove('off');ciBox.classList.remove('dim');setTimeout(()=>{if(!document.body.classList.contains('lo')){tOn=false;exitT=0;}},1300);}
@@ -2382,10 +2378,10 @@ dark.addEventListener('pointermove',e=>{const d=tW/innerWidth;gx=e.clientX*d;gy=
 dark.addEventListener('pointerdown',e=>{const d=tW/innerWidth;gx=e.clientX*d;gy=e.clientY*d;lastMove=performance.now();dnX=e.clientX;dnY=e.clientY;dnT=performance.now();});
 dark.addEventListener('pointerup',e=>{if(e.target.closest('.dk-close,.dk-cta'))return;if(Math.hypot(e.clientX-dnX,e.clientY-dnY)<12&&performance.now()-dnT<400)startExit(e.clientX,e.clientY);});
 addEventListener('resize',()=>{if(tOn){tSize();storyInit();}});
-{const src=document.querySelector('#marq .mq'),dst=document.querySelector('.dk-mq');if(src&&dst){const c=src.cloneNode(true);c.removeAttribute('id');dst.appendChild(c);}}
+{const warm=()=>{const f=()=>{if(!tOn&&tImg.width)tSize();};if(window.requestIdleCallback)requestIdleCallback(f,{timeout:2000});else setTimeout(f,1500);};if(tImg.complete)warm();else tImg.addEventListener('load',warm);}
 const ciBox=document.querySelector('.concept-img'),ciSt=ciBox.querySelector('.ci-stars');
 for(let i=0;i<46;i++){const st=document.createElement('i');st.style.left=(4+Math.random()*92)+'%';st.style.top=(3+Math.random()*34)+'%';st.style.animationDelay=(-Math.random()*2.6)+'s';if(Math.random()<.3){st.style.width=st.style.height='3px';}ciSt.appendChild(st);}
-document.getElementById('lightsBtn').addEventListener('click',e=>{const b=e.currentTarget;b.classList.add('off');ciBox.classList.add('dim');setTimeout(()=>{document.body.classList.add('going');setTimeout(()=>{if(tImg.complete)lightsOff();else tImg.onload=lightsOff;},300);},280);});
+document.getElementById('lightsBtn').addEventListener('click',e=>{const b=e.currentTarget;b.classList.add('off');ciBox.classList.add('dim');setTimeout(()=>{document.body.classList.add('going');setTimeout(()=>{if(tImg.complete)lightsOff();else tImg.onload=lightsOff;},950);},150);});
 document.getElementById('dkClose').addEventListener('click',e=>{const r=e.currentTarget.getBoundingClientRect();startExit(r.left+r.width/2,r.top+r.height/2);});
 addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.classList.contains('lo'))startExit(innerWidth/2,innerHeight/2);});
 
