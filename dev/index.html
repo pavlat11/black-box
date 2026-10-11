@@ -1472,6 +1472,7 @@ html.gold .gt-aura{opacity:1}
 .gt-film.fin .gend{transform:translate(-50%,0)!important}
 @media (max-width:760px){.gt-film .sub{font-size:12.5px!important;padding:7px 14px}}
 @media (max-width:760px),(pointer:coarse){.gt-film{-webkit-mask-image:none!important;mask-image:none!important}}
+.gt-film .gbtns{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-items:center;margin-top:12px}.gt-film .gbtns .grep{margin-top:0}.gt-film .gcall{min-height:40px;padding:0 18px;font-size:12px}
 </style>
 </head>
 <body>
@@ -2417,7 +2418,7 @@ let ok=false;try{const c=document.createElement('canvas');ok=!!(c.getContext('we
 if(!ok)return;
 const T=THREE,RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const film=document.createElement('div');film.className='gt-film';
-film.innerHTML='<canvas></canvas><div class="vig"></div><div class="lb t"></div><div class="lb b"></div><div class="sub" aria-hidden="true"></div><div class="gclk" aria-hidden="true"><b>21:59</b><i>:40</i><span>PÁ</span></div><div class="gend"><small>Gold Time · Pá–So 22:00 – 24:00</small><b>Celá budova.<br><em>Jen pro vás dva.</em></b><button type="button" class="grep">↻ Přehrát znovu</button></div><div class="fade"></div>';
+film.innerHTML='<canvas></canvas><div class="vig"></div><div class="lb t"></div><div class="lb b"></div><div class="sub" aria-hidden="true"></div><div class="gclk" aria-hidden="true"><b>21:59</b><i>:40</i><span>PÁ</span></div><div class="gend"><small>Gold Time · Pá–So 22:00 – 24:00</small><b>Celá budova.<br><em>Jen pro vás dva.</em></b><div class="gbtns"><a class="gu-btn gcall" href="tel:+420737222266">Zamluvit Gold Time <span aria-hidden="true">→</span></a><button type="button" class="grep">↻ Přehrát znovu</button></div></div><div class="fade"></div>';
 const camWrap=box.querySelector('.gt-cam');camWrap.style.display='none';box.insertBefore(film,camWrap);box.classList.add('is3d');
 const cv=film.querySelector('canvas'),sub=film.querySelector('.sub'),clk=film.querySelector('.gclk'),ckH=clk.querySelector('b'),ckS=clk.querySelector('i');let lastSec=-1;
 const MOB=matchMedia('(max-width:760px), (pointer:coarse)').matches;
@@ -2540,7 +2541,7 @@ function bx(w,h,d,m,x,y,z,parent){const o=new T.Mesh(new T.BoxGeometry(w,h,d),m)
 function rbx(w,h,d,r,m,x,y,z,parent){const s=new T.Shape(),a=w/2-r,b=h/2-r;s.moveTo(-a,-h/2);s.lineTo(a,-h/2);s.quadraticCurveTo(w/2,-h/2,w/2,-b);s.lineTo(w/2,b);s.quadraticCurveTo(w/2,h/2,a,h/2);s.lineTo(-a,h/2);s.quadraticCurveTo(-w/2,h/2,-w/2,b);s.lineTo(-w/2,-b);s.quadraticCurveTo(-w/2,-h/2,-a,-h/2);
   const g=new T.ExtrudeGeometry(s,{depth:d-2*r*.6,bevelEnabled:true,bevelThickness:r*.6,bevelSize:r*.6,bevelSegments:3,curveSegments:6});g.translate(0,0,-(d-2*r*.6)/2);const o=new T.Mesh(g,m);o.position.set(x,y,z);(parent||S).add(o);return o;}
 const bloomTex=cvTex(64,64,(x,w,h)=>{const g=x.createRadialGradient(32,32,0,32,32,32);g.addColorStop(0,'rgba(255,255,255,1)');g.addColorStop(.3,'rgba(255,255,255,.35)');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.fillRect(0,0,w,h);});
-function bloom(col,s,x,y,z,o){const sp=new T.Sprite(new T.SpriteMaterial({map:bloomTex,color:col,transparent:true,opacity:o,blending:T.AdditiveBlending,depthWrite:false,toneMapped:false}));sp.scale.set(s,s,1);sp.position.set(x,y,z);S.add(sp);return sp;}
+let BG=null;function bloom(col,s,x,y,z,o){const sp=new T.Sprite(new T.SpriteMaterial({map:bloomTex,color:col,transparent:true,opacity:o,blending:T.AdditiveBlending,depthWrite:false,toneMapped:false}));sp.scale.set(s,s,1);sp.position.set(x,y,z);S.add(sp);if(BG){sp.userData.o0=o;BG.push(sp);}return sp;}
 function ledLine(a,b,m,th){const d=b.clone().sub(a),L=d.length();const o=new T.Mesh(new T.CylinderGeometry(th||.012,th||.012,L,6),m||M.ledV);o.position.copy(a).add(d.clone().multiplyScalar(.5));o.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),d.normalize());S.add(o);
   const n=Math.max(2,Math.round(L/.25));for(let i=0;i<=n;i++){const p=a.clone().lerp(b,i/n);bloom((m||M.ledV).color,.42,p.x,p.y,p.z,.32);}return o;}
 /* shell */
@@ -2555,11 +2556,11 @@ const starPts2=new T.Points(starG,new T.PointsMaterial({size:.05,map:bloomTex,co
 /* soffit band along the walls with LED edge, and the long curved LED line across the ceiling */
 const SO=.42,SH=.18,sy=FL+RH-SH/2;
 bx(RW,SH,SO,M.dark,0,sy,BK+SO/2);bx(SO,SH,RD,M.dark,LX+SO/2,sy,RCZ);bx(SO,SH,RD,M.dark,RX-SO/2,sy,RCZ);
-ledLine(new T.Vector3(LX+SO,FL+RH-SH,BK+SO),new T.Vector3(RX-SO,FL+RH-SH,BK+SO));
+const LEDB=[];BG=LEDB;ledLine(new T.Vector3(LX+SO,FL+RH-SH,BK+SO),new T.Vector3(RX-SO,FL+RH-SH,BK+SO));
 ledLine(new T.Vector3(LX+SO,FL+RH-SH,BK+SO),new T.Vector3(LX+SO,FL+RH-SH,FR-.05));
 ledLine(new T.Vector3(RX-SO,FL+RH-SH,BK+SO),new T.Vector3(RX-SO,FL+RH-SH,FR-.05));
 (function(){const pts=[];for(let i=0;i<=40;i++){const u=i/40;pts.push(new T.Vector3(LX+SO+u*(RW*.62),FL+RH-.02,FR-.25-Math.sin(u*Math.PI*.9)*RD*.55));}
-  const cur=new T.CatmullRomCurve3(pts);S.add(new T.Mesh(new T.TubeGeometry(cur,80,.012,6),M.ledV));cur.getPoints(28).forEach(p=>bloom(0xb27bff,.42,p.x,p.y,p.z,.3));})();
+  const cur=new T.CatmullRomCurve3(pts);S.add(new T.Mesh(new T.TubeGeometry(cur,80,.012,6),M.ledV));cur.getPoints(28).forEach(p=>bloom(0xb27bff,.42,p.x,p.y,p.z,.3));})();BG=null;
 /* back wall: slat panels, TV, media wall, speakers */
 const scrW=2.55,scrH=1.44,scrX=0,scrY=FL+1.55;
 bx(.5,RH-SH-.02,.06,M.slat,scrX-scrW/2-.45,FL+(RH-SH)/2,BK+.04);
@@ -2616,9 +2617,9 @@ const mf=new T.Mesh(new T.PlaneGeometry(RX-1.15,RH-SH),M.marble);mf.rotation.y=M
 const mr=new T.Mesh(new T.PlaneGeometry(mL,RH-SH),M.marble);mr.rotation.y=-Math.PI/2;mr.position.set(RX-.02,FL+(RH-SH)/2,mC);S.add(mr);
 bx(.12,RH-SH,.16,M.slat,RX-.06,FL+(RH-SH)/2,mZ0);bx(.12,RH-SH,.16,M.slat,RX-.06,FL+(RH-SH)/2,mZ1);
 bx(.2,.24,.82,M.white,RX-.12,FL+RH-SH-.34,mC);
-ledLine(new T.Vector3(RX-.03,FL+RH-SH-.62,mZ0+.1),new T.Vector3(RX-.03,FL+RH-SH-.62,mZ1-.1),M.ledW,.008);
+BG=LEDB;ledLine(new T.Vector3(RX-.03,FL+RH-SH-.62,mZ0+.1),new T.Vector3(RX-.03,FL+RH-SH-.62,mZ1-.1),M.ledW,.008);BG=null;
 const mirror=new T.Mesh(new T.PlaneGeometry(.55,1.55),new T.MeshStandardMaterial({color:0x7d86c8,roughness:.03,metalness:1}));mirror.position.set(LX+2.15,FL+1.2,BK+.035);mirror.visible=false;S.add(mirror);
-const tubX=RX-.62,tubZ=FR-.62;
+const tubX=RX-.62,tubZ=FR-.62;const TUBB=[];BG=TUBB;
 (function(){const g=new T.Group();g.position.set(RX-.03,FL,FR-.03);S.add(g);const R0=1.5,H=.6;
   const shp=(o)=>{const s=new T.Shape();s.moveTo(-o,o);s.lineTo(-R0+o,o);s.lineTo(-R0+o,.35+o*.3);s.quadraticCurveTo(-R0+.05+o*.9,R0-.05-o*.9,-.35-o*.3,R0-o);s.lineTo(-o,R0-o);s.lineTo(-o,o);return s;};
   const toW=(x,y,h)=>new T.Vector3(g.position.x+x,FL+h,g.position.z-y);
@@ -2653,7 +2654,9 @@ const tubX=RX-.62,tubZ=FR-.62;
   const inner=new T.QuadraticBezierCurve(new T.Vector2(-R0+.2,.42),new T.Vector2(-R0+.25,R0-.25),new T.Vector2(-.42,R0-.2));
   inner.getPoints(9).forEach(p=>{bloom(0xf0e6ff,.14,0,0,0,1).position.copy(toW(p.x,p.y,H-.2));bloom(0xffffff,.07,0,0,0,1).position.copy(toW(p.x,p.y,H-.2));});
   [[-.2,.6],[-.2,1.0],[-.6,.2],[-1.0,.2]].forEach(([x,y])=>{bloom(0xf0e6ff,.12,0,0,0,1).position.copy(toW(x,y,H-.22));});
-  g.userData.water=water;window.__tubG=g;})();
+  g.userData.water=water;window.__tubG=g;})();BG=null;
+const TUBE=[];window.__tubG.traverse(o=>{const m=o.material;if(m&&m.emissiveIntensity>0)TUBE.push([m,m.emissiveIntensity]);});
+const LEDM=[[M.ledV,M.ledV.color.clone()],[M.ledW,M.ledW.color.clone()]];LEDB.forEach((sp,i)=>sp.userData.d=i/Math.max(1,LEDB.length-1));
 const tubL=new T.PointLight(0x6a5cff,1.3,2.6,1.8);tubL.position.set(tubX-.2,FL+.9,tubZ+.2);S.add(tubL);
 const bb=[];for(let i=0;i<160;i++){const a=Math.random()*6.28,r=Math.random()*.5;bb.push(tubX+Math.cos(a)*r,FL+.53+Math.random()*.02,tubZ+Math.sin(a)*r);}
 const bbG=new T.BufferGeometry();bbG.setAttribute('position',new T.Float32BufferAttribute(bb,3));
@@ -2803,6 +2806,14 @@ function frame(now){
   STORY.labels.forEach(o=>{o.sp.material.opacity=cl((t-o.t)/.5)*(1-cl((k-.12)/.1));});
   film.classList.toggle('end',t>DUR+.6);film.classList.toggle('fin',t>TE+TR*.5);
   if(window.__room){scr.material.color.setScalar(1);}
+  {/* the room wakes up as the camera flies in */
+   const L=(a,b)=>cl((t-a)/(b-a)),off=L(10.2,10.8),lv=w=>1-off+off*w;
+   const wl=lv(L(11,11.9));LEDM.forEach(([m,c])=>m.color.copy(c).multiplyScalar(.04+.96*wl));
+   LEDB.forEach(sp=>{sp.material.opacity=sp.userData.o0*lv(cl((t-11-sp.userData.d*.9)/.3));});
+   starG.setDrawRange(0,Math.floor(900*lv(ease(L(11.5,13.1)))));
+   const tw0=L(12.2,12.9),tw=lv(tw0<1&&tw0>0?(Math.random()>.35?tw0:tw0*.2):tw0);tubL.intensity=1.3*tw;tubB.material.opacity*=tw;TUBB.forEach(sp=>sp.material.opacity=sp.userData.o0*tw);TUBE.forEach(([m,e])=>m.emissiveIntensity=e*(.08+.92*tw));
+   const sw0=L(12.8,13.4),sw=lv(sw0<1&&sw0>0?(Math.random()>.5?sw0:sw0*.25):sw0);scr.material.color.setScalar(.03+.97*sw);scrGlow.material.opacity*=sw;scrL.intensity=2.4*sw;
+   const aw=.18+.82*lv(L(11,13.3));roomL.intensity=.9*aw;fillL.intensity=.45*aw;leftL.intensity=.6*aw;}
   R.render(S,C);
   if(wash&&document.documentElement.classList.contains('gold')){const b=cv.getBoundingClientRect();pv.copy(focus).project(C);pu.copy(focus).add(new T.Vector3(0,1+1.8*k,0)).project(C);
     const x=b.left+(pv.x+1)/2*b.width,y=b.top+(1-pv.y)/2*b.height,r=Math.abs((pv.y-pu.y)/2*b.height);
