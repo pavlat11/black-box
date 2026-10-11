@@ -2390,10 +2390,7 @@ dark.addEventListener('pointerdown',e=>{const d=tW/innerWidth;gx=e.clientX*d;gy=
 dark.addEventListener('pointerup',e=>{if(e.target.closest('.dk-close'))return;if(Math.hypot(e.clientX-dnX,e.clientY-dnY)<12&&performance.now()-dnT<400)startExit(e.clientX,e.clientY);});
 addEventListener('resize',()=>{if(tOn){tSize();storyInit();}});
 {const warm=()=>{const f=()=>{if(!tOn&&tImg.width)tSize();};if(window.requestIdleCallback)requestIdleCallback(f,{timeout:2000});else setTimeout(f,1500);};if(tImg.complete)warm();else tImg.addEventListener('load',warm);}
-function clickSnd(){try{const A=window.__bbAC||(window.__bbAC=new (window.AudioContext||window.webkitAudioContext)());if(A.state==='suspended')A.resume();const t=A.currentTime+.005,n=Math.round(.035*A.sampleRate),buf=A.createBuffer(1,n,A.sampleRate),c=buf.getChannelData(0);for(let i=0;i<n;i++)c[i]=(Math.random()*2-1)*Math.pow(1-i/n,7);
-  const src=A.createBufferSource(),f=A.createBiquadFilter(),g=A.createGain();src.buffer=buf;f.type='bandpass';f.frequency.value=2600;f.Q.value=1.1;g.gain.value=.55;src.connect(f).connect(g).connect(A.destination);src.start(t);
-  const o=A.createOscillator(),og=A.createGain();o.frequency.setValueAtTime(190,t);o.frequency.exponentialRampToValueAtTime(70,t+.06);og.gain.setValueAtTime(.3,t);og.gain.exponentialRampToValueAtTime(.001,t+.08);o.connect(og).connect(A.destination);o.start(t);o.stop(t+.1);}catch(e){}
-  try{if(navigator.vibrate)navigator.vibrate(18);}catch(e){}}
+function clickSnd(){try{if(navigator.vibrate)navigator.vibrate(18);}catch(e){}}
 const ciBox=document.querySelector('.concept-img'),ciSt=ciBox.querySelector('.ci-stars');
 for(let i=0;i<46;i++){const st=document.createElement('i');st.style.left=(4+Math.random()*92)+'%';st.style.top=(3+Math.random()*34)+'%';st.style.animationDelay=(-Math.random()*2.6)+'s';if(Math.random()<.3){st.style.width=st.style.height='3px';}ciSt.appendChild(st);}
 document.getElementById('lightsBtn').addEventListener('click',e=>{const b=e.currentTarget;clickSnd();b.classList.add('off');ciBox.classList.add('dim');setTimeout(()=>{document.body.classList.add('going');setTimeout(()=>{if(tImg.complete)lightsOff();else tImg.onload=lightsOff;},950);},150);});
