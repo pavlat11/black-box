@@ -262,6 +262,12 @@ body.lo.moved .dk-ui{opacity:.35}
 .bbdark small{display:block;text-shadow:0 2px 12px #000;font-family:var(--body);font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-top:18px}
 body.lo .bbdark{opacity:1;pointer-events:auto}
 body.lo .bbdark p{opacity:1}
+.dk-gold{position:absolute;left:0;right:0;top:calc(50% + max(11vmin,62px) + 28px);text-align:center;padding-inline:24px;pointer-events:none;opacity:0;transform:translateY(14px);transition:opacity 1.4s ease,transform 1.4s ease}
+body.lo-gold .dk-gold{opacity:1;transform:none}
+.dk-gt{font-family:var(--display);font-weight:300;font-size:clamp(20px,2.6vw,32px);line-height:1.3;color:var(--chrome);text-shadow:0 4px 24px #000;text-wrap:balance}
+.dk-gt b{font-weight:500;color:#e9cf8f}
+.bbdark .dk-cta{width:auto;margin-top:22px;padding:13px 22px;font-size:12px;cursor:pointer;pointer-events:none}
+body.lo-gold .bbdark .dk-cta{pointer-events:auto}
 .switch{display:inline-flex;align-items:center;gap:14px;margin-top:30px;padding:10px 20px 10px 10px;border-radius:999px;border:1px solid var(--line);background:rgba(176,102,255,.06);color:var(--chrome);font:600 14px var(--body);cursor:pointer;transition:border-color .3s,background .3s}
 .switch{position:relative;transition:border-color .3s,background .3s,box-shadow .4s}
 .switch:hover{border-color:var(--violet);background:rgba(176,102,255,.14);box-shadow:0 0 30px -6px rgba(245,215,126,.55)}
@@ -1962,7 +1968,7 @@ html.gold .gt-aura{opacity:1}
   <div class="mfoot"><button type="button" class="msnd" id="mSnd" aria-pressed="false"><span class="bars"><span></span><span></span><span></span><span></span></span><span class="mt">Zapnout atmosféru</span><small>ambientní hudba</small></button><a class="btn" href="#rezervace">Rezervovat zážitek</a><span style="font-size:13px;color:var(--muted)">Tábor · Od Slunce · Ne–Čt 11–19 · Pá–So 10–24</span></div>
 </div>
 <div class="bbfade" aria-hidden="true"></div>
-<div class="bbdark" id="dark" role="dialog" aria-label="Zhasnutý prostor"><canvas id="torch"></canvas><div class="dk-ui"><p>Tady čas neexistuje.</p><small id="dkHint">Posviťte si myší · kliknutím rozsvítíte</small></div><button class="btn ghost sm dk-close" id="dkClose" type="button">Rozsvítit</button></div>
+<div class="bbdark" id="dark" role="dialog" aria-label="Zhasnutý prostor"><canvas id="torch"></canvas><div class="dk-ui"><p>Tady čas neexistuje.</p><small id="dkHint">Posviťte si myší · kliknutím rozsvítíte</small></div><div class="dk-gold" aria-live="polite"><div class="dk-gt"><b>Gold Time.</b> V celé budově jen vy dva.</div><a class="btn sm dk-cta" href="tel:+420737222266">Zavolat 737 22 22 66</a></div><button class="btn ghost sm dk-close" id="dkClose" type="button">Rozsvítit</button></div>
 <div class="cur" id="cur" aria-hidden="true"></div><div class="cur-dot" id="curDot" aria-hidden="true"></div>
 <div class="bblb" id="lb" hidden role="dialog" aria-label="Galerie">
   <button class="lb-close" id="lbClose" type="button" aria-label="Zavřít galerii">×</button>
@@ -2315,16 +2321,38 @@ function tLoop(t){if(!tOn)return;requestAnimationFrame(tLoop);
   tg.globalCompositeOperation='source-over';tg.globalAlpha=1;tg.drawImage(dkC,0,0);
   tg.fillStyle='#fff';for(const s of TS){const a=Math.pow(Math.max(0,Math.sin(s.p+t*.0012*s.s)),3);if(a<.05)continue;tg.globalAlpha=a*.9;tg.beginPath();tg.arc(s.x,s.y,s.r,0,6.28);tg.fill();}
   tg.globalAlpha=1;const c=tmC.getContext('2d');c.globalCompositeOperation='source-over';c.clearRect(0,0,tW,tH);c.drawImage(brC,0,0);c.globalCompositeOperation='destination-in';c.drawImage(mkC,0,0);tg.drawImage(tmC,0,0);
-  tg.globalCompositeOperation='lighter';const gl=tg.createRadialGradient(px,py,0,px,py,R*.7);gl.addColorStop(0,'rgba(176,102,255,.16)');gl.addColorStop(1,'rgba(176,102,255,0)');tg.fillStyle=gl;tg.fillRect(px-R,py-R,2*R,2*R);tg.globalCompositeOperation='source-over';}
+  tg.globalCompositeOperation='lighter';const gl=tg.createRadialGradient(px,py,0,px,py,R*.7);gl.addColorStop(0,'rgba(176,102,255,.16)');gl.addColorStop(1,'rgba(176,102,255,0)');tg.fillStyle=gl;tg.fillRect(px-R,py-R,2*R,2*R);tg.globalCompositeOperation='source-over';drawStory(t);}
+/* lights out story: LED line → constellation cube → Gold Time */
+const SV=[];for(let i=0;i<6;i++){const a=(-90+60*i)*Math.PI/180;SV.push([Math.cos(a),Math.sin(a)]);}SV.push([0,0]);
+const SE=[[0,1],[1,2],[2,3],[3,4],[4,5],[5,0],[6,5],[6,1],[6,3],[5,3]];
+let SS=[],goldT=0;const ez=k=>k<=0?0:k>=1?1:k*k*(3-2*k);
+function storyInit(){SS=SV.map(()=>({x:tW*(.15+Math.random()*.7),y:tH*(.05+Math.random()*.35)}));}
+function drawStory(t){
+  const d=tW/innerWidth,e=(t-tStart)/1000,fade=exitT?1-Math.min(1,(t-exitT)/700):1;if(fade<=0||!SS.length)return;
+  tg.save();tg.globalCompositeOperation='lighter';tg.lineCap='round';
+  const L=ez((e-.8)/2.6);
+  if(L>0){const ins=10*d,w=tW-2*ins,h=tH-2*ins,P=2*(w+h),br=.8+.2*Math.sin(t*.0015);
+    tg.setLineDash([P*L,P]);
+    tg.strokeStyle=`rgba(176,102,255,${.16*br*fade})`;tg.lineWidth=9*d;tg.strokeRect(ins,ins,w,h);
+    tg.strokeStyle=`rgba(200,160,255,${.85*br*fade})`;tg.lineWidth=1.6*d;tg.strokeRect(ins,ins,w,h);
+    tg.setLineDash([]);}
+  const sa=ez((e-2.8)/.8);
+  if(sa>0){const cx=tW/2,cy=tH/2,R=Math.max(Math.min(tW,tH)*.11,62*d),k=ez((e-3.2)/2.4),pulse=.85+.15*Math.sin(t*.002);
+    const P=SV.map((v,i)=>[SS[i].x+(cx+v[0]*R-SS[i].x)*k,SS[i].y+(cy+v[1]*R-SS[i].y)*k]);
+    SE.forEach(([a,b],i)=>{const lk=ez((e-5.6-i*.12)/.6);if(lk<=0)return;const A=P[a],B=P[b];
+      tg.strokeStyle=`rgba(200,170,255,${(i===9?.35:.6)*pulse*fade})`;tg.lineWidth=1.2*d;
+      tg.beginPath();tg.moveTo(A[0],A[1]);tg.lineTo(A[0]+(B[0]-A[0])*lk,A[1]+(B[1]-A[1])*lk);tg.stroke();});
+    P.forEach(([x,y])=>{const r=9*d,g=tg.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,`rgba(255,255,255,${sa*fade})`);g.addColorStop(.25,`rgba(220,190,255,${.6*sa*fade})`);g.addColorStop(1,'rgba(176,102,255,0)');tg.fillStyle=g;tg.fillRect(x-r,y-r,2*r,2*r);});}
+  tg.restore();}
 function lightsOff(){exitT=0;document.body.classList.remove('going');document.body.classList.add('lo');document.body.classList.remove('moved');tSize();mkC.getContext('2d').clearRect(0,0,tW,tH);
-  const d=tW/innerWidth;gx=px=tW/2;gy=py=tH*.55;lastMove=0;tStart=performance.now();tOn=true;requestAnimationFrame(tLoop);
+  const d=tW/innerWidth;gx=px=tW/2;gy=py=tH*.55;lastMove=0;tStart=performance.now();if(reduce)tStart-=8000;storyInit();clearTimeout(goldT);document.body.classList.remove('lo-gold');goldT=setTimeout(()=>{if(document.body.classList.contains('lo'))document.body.classList.add('lo-gold');},reduce?0:7400);tOn=true;requestAnimationFrame(tLoop);
   document.getElementById('dkHint').textContent=matchMedia('(hover:none)').matches?'Posviťte si prstem · klepnutím rozsvítíte':'Posviťte si myší · kliknutím rozsvítíte';document.getElementById('dkClose').focus({preventScroll:true});}
-function lightsOn(){document.body.classList.remove('lo');document.getElementById('lightsBtn').classList.remove('off');setTimeout(()=>{if(!document.body.classList.contains('lo')){tOn=false;exitT=0;}},1300);}
+function lightsOn(){clearTimeout(goldT);document.body.classList.remove('lo','lo-gold');document.getElementById('lightsBtn').classList.remove('off');setTimeout(()=>{if(!document.body.classList.contains('lo')){tOn=false;exitT=0;}},1300);}
 function startExit(x,y){if(exitT)return;const d=tW/innerWidth;ex=x*d;ey=y*d;exitT=performance.now();}
 dark.addEventListener('pointermove',e=>{const d=tW/innerWidth;gx=e.clientX*d;gy=e.clientY*d;lastMove=performance.now();document.body.classList.add('moved');});
 dark.addEventListener('pointerdown',e=>{const d=tW/innerWidth;gx=e.clientX*d;gy=e.clientY*d;lastMove=performance.now();dnX=e.clientX;dnY=e.clientY;dnT=performance.now();});
-dark.addEventListener('pointerup',e=>{if(e.target.closest('.dk-close'))return;if(Math.hypot(e.clientX-dnX,e.clientY-dnY)<12&&performance.now()-dnT<400)startExit(e.clientX,e.clientY);});
-addEventListener('resize',()=>{if(tOn)tSize();});
+dark.addEventListener('pointerup',e=>{if(e.target.closest('.dk-close,.dk-cta'))return;if(Math.hypot(e.clientX-dnX,e.clientY-dnY)<12&&performance.now()-dnT<400)startExit(e.clientX,e.clientY);});
+addEventListener('resize',()=>{if(tOn){tSize();storyInit();}});
 document.getElementById('lightsBtn').addEventListener('click',e=>{const b=e.currentTarget;b.classList.add('off');setTimeout(()=>{document.body.classList.add('going');setTimeout(()=>{if(tImg.complete)lightsOff();else tImg.onload=lightsOff;},1100);},450);});
 document.getElementById('dkClose').addEventListener('click',e=>{const r=e.currentTarget.getBoundingClientRect();startExit(r.left+r.width/2,r.top+r.height/2);});
 addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.classList.contains('lo'))startExit(innerWidth/2,innerHeight/2);});
