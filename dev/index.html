@@ -2873,10 +2873,13 @@ document.querySelectorAll('a[href="#poukazy"]').forEach(a=>{if(/gold/i.test(a.te
   w.style.setProperty('--fx',c.left+'px');w.style.setProperty('--fy',top+'px');w.style.setProperty('--fw',c.width+'px');w.style.setProperty('--fh',hh+'px');
   const R=parseFloat(getComputedStyle(el).borderTopLeftRadius)||0,W=c.width,H=hh,rt=top>c.top+.5?0:R,mk=W+'|'+H+'|'+rt;if(mk!==w.__mk&&W>0&&H>0){w.__mk=mk;const d='M'+rt+' 0H'+(W-rt)+'Q'+W+' 0 '+W+' '+rt+'V'+(H-R)+'Q'+W+' '+H+' '+(W-R)+' '+H+'H'+R+'Q0 '+H+' 0 '+(H-R)+'V'+rt+'Q0 0 '+rt+' 0Z';
    w.style.setProperty('--fm','url("data:image/svg+xml,'+encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' width='"+W+"' height='"+H+"'><path d='"+d+"'/></svg>")+'")');}})();})();</script>
-<style>.gold-wash.gw-abs{position:absolute!important;left:0!important;right:auto!important;bottom:auto!important;width:100%!important;top:var(--gwt,0px)!important;height:var(--gwh,0px)!important}</style>
+<style>.gold-wash-nav{position:fixed;left:0;right:0;top:0;height:var(--nh,0px);z-index:90;pointer-events:none;background:#e9bd6a;mix-blend-mode:color;opacity:0;transition:opacity .25s ease-out}html.gold .gold-wash-nav{opacity:.88}
+.gold-wash.gw-abs{position:absolute!important;left:0!important;right:auto!important;bottom:auto!important;width:100%!important;top:var(--gwt,0px)!important;height:var(--gwh,0px)!important}</style>
 <script>/* phones: gold filter scrolls natively with the page, film cut-out never moves -> no flicker */
 (function(){if(!matchMedia('(max-width:760px), (pointer:coarse)').matches)return;window.__gwStatic=true;
  const w=document.getElementById('goldWash'),s=document.getElementById('goldtime');if(!w||!s)return;w.classList.add('gw-abs');let last='',mk='';
+ const nw=document.createElement('div');nw.className='gold-wash-nav';nw.setAttribute('aria-hidden','true');w.after(nw);
+ const nh=()=>{const nv=document.getElementById('nav');nw.style.setProperty('--nh',(nv?Math.max(0,nv.getBoundingClientRect().bottom):0)+'px');};nh();addEventListener('resize',nh);addEventListener('load',nh);
  function upd(){const el=document.querySelector('.gt-film')||document.getElementById('gtBld');if(!el)return;const sy=scrollY,sr=s.getBoundingClientRect(),vh=Math.max(innerHeight,screen.height||0);
   w.style.setProperty('--gwh','0px');const docH=document.documentElement.scrollHeight;
   const top=Math.max(0,sr.top+sy-vh),h=Math.min(sr.bottom+sy+vh,docH)-top;
