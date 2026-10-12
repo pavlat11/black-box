@@ -1578,13 +1578,37 @@ html.gold .gt-aura{opacity:1}
 .gt-film .gend .gu-btn{min-height:38px;padding:0 16px;font-size:11.5px}
 .gt-film .gend .grep{padding:8px 13px;font-size:11px}
 </style>
+<style>/* Ceník */
+#cenik .pr-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(16px,2vw,28px)}
+.pr{position:relative;display:flex;flex-direction:column;padding:clamp(26px,3vw,40px);border-radius:24px;background:linear-gradient(180deg,rgba(176,102,255,.10),rgba(176,102,255,.02));border:1px solid var(--line);overflow:hidden}
+.pr-tag{font:700 12px/1 var(--body);letter-spacing:.32em;text-transform:uppercase;color:var(--violet)}
+.pr h3{margin-top:14px;font-family:var(--display);font-size:clamp(24px,2.4vw,32px);color:var(--chrome)}
+.pr-sub{margin-top:6px;color:var(--muted);font-size:15px}
+.pr-price{margin:26px 0 22px;display:flex;align-items:baseline;gap:10px;font-family:var(--display);font-size:clamp(46px,5.4vw,72px);line-height:1;color:#fff;letter-spacing:-.02em}
+.pr-price small{font:700 15px/1 var(--body);letter-spacing:.12em;color:var(--muted)}
+.pr ul{list-style:none;margin:0 0 30px;padding:22px 0 0;border-top:1px solid var(--line);display:grid;gap:11px;flex:1}
+.pr li{position:relative;padding-left:26px;color:#d6d2f5;font-size:15.5px}
+.pr li::before{content:"";position:absolute;left:2px;top:.55em;width:9px;height:9px;border-radius:50%;background:var(--violet);box-shadow:0 0 10px var(--violet)}
+.pr .btn{align-self:flex-start}
+.pr.gold{background:radial-gradient(120% 80% at 100% 0%,rgba(240,207,133,.16),transparent 60%),linear-gradient(180deg,rgba(240,207,133,.07),rgba(18,14,48,.4));border-color:rgba(240,207,133,.45);box-shadow:0 0 0 1px rgba(240,207,133,.12) inset,0 30px 80px -40px rgba(240,207,133,.45)}
+.pr.gold .pr-tag{color:var(--gold)}
+.pr.gold .pr-price{color:var(--gold);text-shadow:0 0 34px rgba(240,207,133,.35)}
+.pr.gold ul{border-color:rgba(240,207,133,.25)}
+.pr.gold li::before{background:var(--gold);box-shadow:0 0 10px var(--gold)}
+.pr.gold li b{color:var(--gold);font-weight:700}
+.pr.gold .btn{background:linear-gradient(135deg,#c9a24f,#f0cf85);color:#1a1206}
+.pr-badge{position:absolute;top:22px;right:22px;padding:7px 12px;border-radius:999px;font:700 10.5px/1 var(--body);letter-spacing:.2em;text-transform:uppercase;color:#1a1206;background:var(--gold)}
+.pr-note{margin-top:22px;text-align:center;color:var(--muted);font-size:14px}
+.pr-note a{color:var(--chrome)}
+@media (max-width:760px){#cenik .pr-grid{grid-template-columns:1fr}.pr .btn{align-self:stretch}.pr-badge{top:18px;right:18px}}
+</style>
 </head>
 <body>
 
 
 <div class="sprog" aria-hidden="true"><i id="sprog"></i></div>
 <nav class="sidenav" id="sidenav" aria-label="Sekce stránky">
-  <a href="#koncept"><span>Koncept</span></a><a href="#pribeh"><span>Váš večer</span></a><a href="#prostor"><span>Prostor</span></a><a href="#projekce"><span>Projekce a zvuk</span></a><a href="#navsteva"><span>Návštěva</span></a><a href="#goldtime"><span>Gold Time</span></a><a href="#poukazy"><span>Poukazy</span></a><a href="#faq"><span>Dotazy</span></a><a href="#rezervace"><span>Rezervace</span></a>
+  <a href="#koncept"><span>Koncept</span></a><a href="#pribeh"><span>Váš večer</span></a><a href="#prostor"><span>Prostor</span></a><a href="#projekce"><span>Projekce a zvuk</span></a><a href="#navsteva"><span>Návštěva</span></a><a href="#cenik"><span>Ceník</span></a><a href="#goldtime"><span>Gold Time</span></a><a href="#poukazy"><span>Poukazy</span></a><a href="#faq"><span>Dotazy</span></a><a href="#rezervace"><span>Rezervace</span></a>
 </nav>
 <a class="mbar" id="mbar" href="tel:+420737222266"><span><small>Nejbližší blok</small><b id="mbNext">–</b></span><i aria-hidden="true">Zavolat →</i></a>
 <div class="bbloader" id="loader" aria-hidden="true"><div class="lw"><img src="data:image/webp;base64,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" alt=""><span>BLACK BOX</span><i><b></b></i></div></div>
@@ -1601,6 +1625,7 @@ html.gold .gt-aura{opacity:1}
       <a href="#prostor">Prostor</a>
       <a href="#projekce">Projekce</a>
       <a href="#navsteva">Návštěva</a>
+      <a href="#cenik">Ceník</a>
       <a href="#poukazy">Poukazy</a>
     </nav>
     <div class="nav-r">
@@ -1831,6 +1856,47 @@ html.gold .gt-aura{opacity:1}
     </div>
   </section>
 
+  <section id="cenik" style="padding-top:0">
+    <div class="wrap">
+      <div class="head">
+        <div>
+          <span class="eyebrow">Ceník</span>
+          <h2>Jasná cena. Dvě možnosti.</h2>
+        </div>
+      </div>
+      <div class="pr-grid">
+        <article class="pr reveal">
+          <span class="pr-tag">Standard</span>
+          <h3>Dvě hodiny jen vaše</h3>
+          <p class="pr-sub">Libovolný volný blok</p>
+          <div class="pr-price">2&nbsp;000<small>Kč</small></div>
+          <ul>
+            <li>Vířivka pro dva</li>
+            <li>Hvězdné nebe a projekce</li>
+            <li>Špičkový zvuk, vaše hudba</li>
+            <li>Čisté ručníky a osušky</li>
+          </ul>
+          <a class="btn ghost" href="tel:+420737222266">Rezervovat · 737 22 22 66</a>
+        </article>
+        <article class="pr gold reveal">
+          <span class="pr-badge">Pá · So</span>
+          <span class="pr-tag">Gold Time</span>
+          <h3>Celá budova jen pro vás</h3>
+          <p class="pr-sub">22:00 – 24:00 · poslední blok večera</p>
+          <div class="pr-price">2&nbsp;500<small>Kč</small></div>
+          <ul>
+            <li>Vše ze Standardu</li>
+            <li><b>Nikdo jiný v budově</b></li>
+            <li>Odcházíte poslední, nikdo nečeká</li>
+            <li>Ideální na výročí a speciální večery</li>
+          </ul>
+          <a class="btn" href="tel:+420737222266">Zamluvit Gold Time</a>
+        </article>
+      </div>
+      <p class="pr-note">Cena za pár a dvouhodinový blok. Platí i pro <a href="#poukazy">dárkové poukazy</a>.</p>
+    </div>
+  </section>
+
   <section id="goldtime" class="gt" aria-labelledby="gtH">
     <canvas class="gt-dust" id="gtDust" aria-hidden="true"></canvas><div class="gt-aura" aria-hidden="true"></div>
     <div class="wrap"><p class="gt-mega" aria-hidden="true"><span><i style="--i:0">G</i><i style="--i:1">o</i><i style="--i:2">l</i><i style="--i:3">d</i><i style="--i:4">&nbsp;</i><i style="--i:5">T</i><i style="--i:6">i</i><i style="--i:7">m</i><i style="--i:8">e</i></span></p><div class="gt-rule" aria-hidden="true"><i></i><b>Pátek · Sobota · 22:00 – 24:00</b><i></i></div></div>
@@ -1910,8 +1976,8 @@ html.gold .gt-aura{opacity:1}
         <p class="lead">K výročí, na Valentýna, k narozeninám nebo jen tak. Vyberte zážitek a jméno i věnování napište rovnou do poukazu.</p>
         <div class="occ" aria-hidden="true"><span>Výročí</span><span>Valentýn</span><span>Narozeniny</span><span>Vánoce</span><span>Jen tak</span></div>
         <div class="vswitch" role="group" aria-label="Typ poukazu"><span class="vsw-thumb" aria-hidden="true"></span>
-          <button type="button" class="vopt" id="vo1" aria-pressed="true" data-k="Standard · 2 hodiny" data-b="2 hod"><strong>Standard</strong><span>2 hodiny · libovolný blok</span></button>
-          <button type="button" class="vopt g" id="vo2" aria-pressed="false" data-k="Gold Time · 2 hodiny" data-b="22 – 24"><strong><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 019.5 4a8 8 0 1010.5 10.5z"/></svg>Gold Time</strong><span>celá budova jen pro vás</span></button>
+          <button type="button" class="vopt" id="vo1" aria-pressed="true" data-k="Standard · 2 hodiny" data-b="2 hod"><strong>Standard</strong><span>2 hodiny · 2 000 Kč</span></button>
+          <button type="button" class="vopt g" id="vo2" aria-pressed="false" data-k="Gold Time · 2 hodiny" data-b="22 – 24"><strong><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 019.5 4a8 8 0 1010.5 10.5z"/></svg>Gold Time</strong><span>celá budova · 2 500 Kč</span></button>
         </div>
         <p class="vsw-q">Vyberte poukaz: <b>Standard</b> nebo <b class="g">Gold Time</b></p>
         <div class="vsteps"><div class="vs"><b>1</b><span>Vyberte Standard nebo Gold Time</span></div><div class="vs vs2"><b>2</b><span>Jméno a věnování napište <em>přímo do poukazu</em></span></div><div class="vs"><b>3</b><span>Zadejte e-mail, poukaz vám pošleme</span></div></div><div class="field"><label for="v-mail">Váš e-mail</label><input id="v-mail" type="email" autocomplete="email" placeholder="kam poukaz pošleme"></div>
@@ -1984,9 +2050,10 @@ html.gold .gt-aura{opacity:1}
     <a href="#prostor"><small>03</small>Prostor</a>
     <a href="#projekce"><small>04</small>Projekce a zvuk</a>
     <a href="#navsteva"><small>05</small>Návštěva</a>
-    <a href="#poukazy"><small>06</small>Dárkové poukazy</a>
-    <a href="#faq"><small>07</small>Časté dotazy</a>
-    <a href="#rezervace"><small>08</small>Rezervace</a>
+    <a href="#cenik"><small>06</small>Ceník</a>
+    <a href="#poukazy"><small>07</small>Dárkové poukazy</a>
+    <a href="#faq"><small>08</small>Časté dotazy</a>
+    <a href="#rezervace"><small>09</small>Rezervace</a>
   </nav>
   <div class="mfoot"><button type="button" class="msnd" id="mSnd" aria-pressed="false"><span class="bars"><span></span><span></span><span></span><span></span></span><span class="mt">Zapnout atmosféru</span><small>ambientní hudba</small></button><a class="btn" href="#rezervace">Rezervovat zážitek</a><span style="font-size:13px;color:var(--muted)">Tábor · Od Slunce · Ne–Čt 11–19 · Pá–So 10–24</span></div>
 </div>
@@ -2529,7 +2596,7 @@ addEventListener('keydown',e=>{if(lb.hidden)return;if(e.key==='Escape')close();i
 
 <div class="gold-wash" id="goldWash" aria-hidden="true"></div>
 <script>(function(){const s=document.getElementById('goldtime'),r=document.documentElement;if(!s||!('IntersectionObserver' in window))return;
-let q=0;const w=document.getElementById('goldWash');const chk=()=>{q=0;const b=s.getBoundingClientRect(),vh=innerHeight;const mg=document.querySelector('.gt-mega'),mt=mg?mg.getBoundingClientRect().top:b.top;const pv=document.getElementById('navsteva'),pb=pv?pv.getBoundingClientRect().bottom:0,nb=(document.getElementById('nav')||{getBoundingClientRect:()=>({bottom:0})}).getBoundingClientRect().bottom;r.classList.toggle('gold',(mt<vh*.45||pb<nb+40)&&pb<nb+140&&(()=>{const fe=document.querySelector('.gt-feats');return (fe?fe.getBoundingClientRect().bottom:b.bottom)>vh*.5;})());const f=document.querySelector('.gt-film')||document.getElementById('gtBld');if(f&&w&&!window.__gwStatic){const c=f.getBoundingClientRect(),nv=document.getElementById('nav'),hb=nv?nv.getBoundingClientRect().bottom:0,top=Math.max(c.top,hb),hh=Math.max(0,c.bottom-top);w.style.setProperty('--fx',c.left+'px');w.style.setProperty('--fy',top+'px');w.style.setProperty('--fw',c.width+'px');w.style.setProperty('--fh',hh+'px');}};addEventListener('scroll',()=>{if(!q)q=requestAnimationFrame(chk);},{passive:true});addEventListener('resize',chk);chk();})();</script>
+let q=0;const w=document.getElementById('goldWash');const chk=()=>{q=0;const b=s.getBoundingClientRect(),vh=innerHeight;const mg=document.querySelector('.gt-mega'),mt=mg?mg.getBoundingClientRect().top:b.top;const pv=document.getElementById('cenik'),pb=pv?pv.getBoundingClientRect().bottom:0,nb=(document.getElementById('nav')||{getBoundingClientRect:()=>({bottom:0})}).getBoundingClientRect().bottom;r.classList.toggle('gold',(mt<vh*.45||pb<nb+40)&&pb<nb+140&&(()=>{const fe=document.querySelector('.gt-feats');return (fe?fe.getBoundingClientRect().bottom:b.bottom)>vh*.5;})());const f=document.querySelector('.gt-film')||document.getElementById('gtBld');if(f&&w&&!window.__gwStatic){const c=f.getBoundingClientRect(),nv=document.getElementById('nav'),hb=nv?nv.getBoundingClientRect().bottom:0,top=Math.max(c.top,hb),hh=Math.max(0,c.bottom-top);w.style.setProperty('--fx',c.left+'px');w.style.setProperty('--fy',top+'px');w.style.setProperty('--fw',c.width+'px');w.style.setProperty('--fh',hh+'px');}};addEventListener('scroll',()=>{if(!q)q=requestAnimationFrame(chk);},{passive:true});addEventListener('resize',chk);chk();})();</script>
 <script>(function(){const b=document.getElementById('gtBld');if(!b||!('IntersectionObserver' in window)){b&&b.classList.add('play');return;}
 new IntersectionObserver(es=>es.forEach(e=>{if(e.intersectionRatio>=.5)b.classList.add('play');else if(!e.isIntersecting)b.classList.remove('play');}),{threshold:[0,.5]}).observe(b);})();</script>
 <script>(function(){const w=document.getElementById('goldWash'),c=document.querySelector('#gtBld .bb-win'),r=document.documentElement;if(!w||!c)return;let on=false;
