@@ -1634,7 +1634,9 @@ html.gold .gt-aura{opacity:1}
  .gtc-mid b{font-size:44px}
 }
 @media (max-width:760px){
- /* mobil: svislá zlatá osa vedle seznamu */
+ /* mobil: bez ciferníku, jen svislá zlatá osa vedle seznamu */
+ .gtc-dial{display:none}
+ .gtc{margin-top:40px}
  .gtc-list::before,.gtc-list::after{content:"";position:absolute;left:4px;top:26px;width:2px;border-radius:2px}
  .gtc-list::before{bottom:26px;background:rgba(240,207,133,.18)}
  .gtc-list::after{height:var(--lh,0px);background:linear-gradient(180deg,#b98d3e,#f6dc9c);box-shadow:0 0 14px rgba(240,207,133,.7)}
