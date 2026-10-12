@@ -1602,52 +1602,42 @@ html.gold .gt-aura{opacity:1}
 .pr-note a{color:var(--chrome)}
 @media (max-width:760px){#cenik .pr-grid{grid-template-columns:1fr}.pr .btn{align-self:stretch}.pr-badge{top:18px;right:18px}}
 </style>
-<style>/* Gold Time C: ciferník */
-.gtc{display:grid;grid-template-columns:minmax(0,440px) minmax(0,1fr);gap:clamp(36px,5vw,80px);align-items:center;margin-top:clamp(56px,7vw,96px)}
-.gtc-dial{position:relative;width:100%;max-width:440px;justify-self:center}
-.gtc-dial svg{display:block;width:100%;height:auto;overflow:visible}
-.gtc-arc{filter:drop-shadow(0 0 12px rgba(240,207,133,.6))}
-.gtc-mk g{fill:rgba(240,207,133,.35);transition:fill .6s}
-.gtc-mk g.on{fill:#f0cf85}
-.gtc-mk g.on circle{fill:#fff6df}
-.gtc-dot{fill:#fff6df;filter:drop-shadow(0 0 10px rgba(240,207,133,1)) drop-shadow(0 0 22px rgba(240,207,133,.8))}
-.gtc-mid{position:absolute;left:9%;right:9%;top:0;bottom:0;margin:auto;height:max-content;display:flex;flex-direction:column;align-items:center;text-align:center;pointer-events:none}
-.gtc-mid small{font:700 11px var(--body);letter-spacing:.32em;text-transform:uppercase;color:var(--gold)}
-.gtc-mid b{display:block;margin:10px 0 8px;font:300 clamp(46px,5vw,68px)/1 var(--display);font-variant-numeric:tabular-nums;background:linear-gradient(180deg,#fff6df,#f0cf85 60%,#b98d3e);-webkit-background-clip:text;background-clip:text;color:transparent}
-.gtc-mid span{font-size:13.5px;color:#bfb49a;min-height:1.4em}
+<style>/* Gold Time: seznam s jedoucí osou + rezervační karta */
+.gtc{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,380px);gap:clamp(40px,6vw,96px);align-items:center;margin-top:clamp(56px,7vw,96px)}
 .gtc-list{list-style:none;margin:0;padding:0;position:relative}
-.gtc-list li{display:grid;grid-template-columns:18px 96px minmax(0,1fr);gap:14px;align-items:baseline;padding:16px 0;border-bottom:1px solid rgba(240,207,133,.14)}
-.gtc-list li>*{opacity:.35;transition:opacity .8s cubic-bezier(.22,.61,.36,1)}
+.gtc-list::before,.gtc-list::after{content:"";position:absolute;left:5px;top:var(--lt,30px);width:2px;border-radius:2px}
+.gtc-list::before{height:var(--lmax,0px);background:rgba(240,207,133,.18)}
+.gtc-list::after{height:var(--lh,0px);background:linear-gradient(180deg,#b98d3e,#f6dc9c);box-shadow:0 0 16px rgba(240,207,133,.75)}
+.gtc-list li{position:relative;display:grid;grid-template-columns:12px clamp(150px,15vw,210px) minmax(0,1fr);column-gap:clamp(18px,2.4vw,36px);align-items:center;padding:clamp(18px,2vw,26px) 0}
+.gtc-list li+li{border-top:1px solid rgba(240,207,133,.1)}
+.gtc-list li>*{opacity:.3;transition:opacity .8s cubic-bezier(.22,.61,.36,1)}
 .gtc-list li.lit>*{opacity:1}
-.gtc-list i{width:10px;height:10px;border-radius:50%;align-self:center;border:1.5px solid rgba(240,207,133,.6);background:#0c0907;transition:background .6s,box-shadow .6s}
-.gtc-list li.lit i{background:#f0cf85;box-shadow:0 0 14px rgba(240,207,133,.9)}
-.gtc-list b{font:300 24px/1 var(--display);color:var(--gold);font-variant-numeric:tabular-nums}
-.gtc-list h3{margin:0;font-size:17px;color:#fff3d6}
-.gtc-list p{margin:4px 0 0;font-size:14px;color:#a99e84;line-height:1.5}
-.gtc-cta{display:flex;flex-wrap:wrap;align-items:center;gap:16px 26px;margin-top:30px}
-.gtc-tel{font:400 22px var(--display);color:#fff3d6;text-decoration:none;font-variant-numeric:tabular-nums;white-space:nowrap}
+.gtc-list i{position:relative;z-index:1;width:12px;height:12px;border-radius:50%;border:1.5px solid rgba(240,207,133,.6);background:#0c0907;opacity:1!important;transition:background .6s,box-shadow .6s}
+.gtc-list li.lit i{background:#f0cf85;box-shadow:0 0 16px rgba(240,207,133,.95)}
+.gtc-list b{font:200 clamp(38px,4vw,56px)/1 var(--display);font-variant-numeric:tabular-nums;background:linear-gradient(180deg,#fff6df,#f0cf85 60%,#b98d3e);-webkit-background-clip:text;background-clip:text;color:transparent}
+.gtc-list h3{margin:0;font-size:clamp(17px,1.5vw,21px);color:#fff3d6}
+.gtc-list p{margin:6px 0 0;font-size:15px;color:#a99e84;line-height:1.5}
+.gtc-card{position:relative;padding:clamp(28px,3vw,40px);border-radius:26px;border:1px solid rgba(240,207,133,.5);
+ background:radial-gradient(ellipse at 100% 0%,rgba(240,207,133,.24),transparent 60%),linear-gradient(160deg,rgba(40,29,10,.6),rgba(8,6,20,.75));box-shadow:0 40px 100px -50px rgba(240,207,133,.7)}
+.gtc-card small{display:block;font:700 11px var(--body);letter-spacing:.3em;text-transform:uppercase;color:var(--gold)}
+.gtc-card h3{margin:14px 0 26px;font:400 clamp(26px,2.4vw,34px)/1.1 var(--display);color:#fff}
+.gtc-card h3 em{font-style:normal;background:linear-gradient(100deg,#fff3d6,#f0cf85 45%,#c9a24e);-webkit-background-clip:text;background-clip:text;color:transparent}
+.gtc-card .gu-btn{display:flex;justify-content:center;width:100%;min-height:52px}
+.gtc-row{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:20px}
+.gtc-tel{font:400 20px var(--display);color:#fff3d6;text-decoration:none;font-variant-numeric:tabular-nums;white-space:nowrap}
 .gtc-tel:hover{color:#f0cf85}
-.gtc-note{margin:14px 0 0;font-size:13px;color:#a99e84}
-@media (max-width:860px){
- .gtc{grid-template-columns:1fr;gap:28px}
- .gtc-dial{max-width:300px}
- .gtc-mid b{font-size:44px}
-}
+.gtc-note{margin:12px 0 0;font-size:13px;color:#a99e84}
+@media (max-width:960px){.gtc{grid-template-columns:1fr;gap:36px}.gtc-card{max-width:520px}}
 @media (max-width:760px){
- /* mobil: bez ciferníku, jen svislá zlatá osa vedle seznamu */
- .gtc-dial{display:none}
  .gtc{margin-top:40px}
- .gtc-list::before,.gtc-list::after{content:"";position:absolute;left:4px;top:26px;width:2px;border-radius:2px}
- .gtc-list::before{bottom:26px;background:rgba(240,207,133,.18)}
- .gtc-list::after{height:var(--lh,0px);background:linear-gradient(180deg,#b98d3e,#f6dc9c);box-shadow:0 0 14px rgba(240,207,133,.7)}
- .gtc-list li{grid-template-columns:18px minmax(0,1fr);row-gap:6px;border-bottom:0;padding:14px 0}
- .gtc-list li i{position:relative;z-index:1}
- .gtc-list li b{grid-column:2;font-size:28px}
- .gtc-list li>div{grid-column:2}
- .gtc-cta{flex-direction:column;align-items:stretch;gap:14px}
- .gtc-cta .gu-btn{justify-content:center}
- .gtc-tel,.gtc-cta .gt-link{align-self:center}
- .gtc-note{text-align:center}
+ .gtc-list li{grid-template-columns:12px minmax(0,1fr);row-gap:6px;align-items:start;padding:14px 0}
+ .gtc-list li+li{border-top:0}
+ .gtc-list i{margin-top:12px}
+ .gtc-list li>b,.gtc-list li>div{grid-column:2}
+ .gtc-list b{font-size:30px;font-weight:300}
+ .gtc-list h3{font-size:17px}.gtc-list p{font-size:14px}
+ .gtc-card{text-align:center;padding:26px 22px}
+ .gtc-row{flex-direction:column;gap:12px}
 }
 </style>
 </head>
@@ -1950,36 +1940,19 @@ html.gold .gt-aura{opacity:1}
       </div>
     </div>
     <div class="wrap gtc" id="gtTl">
-      <div class="gtc-dial" aria-hidden="true">
-        <svg viewBox="-46 -10 512 440" fill="none">
-          <defs><linearGradient id="gtcG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff3d6"/><stop offset=".5" stop-color="#f0cf85"/><stop offset="1" stop-color="#b98d3e"/></linearGradient></defs>
-          <circle cx="210" cy="210" r="194" stroke="rgba(240,207,133,.14)" stroke-width="1"/>
-          <circle cx="210" cy="210" r="168" stroke="rgba(240,207,133,.12)" stroke-width="10" stroke-linecap="round" stroke-dasharray="791.7 2000" transform="rotate(-90 210 210)"/>
-          <circle class="gtc-arc" cx="210" cy="210" r="168" stroke="url(#gtcG)" stroke-width="10" stroke-linecap="round" stroke-dasharray="0 2000" transform="rotate(-90 210 210)"/>
-          <g class="gtc-mk" font-family="Manrope,system-ui,sans-serif" font-weight="700" font-size="13" letter-spacing="1.5">
-            <g data-i="0"><circle cx="210" cy="42" r="5"/><text x="210" y="20" text-anchor="middle">22:00</text></g>
-            <g data-i="1"><circle cx="303.3" cy="70.3" r="5"/><text x="318" y="58">22:15</text></g>
-            <g data-i="2"><circle cx="328.8" cy="328.8" r="5"/><text x="342" y="354">23:00</text></g>
-            <g data-i="3"><circle cx="42" cy="210" r="5"/><text x="26" y="215" text-anchor="end">24:00</text></g>
-          </g>
-          <circle class="gtc-dot" cx="210" cy="42" r="9"/>
-        </svg>
-        <div class="gtc-mid"><small>Gold Time</small><b id="gtcClock">22:00</b><span id="gtcNow">Poslední host odchází</span></div>
-      </div>
-      <div class="gtc-r">
-        <ol class="gtc-list">
-          <li data-t="0"><i></i><b>22:00</b><div><h3>Poslední host odchází</h3><p>Dveře se zavřou. Budova patří jen vám.</p></div></li>
-          <li data-t=".125"><i></i><b>22:15</b><div><h3>Vířivka pro dva</h3><p>Hřejivá voda, bublinky a světlo pod hladinou.</p></div></li>
-          <li data-t=".5"><i></i><b>23:00</b><div><h3>Hudba pod hvězdami</h3><p>Vaše oblíbená hudba a hvězdné nebe nad postelí.</p></div></li>
-          <li data-t="1"><i></i><b>24:00</b><div><h3>Noc patří vám</h3><p>Odcházíte poslední. Nikdo nečeká za dveřmi.</p></div></li>
-        </ol>
-        <div class="gtc-cta">
-          <a class="gu-btn" href="tel:+420737222266">Zamluvit Gold Time <span aria-hidden="true">→</span></a>
-          <a class="gtc-tel" href="tel:+420737222266">+420 737 22 22 66</a>
-          <a class="gt-link" href="#poukazy">Darovat</a>
-        </div>
-        <p class="gtc-note">Jen 2 termíny v týdnu · pátek a sobota</p>
-      </div>
+      <ol class="gtc-list">
+        <li><i></i><b>22:00</b><div><h3>Poslední host odchází</h3><p>Dveře se zavřou. Budova patří jen vám.</p></div></li>
+        <li><i></i><b>22:15</b><div><h3>Vířivka pro dva</h3><p>Hřejivá voda, bublinky a světlo pod hladinou.</p></div></li>
+        <li><i></i><b>23:00</b><div><h3>Hudba pod hvězdami</h3><p>Vaše oblíbená hudba a hvězdné nebe nad postelí.</p></div></li>
+        <li><i></i><b>24:00</b><div><h3>Noc patří vám</h3><p>Odcházíte poslední. Nikdo nečeká za dveřmi.</p></div></li>
+      </ol>
+      <aside class="gtc-card">
+        <small>Pátek · Sobota · 22–24</small>
+        <h3>Zamluvte si<br><em>celou budovu.</em></h3>
+        <a class="gu-btn" href="tel:+420737222266">Zamluvit Gold Time <span aria-hidden="true">→</span></a>
+        <div class="gtc-row"><a class="gtc-tel" href="tel:+420737222266">+420 737 22 22 66</a><a class="gt-link" href="#poukazy">Darovat</a></div>
+        <p class="gtc-note">Jen 2 termíny v týdnu</p>
+      </aside>
     </div>
   </section>
 
@@ -3157,22 +3130,13 @@ document.querySelectorAll('a[href="#poukazy"]').forEach(a=>{if(/gold/i.test(a.te
  upd();addEventListener('load',upd);addEventListener('resize',upd);document.fonts&&document.fonts.ready.then(upd);
  if('ResizeObserver' in window){const ro=new ResizeObserver(upd);ro.observe(s);ro.observe(document.body);const b=document.getElementById('gtBld');b&&ro.observe(b);}
  let n=0;const t=setInterval(()=>{upd();if(++n>20)clearInterval(t);},500);})();</script>
-<script>/* Gold Time C: ciferník jede se scrollem */
+<script>/* Gold Time: zlatá osa jede se scrollem */
 (function(){const box=document.getElementById('gtTl');if(!box||!box.classList.contains('gtc'))return;
- const arc=box.querySelector('.gtc-arc'),dot=box.querySelector('.gtc-dot'),mk=[...box.querySelectorAll('.gtc-mk g')],li=[...box.querySelectorAll('.gtc-list li')],list=box.querySelector('.gtc-list'),
-  clk=document.getElementById('gtcClock'),now=document.getElementById('gtcNow'),T=li.map(l=>+l.dataset.t),N=li.map(l=>l.querySelector('h3').textContent),L=791.7,mq=matchMedia('(max-width:760px)');let q=0;
- function upd(){q=0;const vh=innerHeight,d=box.querySelector('.gtc-dial').getBoundingClientRect();
-  // ciferník: od chvíle, kdy je vidět, do chvíle, kdy jeho střed projde horní třetinou
-  let p=(vh*.85-d.top)/(vh*.85-vh*.2+d.height*.2);p=Math.max(0,Math.min(1,p));
-  let lp=p;
-  if(mq.matches){const r=list.getBoundingClientRect();lp=Math.max(0,Math.min(1,(vh*.62-r.top)/r.height));
-   const f=li[0].offsetTop,last=li[li.length-1].offsetTop,h=(last-f)*lp;list.style.setProperty('--lh',h+'px');
-   li.forEach(l=>l.classList.toggle('lit',l.offsetTop-f<=h+2));}
-  arc.setAttribute('stroke-dasharray',(L*p).toFixed(1)+' 2000');const a=p*1.5*Math.PI;dot.setAttribute('cx',(210+168*Math.sin(a)).toFixed(1));dot.setAttribute('cy',(210-168*Math.cos(a)).toFixed(1));
-  const m=Math.round(p*120),hh=22+Math.floor(m/60),mm=m%60;clk.textContent=String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');
-  let k=0;T.forEach((t,i)=>{if(p>=t-.001)k=i;});now.textContent=N[k];
-  mk.forEach((g,i)=>g.classList.toggle('on',p>=T[i]-.001));
-  if(!mq.matches)li.forEach((l,i)=>l.classList.toggle('lit',p>=T[i]-.001));}
+ const list=box.querySelector('.gtc-list'),li=[...list.querySelectorAll('li')];let q=0;
+ function upd(){q=0;const vh=innerHeight,r=list.getBoundingClientRect(),dots=li.map(l=>{const d=l.querySelector('i');return d.offsetTop+l.offsetTop+d.offsetHeight/2;});
+  const f=dots[0],last=dots[dots.length-1],max=last-f;list.style.setProperty('--lt',f+'px');list.style.setProperty('--lmax',max+'px');
+  const p=Math.max(0,Math.min(1,(vh*.6-(r.top+f))/max)),h=max*p;list.style.setProperty('--lh',h+'px');
+  li.forEach((l,i)=>l.classList.toggle('lit',dots[i]-f<=h+2));}
  addEventListener('scroll',()=>{if(!q)q=requestAnimationFrame(upd);},{passive:true});addEventListener('resize',upd);upd();})();</script>
 </body>
 </html>
