@@ -270,7 +270,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 $o['status'] = 'vyrizeno';
                 $o['done_at'] = time();
                 bb_save_order($DATA, $o);
-                $_SESSION['flash'] = ['ok', "Objednávka – $who – označena jako vyřízená."];
+                $_SESSION['flash'] = ['ok', "Poukaz – $who – označen jako vyzvednutý."];
                 break;
             case 'storno':
                 $o['prev_status'] = $o['status'];
@@ -314,7 +314,7 @@ $list = array_filter($all, function ($o) use ($f, $active, $q) {
     return true;
 });
 
-$LABEL = ['ceka' => 'Čeká na platbu', 'nova' => 'Nová – osobní odběr', 'bez_faktury' => 'Bez faktury', 'zaplaceno' => 'Zaplaceno', 'vyrizeno' => 'Vyřízeno', 'storno' => 'Storno'];
+$LABEL = ['ceka' => 'Čeká na platbu', 'nova' => 'Nová – osobní odběr', 'bez_faktury' => 'Bez faktury', 'zaplaceno' => 'Zaplaceno', 'vyrizeno' => 'Vyzvednuto', 'storno' => 'Storno'];
 $csrf = $_SESSION['csrf'] ?? '';
 $btn = function (array $o, string $a, string $label, string $cls = 'ghost', string $confirm = '') use ($csrf, $f, $h) {
     return '<form method="post"' . ($confirm ? ' onsubmit="return confirm(\'' . $h($confirm) . '\')"' : '') . '><input type="hidden" name="csrf" value="' . $h($csrf) . '"><input type="hidden" name="id" value="' . $h($o['id']) . '"><input type="hidden" name="a" value="' . $a . '"><input type="hidden" name="f" value="' . $h($f) . '"><button class="btn ' . $cls . '" type="submit">' . $label . '</button></form>';
@@ -370,7 +370,7 @@ foreach ($list as $o) {
     }
     if ($st === 'nova') {
         $out .= '<a class="btn ' . ($gold ? 'gold' : '') . '" href="?dl=poukaz&id=' . urlencode($o['id']) . '" target="_blank">Poukaz k tisku</a>';
-        $out .= $btn($o, 'vyrizeno', 'Předáno – vyřízeno');
+        $out .= $btn($o, 'vyrizeno', 'Vyzvednuto', $gold ? 'gold' : '', 'Potvrdit, že si ' . $c['name'] . ' poukaz vyzvedl(a)?');
     }
     if (!empty($o['no'])) {
         $out .= '<a class="btn ghost" href="?dl=faktura&id=' . urlencode($o['id']) . '" target="_blank">Faktura PDF</a>';
