@@ -626,9 +626,13 @@ function bb_mailer(array $cfg): PHPMailer
         $m->Password = $smtp['pass'];
         $m->Timeout = 20;
         $m->setFrom($smtp['user'], $cfg['from_name']);
+        // Message-ID/HELO musí být ze stejné domény jako odesílatel (jinak to vypadá podezřele
+        // – hosting by jinak použil svůj vlastní technický název serveru, např. "server123.endora.cz").
+        $m->Hostname = substr((string) strrchr($smtp['user'], '@'), 1) ?: 'email.cz';
     } else {
         $m->isMail();
         $m->setFrom($cfg['from_fallback'], $cfg['from_name']);
+        $m->Hostname = substr((string) strrchr($cfg['from_fallback'], '@'), 1) ?: 'black-box-luxury.cz';
     }
     $m->addReplyTo($cfg['reply_to'], $cfg['from_name']);
     return $m;
