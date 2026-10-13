@@ -62,32 +62,6 @@ if ($bad) {
     out(['ok' => false, 'error' => 'Zkontrolujte prosím vyplněné údaje.', 'fields' => $bad], 422);
 }
 
-/* ---- omezení počtu objednávek z jedné IP ---- */
-$ip = $_SERVER['REMOTE_ADDR'] ?? '0';
-$rlFile = $DATA . '/limit.json';
-$fh = @fopen($rlFile, 'c+');
-if ($fh) {
-    flock($fh, LOCK_EX);
-    $rl = json_decode(stream_get_contents($fh) ?: '[]', true) ?: [];
-    $now = time();
-    foreach ($rl as $k => $list) {
-        $rl[$k] = array_values(array_filter($list, fn($t) => $t > $now - 3600));
-        if (!$rl[$k]) unset($rl[$k]);
-    }
-    $key = sha1($ip);
-    if (count($rl[$key] ?? []) >= (int) $cfg['max_orders_per_ip_per_hour']) {
-        flock($fh, LOCK_UN);
-        fclose($fh);
-        out(['ok' => false, 'error' => 'Příliš mnoho objednávek za krátkou dobu. Zavolejte nám prosím na ' . $cfg['phone'] . '.'], 429);
-    }
-    $rl[$key][] = $now;
-    ftruncate($fh, 0);
-    rewind($fh);
-    fwrite($fh, json_encode($rl));
-    flock($fh, LOCK_UN);
-    fclose($fh);
-}
-
 /* ---- objednávka ---- */
 $ico = '';
 $company = $compRaw;
