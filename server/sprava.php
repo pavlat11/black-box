@@ -204,7 +204,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 $o['status'] = 'zaplaceno';
                 $o['paid_mail_at'] = time();
                 bb_save_order($DATA, $o);
-                $_SESSION['flash'] = ['ok', "Platba potvrzena – potvrzení a poukaz {$o['voucher']} odešly na {$o['customer']['email']}."];
+                $_SESSION['flash'] = ['ok', "Platba potvrzena – potvrzení a poukaz {$o['voucher']} odešly na {$o['customer']['email']}. Nezapomeňte zákazníkovi zavolat a domluvit termín návštěvy."];
                 break;
             case 'faktura_znovu':
                 bb_send_invoice_customer($cfg, $DATA, $o);
@@ -327,6 +327,9 @@ foreach ($list as $o) {
         $out .= $btn($o, 'zaplaceno', 'Platba přišla – poslat potvrzení a poukaz', $gold ? 'gold' : '', 'Potvrdit platbu ' . bb_money((float) $o['product']['price']) . ' a poslat poukaz na ' . $c['email'] . '?');
         $out .= $btn($o, 'faktura_znovu', 'Poslat fakturu znovu', 'ghost', 'Poslat fakturu znovu na ' . $c['email'] . '?');
     }
+    if ($st === 'ceka' || $st === 'bez_faktury') {
+        $out .= '<span style="color:#8f89b8;font-size:12px;width:100%;flex-basis:100%">Po zaplacení ještě zákazníkovi zavolejte a domluvte termín návštěvy.</span>';
+    }
     if ($st === 'bez_faktury') {
         $out .= $btn($o, 'vystavit', 'Vystavit a poslat fakturu', $gold ? 'gold' : '', 'Vystavit fakturu a poslat ji na ' . $c['email'] . '?');
     }
@@ -337,7 +340,7 @@ foreach ($list as $o) {
     if (!empty($o['no'])) {
         $out .= '<a class="btn ghost" href="?dl=faktura&id=' . urlencode($o['id']) . '" target="_blank">Faktura PDF</a>';
     }
-    if (in_array($st, ['zaplaceno', 'vyrizeno'], true)) {
+    if ($st !== 'nova') {
         $out .= '<a class="btn ghost" href="?dl=poukaz&id=' . urlencode($o['id']) . '" target="_blank">Poukaz PDF</a>';
         if ($st === 'zaplaceno') {
             $out .= $btn($o, 'zaplaceno', 'Poslat poukaz znovu', 'ghost', 'Poslat potvrzení a poukaz znovu na ' . $c['email'] . '?');
