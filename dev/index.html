@@ -1095,6 +1095,60 @@ body:not(.go) .hero-copy .locb{animation-play-state:paused}
 .galnav .gpause{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:rgba(176,102,255,.08);color:var(--chrome);display:grid;place-items:center;cursor:pointer}
 
 
+
+/* ===== objednávka poukazu – modal ===== */
+.vo-dlg{border:0;padding:0;margin:auto;background:transparent;color:var(--chrome);max-width:min(560px,calc(100vw - 24px));width:100%;max-height:calc(100dvh - 24px);overflow:visible}
+.vo-dlg::backdrop{background:rgba(3,2,14,.78);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.vo-dlg[open]{animation:voIn .45s cubic-bezier(.22,.61,.36,1)}
+.vo-dlg[open]::backdrop{animation:voFade .35s ease}
+@keyframes voIn{from{opacity:0;transform:translateY(18px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes voFade{from{opacity:0}to{opacity:1}}
+.vo-box{position:relative;max-height:calc(100dvh - 24px);overflow-y:auto;overscroll-behavior:contain;border-radius:24px;border:1px solid var(--line);background:radial-gradient(ellipse at 100% 0%,rgba(176,102,255,.22),transparent 55%),linear-gradient(160deg,#141036,#08061c 70%);box-shadow:0 30px 80px -20px rgba(109,40,255,.55),0 0 0 1px rgba(255,255,255,.04) inset;padding:28px clamp(18px,4vw,32px) 24px}
+.vo-dlg.is-gold .vo-box{background:radial-gradient(ellipse at 100% 0%,rgba(240,207,133,.22),transparent 55%),linear-gradient(160deg,#1c1530,#08061c 70%);border-color:rgba(240,207,133,.3)}
+.vo-x{position:absolute;top:14px;right:14px;width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--chrome);display:grid;place-items:center;cursor:pointer;transition:background .2s,transform .2s}
+.vo-x:hover{background:rgba(176,102,255,.18);transform:rotate(90deg)}
+.vo-x svg{width:16px;height:16px}
+.vo-box h3{font-size:clamp(20px,3.4vw,26px);line-height:1.15;padding-right:44px}
+.vo-sum{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:16px 0 20px;padding:12px 16px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.03);font-size:14px}
+.vo-sum b{font-family:var(--display);font-weight:400;font-size:15px;color:#fff}
+.vo-sum small{display:block;color:var(--muted);font-size:12px;margin-top:2px;overflow-wrap:anywhere}
+.vo-sum .vo-price{flex:none;font:700 15px var(--body);color:var(--ice);white-space:nowrap}
+.vo-dlg.is-gold .vo-sum .vo-price{color:var(--gold)}
+.vo-lbl{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+.vo-opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;border:0;padding:0;margin:0 0 18px}
+.vo-opt{position:relative;cursor:pointer}
+.vo-opt input{position:absolute;opacity:0;pointer-events:none}
+.vo-opt span{display:flex;flex-direction:column;gap:6px;height:100%;padding:16px 14px;border-radius:16px;border:1px solid var(--line);background:rgba(255,255,255,.03);transition:border-color .25s,background .25s,box-shadow .25s}
+.vo-opt svg{width:24px;height:24px;color:var(--violet)}
+.vo-opt strong{font-size:15px;color:#fff}
+.vo-opt em{font-style:normal;font-size:12.5px;line-height:1.4;color:var(--muted)}
+.vo-opt:hover span{border-color:rgba(176,102,255,.5)}
+.vo-opt input:checked+span{border-color:var(--violet);background:rgba(176,102,255,.14);box-shadow:0 0 0 3px rgba(176,102,255,.18)}
+.vo-opt input:focus-visible+span{outline:2px solid var(--ice);outline-offset:2px}
+.vo-opt input:checked+span::after{content:"";position:absolute;top:12px;right:12px;width:18px;height:18px;border-radius:50%;background:var(--violet) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E") center/12px no-repeat}
+.vo-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.vo-fields .field.full{grid-column:1/-1}
+.vo-fields .field label i{font-style:normal;font-weight:500;opacity:.7}
+.vo-inv{display:contents}
+.vo-inv[hidden]{display:none}
+.vo-flow{margin:20px 0 4px;padding:16px;border-radius:16px;background:rgba(143,227,255,.05);border:1px solid rgba(143,227,255,.16)}
+.vo-flow ol{list-style:none;margin:0;padding:0;display:grid;gap:10px;counter-reset:vo}
+.vo-flow li{position:relative;padding-left:36px;font-size:14px;line-height:1.45;color:var(--chrome);counter-increment:vo}
+.vo-flow li::before{content:counter(vo);position:absolute;left:0;top:-2px;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font:700 11.5px var(--body);border:1px solid rgba(143,227,255,.35);color:var(--ice)}
+.vo-flow li:not(:last-child)::after{content:"";position:absolute;left:11.5px;top:24px;bottom:-10px;width:1px;background:rgba(143,227,255,.2)}
+.vo-flow li.vo-last{color:#fff;font-weight:600}
+.vo-flow li.vo-last::before{background:var(--ice);color:#06051a;border-color:var(--ice)}
+.vo-flow a{color:var(--ice);white-space:nowrap}
+.vo-box .btn{width:100%;margin-top:18px}
+.vo-err{font-size:13px;color:#ff9db5;min-height:1.3em;margin-top:8px;text-align:center}
+.vo-field-bad input,.vo-field-bad textarea{border-color:#ff7a9c!important}
+.vo-done{text-align:center;padding:10px 0 4px}
+.vo-done svg{width:56px;height:56px;color:var(--ice);margin:0 auto 14px}
+.vo-done p{color:var(--muted);font-size:15px;margin-top:10px}
+.vo-done .btn{margin-top:20px}
+html.vo-lock,html.vo-lock body{overflow:hidden}
+@media (max-width:520px){.vo-opts,.vo-fields{grid-template-columns:1fr}.vo-opt span{flex-direction:row;align-items:center;flex-wrap:wrap;gap:4px 12px;padding:14px 44px 14px 14px}.vo-opt em{flex-basis:100%}}
+@media (prefers-reduced-motion:reduce){.vo-dlg[open],.vo-dlg[open]::backdrop{animation:none}}
 </style>
 <style>/* mobil: úvod vždy přesně na výšku obrazovky */
 @media (max-width:760px){
@@ -2033,12 +2087,47 @@ html.gold .gt-aura{opacity:1}
           <button type="button" class="vopt g" id="vo2" aria-pressed="false" data-k="Gold Time · 2 hodiny" data-b="22 – 24"><strong><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 019.5 4a8 8 0 1010.5 10.5z"/></svg>Gold Time</strong><span>celá budova · 2 500 Kč</span></button>
         </div>
         <p class="vsw-q">Vyberte poukaz: <b>Standard</b> nebo <b class="g">Gold Time</b></p>
-        <div class="vsteps"><div class="vs"><b>1</b><span>Vyberte Standard nebo Gold Time</span></div><div class="vs vs2"><b>2</b><span>Jméno a věnování napište <em>přímo do poukazu</em></span></div><div class="vs"><b>3</b><span>Zadejte e-mail, poukaz vám pošleme</span></div></div><div class="field"><label for="v-mail">Váš e-mail</label><input id="v-mail" type="email" autocomplete="email" placeholder="kam poukaz pošleme"></div>
-        <button class="btn" type="submit">Objednat poukaz</button>
+        <div class="vsteps"><div class="vs"><b>1</b><span>Vyberte Standard nebo Gold Time</span></div><div class="vs vs2"><b>2</b><span>Jméno a věnování napište <em>přímo do poukazu</em></span></div><div class="vs"><b>3</b><span>Vyzvednete na místě, nebo pošleme fakturu</span></div></div>
+        <button class="btn" type="submit" aria-haspopup="dialog">Objednat poukaz</button>
         <p class="vnote" id="vnote"></p>
       </form>
     </div>
   </section>
+
+
+  <dialog class="vo-dlg" id="voDlg" aria-labelledby="voTitle">
+    <div class="vo-box">
+      <button type="button" class="vo-x" id="voX" aria-label="Zavřít"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      <form id="voForm" novalidate>
+        <div id="voStep">
+          <h3 id="voTitle">Jak chcete poukaz převzít?</h3>
+          <div class="vo-sum"><div><b id="voKind">Standard · 2 hodiny</b><small id="voFor"></small></div><span class="vo-price" id="voPrice">2 000 Kč</span></div>
+          <fieldset class="vo-opts"><legend class="vo-lbl">Způsob převzetí</legend>
+            <label class="vo-opt"><input type="radio" name="voWay" value="odber" checked><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0114 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><strong>Osobní odběr</strong><em>Zaplatíte a převezmete přímo u nás v Táboře.</em></span></label>
+            <label class="vo-opt"><input type="radio" name="voWay" value="faktura"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg><strong>Poslat fakturu</strong><em>Zaplatíte převodem, poukaz pošleme e-mailem.</em></span></label>
+          </fieldset>
+          <div class="vo-fields">
+            <div class="field full"><label for="voName">Jméno a příjmení</label><input id="voName" type="text" autocomplete="name" required></div>
+            <div class="field"><label for="voTel">Telefon</label><input id="voTel" type="tel" autocomplete="tel" inputmode="tel" placeholder="+420" required></div>
+            <div class="field"><label for="voMail">E-mail</label><input id="voMail" type="email" autocomplete="email" required></div>
+            <div class="vo-inv" id="voInv" hidden>
+              <div class="field full"><label for="voAddr">Fakturační adresa</label><input id="voAddr" type="text" autocomplete="street-address" placeholder="ulice, město, PSČ"></div>
+              <div class="field full"><label for="voIco">Firma / IČO <i>(nepovinné)</i></label><input id="voIco" type="text" autocomplete="organization"></div>
+            </div>
+          </div>
+          <div class="vo-flow" aria-live="polite"><p class="vo-lbl">Co bude dál</p><ol id="voFlow"></ol></div>
+          <button class="btn" type="submit">Odeslat objednávku</button>
+          <p class="vo-err" id="voErr" role="alert"></p>
+        </div>
+        <div class="vo-done" id="voDone" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M7.5 12.5l3 3 6-6.5"/></svg>
+          <h3>Skoro hotovo</h3>
+          <p>Otevřeli jsme vám e-mail s objednávkou. Stačí ho odeslat a my se vám obratem ozveme.</p>
+          <button class="btn" type="button" id="voOk">Rozumím</button>
+        </div>
+      </form>
+    </div>
+  </dialog>
 
   <section id="faq" style="padding-top:0">
     <div class="wrap faq">
@@ -2588,8 +2677,39 @@ if('IntersectionObserver' in window&&!reduce){const io=new IntersectionObserver(
   ['vFor','vMsg'].forEach(id=>{const e=document.getElementById(id);e.addEventListener('input',()=>vc.classList.toggle('typed',!!(document.getElementById('vFor').value.trim()||document.getElementById('vMsg').value.trim())));e.addEventListener('keydown',ev=>{if(ev.key==='Enter'){ev.preventDefault();e.blur();}});});
   o.forEach(b=>b.addEventListener('click',()=>{o.forEach(x=>x.setAttribute('aria-pressed',x===b));vc.classList.toggle('gold',b.id==='vo2');document.getElementById('vKind').textContent=b.dataset.k;document.getElementById('vBlock').textContent=b.dataset.b;}));
   if(matchMedia('(pointer:fine)').matches&&!reduce){vc.addEventListener('mousemove',e=>{if(document.activeElement&&vc.contains(document.activeElement)&&document.activeElement.tagName==='INPUT'){vc.style.transform='';return;}const r=vc.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;vc.style.transform=`perspective(1000px) rotateY(${x*10}deg) rotateX(${-y*10}deg)`;});vc.addEventListener('mouseleave',()=>vc.style.transform='');}
-  document.getElementById('vform').addEventListener('submit',e=>{e.preventDefault();const n=document.getElementById('vnote'),m=document.getElementById('v-mail').value.trim();
-    if(!m){n.textContent='Doplňte prosím váš e-mail.';return;}const k=document.getElementById('vKind').textContent,f=document.getElementById('vFor').value.trim(),g=document.getElementById('vMsg').value.trim();const body='Dobrý den,\n\nmám zájem o dárkový poukaz.\n\nTyp: '+k+'\nPro koho: '+(f||'—')+'\nVěnování: '+(g||'—')+'\nMůj e-mail: '+m+'\n\nDěkuji';location.href='mailto:blackboxluxury@email.cz?subject='+encodeURIComponent('Objednávka poukazu – '+k)+'&body='+encodeURIComponent(body);n.textContent='Otevřeli jsme vám e-mail s objednávkou. Stačí ho odeslat.';});
+  /* objednávka poukazu → modal */
+  const D=document.getElementById('voDlg'),F=document.getElementById('voForm'),$=id=>document.getElementById(id);
+  const FLOW={odber:['Odešlete objednávku.','Ozveme se a domluvíme čas vyzvednutí.','Zaplatíte na místě a převezmete poukaz.'],
+              faktura:['Odešlete objednávku.','Pošleme vám fakturu e-mailem.','Po připsání platby vám pošleme poukaz.']};
+  const LAST='Termín návštěvy si obdarovaný domluví telefonem na <a href="tel:+420737222266">+420 737 22 22 66</a>.';
+  const way=()=>F.querySelector('input[name="voWay"]:checked').value;
+  function paint(){const w=way();$('voInv').hidden=w!=='faktura';$('voAddr').required=w==='faktura';
+    $('voFlow').innerHTML=FLOW[w].map(t=>'<li>'+t+'</li>').join('')+'<li class="vo-last">'+LAST+'</li>';}
+  F.querySelectorAll('input[name="voWay"]').forEach(r=>r.addEventListener('change',paint));
+  function openDlg(){const g=$('vo2').getAttribute('aria-pressed')==='true',btn=g?$('vo2'):$('vo1');
+    $('voKind').textContent=$('vKind').textContent;$('voPrice').textContent=(btn.querySelector('span').textContent.split('·').pop()||'').trim();
+    const f=$('vFor').value.trim(),m=$('vMsg').value.trim();$('voFor').textContent=[f&&'Pro: '+f,m&&'„'+m+'“'].filter(Boolean).join(' · ');
+    D.classList.toggle('is-gold',g);$('voStep').hidden=false;$('voDone').hidden=true;$('voErr').textContent='';paint();
+    document.documentElement.classList.add('vo-lock');if(D.showModal)D.showModal();else D.setAttribute('open','');setTimeout(()=>$('voName').focus(),60);}
+  function closeDlg(){if(D.close)D.close();else D.removeAttribute('open');}
+  D.addEventListener('close',()=>document.documentElement.classList.remove('vo-lock'));
+  D.addEventListener('click',e=>{if(e.target===D)closeDlg();});
+  $('voX').addEventListener('click',closeDlg);$('voOk').addEventListener('click',closeDlg);
+  F.querySelectorAll('input').forEach(i=>i.addEventListener('input',()=>i.closest('.field')&&i.closest('.field').classList.remove('vo-field-bad')));
+  document.getElementById('vform').addEventListener('submit',e=>{e.preventDefault();$('vnote').textContent='';openDlg();});
+  F.addEventListener('submit',e=>{e.preventDefault();const w=way(),err=$('voErr');let bad=null;
+    const need=['voName','voTel','voMail'].concat(w==='faktura'?['voAddr']:[]);
+    need.forEach(id=>{const i=$(id),ok=id==='voMail'?/^\S+@\S+\.\S+$/.test(i.value.trim()):!!i.value.trim();i.closest('.field').classList.toggle('vo-field-bad',!ok);if(!ok&&!bad)bad=i;});
+    if(bad){err.textContent='Doplňte prosím zvýrazněné údaje.';bad.focus();return;}err.textContent='';
+    const v=id=>$(id).value.trim(),k=$('vKind').textContent;
+    const lines=['Dobrý den,','','mám zájem o dárkový poukaz.','',
+      'Typ: '+k+' ('+$('voPrice').textContent+')','Pro koho: '+(v('vFor')||'—'),'Věnování: '+(v('vMsg')||'—'),'',
+      'Způsob převzetí: '+(w==='faktura'?'Poslat fakturu (platba převodem)':'Osobní odběr na místě'),'',
+      'Jméno: '+v('voName'),'Telefon: '+v('voTel'),'E-mail: '+v('voMail')];
+    if(w==='faktura'){lines.push('Fakturační adresa: '+v('voAddr'));if(v('voIco'))lines.push('Firma / IČO: '+v('voIco'));}
+    lines.push('','Děkuji');
+    location.href='mailto:blackboxluxury@email.cz?subject='+encodeURIComponent('Objednávka poukazu – '+k+' – '+(w==='faktura'?'faktura':'osobní odběr'))+'&body='+encodeURIComponent(lines.join('\n'));
+    $('voStep').hidden=true;$('voDone').hidden=false;$('voOk').focus();});
 })();
 /* faq: one open at a time */
 (function(){const Q=[...document.querySelectorAll('.qa')];
