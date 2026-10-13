@@ -1096,6 +1096,14 @@ body:not(.go) .hero-copy .locb{animation-play-state:paused}
 
 
 
+
+/* objednat až po vyplnění jména */
+#vform .btn.is-off{filter:grayscale(.6) brightness(.75);box-shadow:none;cursor:not-allowed}
+#vform .btn.is-off:hover{transform:none}
+.vcard.need-name .vline{animation:needName .6s cubic-bezier(.36,.07,.19,.97)}
+.vcard.need-name .vname{border-color:#ff7a9c!important;box-shadow:0 2px 0 -1px #ff7a9c}
+@keyframes needName{10%,90%{transform:translateX(-1px)}20%,80%{transform:translateX(3px)}30%,50%,70%{transform:translateX(-5px)}40%,60%{transform:translateX(5px)}}
+@media (prefers-reduced-motion:reduce){.vcard.need-name .vline{animation:none}}
 /* ===== objednávka poukazu – modal ===== */
 .vo-dlg{border:0;padding:0;margin:auto;background:transparent;color:var(--chrome);max-width:min(560px,calc(100vw - 24px));width:100%;max-height:calc(100dvh - 24px);overflow:visible}
 .vo-dlg::backdrop{background:rgba(3,2,14,.78);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
@@ -2696,7 +2704,12 @@ if('IntersectionObserver' in window&&!reduce){const io=new IntersectionObserver(
   D.addEventListener('click',e=>{if(e.target===D)closeDlg();});
   $('voX').addEventListener('click',closeDlg);$('voOk').addEventListener('click',closeDlg);
   F.querySelectorAll('input').forEach(i=>i.addEventListener('input',()=>i.closest('.field')&&i.closest('.field').classList.remove('vo-field-bad')));
-  document.getElementById('vform').addEventListener('submit',e=>{e.preventDefault();$('vnote').textContent='';openDlg();});
+  const vBtn=document.querySelector('#vform button[type=submit]'),vF=$('vFor');
+  const syncBtn=()=>{const ok=!!vF.value.trim();vBtn.classList.toggle('is-off',!ok);vBtn.setAttribute('aria-disabled',String(!ok));if(ok){$('vnote').textContent='';vc.classList.remove('need-name');}};
+  vF.addEventListener('input',syncBtn);syncBtn();
+  document.getElementById('vform').addEventListener('submit',e=>{e.preventDefault();
+    if(!vF.value.trim()){$('vnote').textContent='Nejdřív napište do poukazu jméno obdarovaného.';vc.classList.remove('need-name');void vc.offsetWidth;vc.classList.add('need-name');vc.scrollIntoView({behavior:'smooth',block:'center'});setTimeout(()=>vF.focus({preventScroll:true}),350);return;}
+    $('vnote').textContent='';openDlg();});
   F.addEventListener('submit',e=>{e.preventDefault();const w=way(),err=$('voErr');let bad=null;
     const need=['voName','voTel','voMail'].concat(w==='faktura'?['voAddr']:[]);
     need.forEach(id=>{const i=$(id),ok=id==='voMail'?/^\S+@\S+\.\S+$/.test(i.value.trim()):!!i.value.trim();i.closest('.field').classList.toggle('vo-field-bad',!ok);if(!ok&&!bad)bad=i;});
