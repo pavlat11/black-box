@@ -419,7 +419,7 @@ function bb_invoice_pdf(array $cfg, array $o): string
     }
     $pdf->SetFont('Manrope', 'B', 7.5);
     $pdf->SetTextColor(124, 92, 230);
-    $pdf->Cell($R - $L, 4, $cfg['phone'] . '  ·  ' . $cfg['reply_to'] . '  ·  ' . preg_replace('~^https?://~', '', $cfg['web']), 0, 2, 'C');
+    $pdf->Cell($R - $L, 4, $cfg['phone'] . '  ·  ' . ($cfg['contact_email'] ?? $cfg['reply_to']) . '  ·  ' . preg_replace('~^https?://~', '', $cfg['web']), 0, 2, 'C');
 
     return $pdf->Output('S');
 }
@@ -433,7 +433,7 @@ function bb_email_layout(string $preheader, string $inner, array $cfg, bool $gol
     $webShort = bb_h(preg_replace('~^https?://~', '', $cfg['web']));
     $tel = bb_h($cfg['phone']);
     $telHref = 'tel:' . preg_replace('/\s+/', '', $cfg['phone']);
-    $mail = bb_h($cfg['reply_to']);
+    $mail = bb_h($cfg['contact_email'] ?? $cfg['reply_to']);
     $s = $cfg['seller'];
     return '<!doctype html>
 <html lang="cs" xmlns="http://www.w3.org/1999/xhtml"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="x-apple-disable-message-reformatting"><meta name="color-scheme" content="dark light"><meta name="supported-color-schemes" content="dark light"><title>Black Box Luxury</title>
@@ -610,4 +610,295 @@ function bb_mailer(array $cfg): PHPMailer
     }
     $m->addReplyTo($cfg['reply_to'], $cfg['from_name']);
     return $m;
+}
+
+/* ---------- uložené objednávky ---------- */
+
+function bb_orders_dir(string $dataDir): string
+{
+    $d = $dataDir . '/objednavky';
+    if (!is_dir($d)) {
+        @mkdir($d, 0755, true);
+    }
+    return $d;
+}
+
+function bb_safe_id(string $id): string
+{
+    return preg_replace('/[^A-Za-z0-9\-]/', '', $id);
+}
+
+function bb_save_order(string $dataDir, array $o): void
+{
+    $o['updated'] = time();
+    file_put_contents(bb_orders_dir($dataDir) . '/' . bb_safe_id($o['id']) . '.json', json_encode($o, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT), LOCK_EX);
+}
+
+function bb_load_order(string $dataDir, string $id): ?array
+{
+    $f = bb_orders_dir($dataDir) . '/' . bb_safe_id($id) . '.json';
+    if (!is_file($f)) {
+        return null;
+    }
+    $o = json_decode((string) file_get_contents($f), true);
+    return is_array($o) ? $o : null;
+}
+
+function bb_list_orders(string $dataDir): array
+{
+    $list = [];
+    foreach (glob(bb_orders_dir($dataDir) . '/*.json') ?: [] as $f) {
+        $o = json_decode((string) file_get_contents($f), true);
+        if (is_array($o)) {
+            $list[] = $o;
+        }
+    }
+    usort($list, fn($a, $b) => ($b['created'] ?? 0) <=> ($a['created'] ?? 0));
+    return $list;
+}
+
+function bb_voucher_code(): string
+{
+    $alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    $c = '';
+    for ($i = 0; $i < 6; $i++) {
+        $c .= $alphabet[random_int(0, strlen($alphabet) - 1)];
+    }
+    return 'BB-' . substr($c, 0, 3) . '-' . substr($c, 3);
+}
+
+/* ---------- PDF poukaz ---------- */
+
+function bb_voucher_pdf(array $cfg, array $o): string
+{
+    $clean = fn($t) => trim(preg_replace('/\s+/u', ' ', preg_replace('/[^\x{20}-\x{7E}\x{A0}-\x{17F}\x{2013}-\x{201E}\x{2022}\x{2026}]/u', '', (string) $t)));
+    $gold = $o['kind'] === 'gold';
+    $A = $gold ? [240, 207, 133] : [185, 150, 255];
+    $A2 = $gold ? [201, 160, 74] : [138, 77, 255];
+
+    $pdf = new BBInvoicePdf('L', 'mm', 'A5');
+    $pdf->SetTitle('Dárkový poukaz Black Box ' . $o['voucher'], true);
+    $pdf->SetAuthor($cfg['seller']['name'], true);
+    $pdf->AddFont('Manrope', '', 'Manrope-Regular.ttf', true);
+    $pdf->AddFont('Manrope', 'B', 'Manrope-Bold.ttf', true);
+    $pdf->AddFont('Manrope', 'I', 'Manrope-SemiBold.ttf', true);
+    $pdf->AddFont('Unbounded', '', 'Unbounded-Regular.ttf', true);
+    $pdf->SetAutoPageBreak(false);
+    $pdf->AddPage();
+    $W = 210;
+    $H = 148;
+
+    /* pozadí + hvězdy */
+    $pdf->SetFillColor(6, 5, 26);
+    $pdf->Rect(0, 0, $W, $H, 'F');
+    mt_srand(crc32($o['voucher']));
+    for ($i = 0; $i < 140; $i++) {
+        $x = mt_rand(0, $W * 10) / 10;
+        $y = mt_rand(0, $H * 10) / 10;
+        $r = mt_rand(10, 45) / 100;
+        $b = mt_rand(90, 235);
+        $pdf->SetFillColor($b, $b, min(255, $b + 20));
+        $pdf->RoundedRect($x, $y, $r, $r, $r / 2, 'F');
+    }
+    /* rámeček */
+    $pdf->SetDrawColor(...$A2);
+    $pdf->SetLineWidth(0.35);
+    $pdf->RoundedRect(7, 7, $W - 14, $H - 14, 5);
+    $pdf->SetDrawColor(...$A);
+    $pdf->SetLineWidth(0.15);
+    $pdf->RoundedRect(9, 9, $W - 18, $H - 18, 4);
+
+    /* logo */
+    $pdf->Image(__DIR__ . '/assets/logo-pdf.jpg', 16, 30, 62, 62);
+    $pdf->SetFont('Manrope', 'B', 7.5);
+    $pdf->SetTextColor(...$A);
+    $pdf->SetXY(16, 96);
+    $pdf->Cell(62, 4, 'TÁBOR · OD SLUNCE', 0, 0, 'C');
+
+    /* text */
+    $x = 90;
+    $w = $W - $x - 18;
+    $pdf->SetFont('Manrope', 'B', 8);
+    $pdf->SetTextColor(...$A);
+    $pdf->SetXY($x, 22);
+    $pdf->Cell($w, 4, 'DÁRKOVÝ POUKAZ');
+    $pdf->SetFont('Unbounded', '', 26);
+    $pdf->SetTextColor(255, 255, 255);
+    $pdf->SetXY($x, 28);
+    $pdf->Cell($w, 13, $gold ? 'Gold Time' : 'Standard');
+    $pdf->SetFont('Manrope', '', 9.5);
+    $pdf->SetTextColor(190, 186, 220);
+    $pdf->SetXY($x, 42);
+    $pdf->MultiCell($w, 5, $o['product']['detail'] . '. Vířivka, hvězdné nebe, projekce a zvuk.');
+
+    $y = $pdf->GetY() + 7;
+    $pdf->SetFont('Manrope', 'B', 7.5);
+    $pdf->SetTextColor(...$A);
+    $pdf->SetXY($x, $y);
+    $pdf->Cell($w, 4, 'PRO');
+    $pdf->SetFont('Unbounded', '', 15);
+    $pdf->SetTextColor(255, 255, 255);
+    $pdf->SetXY($x, $y + 5);
+    $pdf->MultiCell($w, 8, $clean($o['for']) ?: '—');
+    $y = $pdf->GetY();
+    if (($o['msg'] ?? '') !== '') {
+        $pdf->SetFont('Manrope', 'I', 10.5);
+        $pdf->SetTextColor(220, 214, 250);
+        $pdf->SetXY($x, $y + 2);
+        $pdf->MultiCell($w, 5.5, '„' . $clean($o['msg']) . '“');
+    }
+
+    /* kód + rezervace */
+    $by = $H - 38;
+    $pdf->SetFillColor(21, 17, 58);
+    $pdf->RoundedRect($x, $by, 46, 16, 3, 'F');
+    $pdf->SetFont('Manrope', 'B', 6.5);
+    $pdf->SetTextColor(...$A);
+    $pdf->SetXY($x + 4, $by + 3);
+    $pdf->Cell(40, 3, 'KÓD POUKAZU');
+    $pdf->SetFont('Manrope', 'B', 12);
+    $pdf->SetTextColor(255, 255, 255);
+    $pdf->SetXY($x + 4, $by + 7.5);
+    $pdf->Cell(40, 6, $o['voucher']);
+
+    $pdf->SetFont('Manrope', 'B', 6.5);
+    $pdf->SetTextColor(...$A);
+    $pdf->SetXY($x + 52, $by + 3);
+    $pdf->Cell(50, 3, 'REZERVACE TERMÍNU');
+    $pdf->SetFont('Manrope', 'B', 12);
+    $pdf->SetTextColor(255, 255, 255);
+    $pdf->SetXY($x + 52, $by + 7.5);
+    $pdf->Cell(50, 6, $cfg['phone']);
+
+    $pdf->SetFont('Manrope', '', 7.5);
+    $pdf->SetTextColor(143, 137, 184);
+    $pdf->SetXY($x, $H - 18);
+    $pdf->Cell($w, 4, 'Purkyňova 2961, 390 02 Tábor  ·  ' . preg_replace('~^https?://~', '', $cfg['web']));
+    return $pdf->Output('S');
+}
+
+/* ---------- e-mail: platba přijata ---------- */
+
+function bb_email_paid(array $cfg, array $o): string
+{
+    $gold = $o['kind'] === 'gold';
+    $acc = $gold ? '#f0cf85' : '#b98cff';
+    $telHref = 'tel:' . preg_replace('/\s+/', '', $cfg['phone']);
+    $f = 'font-family:Manrope,\'Segoe UI\',Helvetica,Arial,sans-serif;';
+    $ref = !empty($o['no']) ? 'za fakturu č. ' . bb_h($o['no']) . ' ' : '';
+    $inner = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+<tr><td class="px" style="padding:38px 40px 8px;' . $f . 'font-size:11px;letter-spacing:3px;text-transform:uppercase;color:' . $acc . ';font-weight:700;">Potvrzení o platbě</td></tr>
+<tr><td class="px h1" style="padding:0 40px 14px;font-family:Unbounded,\'Segoe UI\',Helvetica,Arial,sans-serif;font-size:30px;line-height:38px;color:#ffffff;font-weight:400;">Platba dorazila. Děkujeme!</td></tr>
+<tr><td class="px" style="padding:0 40px 26px;' . $f . 'font-size:16px;line-height:25px;color:#c9c3ee;">Potvrzujeme přijetí platby ' . $ref . 've výši <b style="color:#ffffff;">' . bb_h(bb_money($o['product']['price'])) . '</b> (' . bb_h(bb_date($o['paid_at'])) . '). Dárkový poukaz najdete <b style="color:#ffffff;">v příloze</b> – připravený k tisku i k poslání dál.</td></tr>
+' . bb_email_summary($o, $gold) . '
+<tr><td class="px" style="padding:22px 40px 0;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px dashed ' . $acc . ';border-radius:14px;"><tr>
+<td style="padding:16px 20px;' . $f . 'font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#8f89b8;font-weight:700;">Kód poukazu</td>
+<td align="right" style="padding:16px 20px;' . $f . 'font-size:20px;letter-spacing:2px;color:#ffffff;font-weight:700;">' . bb_h($o['voucher']) . '</td>
+</tr></table>
+</td></tr>
+' . bb_email_steps([
+        'Poukaz z přílohy vytiskněte, nebo ho rovnou pošlete obdarovanému.',
+        'Termín si domluvíte telefonicky na <a href="' . $telHref . '" style="color:' . $acc . ';text-decoration:none;font-weight:700;">' . bb_h($cfg['phone']) . '</a> – stačí říct kód poukazu.',
+        'Pak už jen přijďte do Black Boxu v Táboře a užijte si večer jen pro vás dva.',
+    ], $gold) . '
+</table>';
+    return bb_email_layout('Platba přijata – posíláme dárkový poukaz Black Box.', $inner, $cfg, $gold);
+}
+
+/* ---------- faktura: vystavení a odeslání ---------- */
+
+function bb_issue_invoice(array $cfg, string $dataDir, array $o, string $iban): array
+{
+    $no = bb_next_invoice_no($cfg, $dataDir);
+    $issued = time();
+    $o = array_merge($o, [
+        'no' => $no,
+        'vs' => preg_replace('/\D/', '', $no),
+        'issued' => $issued,
+        'due' => strtotime('+' . (int) $cfg['due_days'] . ' days', $issued),
+        'account' => preg_replace('/\s+/', '', (string) $cfg['bank_account']),
+        'iban' => $iban,
+    ]);
+    $o['spayd'] = bb_spayd($iban, (float) $o['product']['price'], $o['vs'], 'Poukaz Black Box ' . $no);
+    if (!is_dir($dataDir . '/faktury')) {
+        @mkdir($dataDir . '/faktury', 0755, true);
+    }
+    $o['invoice_file'] = 'faktura-' . $no . '.pdf';
+    file_put_contents($dataDir . '/faktury/' . $o['invoice_file'], bb_invoice_pdf($cfg, $o));
+    $o['id'] = $no;
+    $o['way'] = 'faktura';
+    $o['status'] = 'ceka';
+    $o['created'] = $o['created'] ?? $issued;
+    bb_save_order($dataDir, $o);
+    return $o;
+}
+
+function bb_invoice_bytes(array $cfg, string $dataDir, array $o): string
+{
+    $f = $dataDir . '/faktury/' . ($o['invoice_file'] ?? '');
+    return is_file($f) ? (string) file_get_contents($f) : bb_invoice_pdf($cfg, $o);
+}
+
+function bb_send_invoice_customer(array $cfg, string $dataDir, array $o): void
+{
+    $pdf = bb_invoice_bytes($cfg, $dataDir, $o);
+    $qrPng = bb_qr_png($o['spayd']);
+    $m = bb_mailer($cfg);
+    $m->addAddress($o['customer']['email'], $o['customer']['name']);
+    $m->Subject = 'Faktura č. ' . $o['no'] . ' – dárkový poukaz Black Box';
+    $m->isHTML(true);
+    $m->addEmbeddedImage(__DIR__ . '/assets/logo-email.png', 'bblogo', 'black-box.png');
+    if ($qrPng) {
+        $m->addStringEmbeddedImage($qrPng, 'bbqr', 'qr-platba.png', 'base64', 'image/png');
+    }
+    $m->Body = bb_email_invoice($cfg, $o, (bool) $qrPng);
+    $m->AltBody = "Děkujeme za objednávku dárkového poukazu.\n\nFaktura č. {$o['no']} je v příloze.\n"
+        . "Číslo účtu: {$o['account']}\nVariabilní symbol: {$o['vs']}\nČástka: " . bb_money($o['product']['price']) . "\nSplatnost: " . bb_date($o['due']) . "\n\n"
+        . "Po připsání platby vám pošleme potvrzení o platbě a dárkový poukaz. Termín si pak domluvíte na {$cfg['phone']}.\n\nBlack Box Luxury";
+    $m->addStringAttachment($pdf, $o['invoice_file'], 'base64', 'application/pdf');
+    $m->send();
+}
+
+function bb_send_invoice_copy(array $cfg, string $dataDir, array $o, string $title): void
+{
+    $m = bb_mailer($cfg);
+    $m->addAddress($cfg['invoice_copy_to']);
+    $m->clearReplyTos();
+    $m->addReplyTo($o['customer']['email'], $o['customer']['name']);
+    $m->Subject = $title . ' ' . $o['no'] . ' – ' . $o['product']['name'] . ' – ' . $o['customer']['name'];
+    $m->isHTML(true);
+    $m->Body = bb_email_internal($o, 'faktura');
+    $m->AltBody = strip_tags(str_replace(['</tr>', '</td>'], ["\n", ' '], $m->Body));
+    $m->addStringAttachment(bb_invoice_bytes($cfg, $dataDir, $o), $o['invoice_file'], 'base64', 'application/pdf');
+    $m->send();
+}
+
+/** Potvrzení o platbě + poukaz zákazníkovi, kopie majiteli */
+function bb_send_paid(array $cfg, array $o): void
+{
+    $pdf = bb_voucher_pdf($cfg, $o);
+    $file = 'poukaz-black-box-' . $o['voucher'] . '.pdf';
+    $m = bb_mailer($cfg);
+    $m->addAddress($o['customer']['email'], $o['customer']['name']);
+    $m->Subject = 'Platba přijata – váš dárkový poukaz Black Box';
+    $m->isHTML(true);
+    $m->addEmbeddedImage(__DIR__ . '/assets/logo-email.png', 'bblogo', 'black-box.png');
+    $m->Body = bb_email_paid($cfg, $o);
+    $m->AltBody = "Platba " . (!empty($o['no']) ? "za fakturu č. {$o['no']} " : '') . "ve výši " . bb_money($o['product']['price']) . " byla přijata. Děkujeme!\n\n"
+        . "Dárkový poukaz je v příloze (kód {$o['voucher']}).\nTermín si domluvíte na {$cfg['phone']}.\n\nBlack Box Luxury";
+    $m->addStringAttachment($pdf, $file, 'base64', 'application/pdf');
+    $m->send();
+    try {
+        $m = bb_mailer($cfg);
+        $m->addAddress($cfg['invoice_copy_to']);
+        $m->Subject = 'Odesláno potvrzení o platbě ' . ($o['no'] ?? '') . ' – ' . $o['customer']['name'] . ' – poukaz ' . $o['voucher'];
+        $m->isHTML(true);
+        $m->addEmbeddedImage(__DIR__ . '/assets/logo-email.png', 'bblogo', 'black-box.png');
+        $m->Body = bb_email_paid($cfg, $o);
+        $m->AltBody = 'Kopie potvrzení o platbě pro ' . $o['customer']['email'];
+        $m->addStringAttachment($pdf, $file, 'base64', 'application/pdf');
+        $m->send();
+    } catch (Throwable $e) {
+    }
 }

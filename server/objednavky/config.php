@@ -34,9 +34,11 @@ return [
     ],
 
     // ===== E-maily ===========================================================
-    'invoice_copy_to' => 'pavlatp@email.cz',          // sem chodí objednávky s fakturou (s kopií faktury)
-    'pickup_to'       => 'blackboxluxury@email.cz',   // sem chodí objednávky s osobním odběrem
-    'reply_to'        => 'blackboxluxury@email.cz',   // na tuto adresu zákazník odpovídá
+    // Kam chodí objednávky a kopie (faktury, osobní odběr, potvrzení plateb):
+    'invoice_copy_to' => 'pavlatp@email.cz',
+    'pickup_to'       => 'pavlatp@email.cz',
+    'reply_to'        => 'pavlatp@email.cz',          // když zákazník na e-mail odpoví, přijde to sem
+    'contact_email'   => 'blackboxluxury@email.cz',   // kontakt zobrazený v e-mailech a na faktuře
     'phone'           => '+420 737 22 22 66',
     'web'             => 'https://www.black-box-luxury.cz',
 
@@ -54,6 +56,10 @@ return [
     // Odesílatel, pokud se NEposílá přes SMTP (musí být na vaší doméně):
     'from_fallback' => 'objednavky@black-box-luxury.cz',
     'from_name'     => 'Black Box Luxury',
+
+    // ===== Správa objednávek (stránka /sprava.php) ==========================
+    // Heslo pro přihlášení do správy. Prázdné = správa je vypnutá.
+    'admin_password' => '',
 
     // ===== Ochrana proti spamu ===============================================
     'max_orders_per_ip_per_hour' => 5,

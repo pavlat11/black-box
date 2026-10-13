@@ -2728,7 +2728,7 @@ if('IntersectionObserver' in window&&!reduce){const io=new IntersectionObserver(
       'Jméno: '+v('voName'),'Telefon: '+v('voTel'),'E-mail: '+v('voMail')];
     if(w==='faktura'){lines.push('Fakturační adresa: '+v('voAddr'));if(v('voIco'))lines.push('Firma / IČO: '+v('voIco'));}
     lines.push('','Děkuji');
-    const viaMail=()=>{location.href='mailto:'+(w==='faktura'?'pavlatp@email.cz':'blackboxluxury@email.cz')+'?subject='+encodeURIComponent('Objednávka poukazu – '+k+' – '+(w==='faktura'?'faktura':'osobní odběr'))+'&body='+encodeURIComponent(lines.join('\n'));
+    const viaMail=()=>{location.href='mailto:'+'pavlatp@email.cz'+'?subject='+encodeURIComponent('Objednávka poukazu – '+k+' – '+(w==='faktura'?'faktura':'osobní odběr'))+'&body='+encodeURIComponent(lines.join('\n'));
 };
     const done=(h,p)=>{$('voDoneH').textContent=h;$('voDoneP').innerHTML=p;$('voStep').hidden=true;$('voDone').hidden=false;D.scrollTop=0;$('voOk').focus({preventScroll:true});};
     const esc=t=>t.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));

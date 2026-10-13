@@ -143,6 +143,7 @@ try {
         } catch (Throwable $e) {
             // potvrzení zákazníkovi není kritické – objednávka už dorazila
         }
+        bb_save_order($DATA, $o + ['id' => 'OD-' . date('ymd-His') . '-' . random_int(10, 99), 'way' => 'odber', 'status' => 'nova', 'created' => time()]);
         log_order($DATA, [date('Y-m-d H:i'), 'osobní odběr', '', $o['product']['name'], $o['product']['price'], $for, $msg, $name, $phone, $email, '', $company, $ico, 'přijato']);
         out(['ok' => true, 'mode' => 'pickup']);
     }
@@ -160,56 +161,20 @@ try {
         $m->Body = '<p style="font-family:Arial;color:#b00020"><b>Faktura nebyla vystavena automaticky – v objednavky/config.php chybí číslo účtu.</b></p>' . bb_email_internal($o, 'faktura');
         $m->AltBody = strip_tags($m->Body);
         $m->send();
+        bb_save_order($DATA, $o + ['id' => 'FR-' . date('ymd-His') . '-' . random_int(10, 99), 'way' => 'faktura', 'status' => 'bez_faktury', 'created' => time()]);
         log_order($DATA, [date('Y-m-d H:i'), 'faktura', '', $o['product']['name'], $o['product']['price'], $for, $msg, $name, $phone, $email, $addr, $company, $ico, 'čeká na ruční fakturu']);
         out(['ok' => true, 'mode' => 'manual']);
     }
 
-    $no = bb_next_invoice_no($cfg, $DATA);
-    $issued = time();
-    $o += [
-        'no' => $no,
-        'vs' => preg_replace('/\D/', '', $no),
-        'issued' => $issued,
-        'due' => strtotime('+' . (int) $cfg['due_days'] . ' days', $issued),
-        'account' => preg_replace('/\s+/', '', (string) $cfg['bank_account']),
-        'iban' => $iban,
-    ];
-    $o['spayd'] = bb_spayd($iban, (float) $o['product']['price'], $o['vs'], 'Poukaz Black Box ' . $no);
-    $pdf = bb_invoice_pdf($cfg, $o);
-    $pdfName = 'faktura-' . $no . '.pdf';
-    @file_put_contents($DATA . '/faktury/' . $pdfName, $pdf);
-    $qrPng = bb_qr_png($o['spayd']);
-
-    // zákazníkovi
-    $m = bb_mailer($cfg);
-    $m->addAddress($email, $name);
-    $m->Subject = 'Faktura č. ' . $no . ' – dárkový poukaz Black Box';
-    $m->isHTML(true);
-    $m->addEmbeddedImage($logo, 'bblogo', 'black-box.png');
-    if ($qrPng) {
-        $m->addStringEmbeddedImage($qrPng, 'bbqr', 'qr-platba.png', 'base64', 'image/png');
-    }
-    $m->Body = bb_email_invoice($cfg, $o, (bool) $qrPng);
-    $m->AltBody = "Děkujeme za objednávku dárkového poukazu.\n\nFaktura č. $no je v příloze.\n"
-        . "Číslo účtu: {$o['account']}\nVariabilní symbol: {$o['vs']}\nČástka: " . bb_money($o['product']['price']) . "\nSplatnost: " . bb_date($o['due']) . "\n\n"
-        . "Po připsání platby vám pošleme potvrzení o platbě a dárkový poukaz. Termín si pak domluvíte na {$cfg['phone']}.\n\nBlack Box Luxury";
-    $m->addStringAttachment($pdf, $pdfName, 'base64', 'application/pdf');
-    $m->send();
-
-    // kopie majiteli
+    $o = bb_issue_invoice($cfg, $DATA, $o, $iban);
+    $no = $o['no'];
+    bb_send_invoice_customer($cfg, $DATA, $o);
     try {
-        $m = bb_mailer($cfg);
-        $m->addAddress($cfg['invoice_copy_to']);
-        $m->clearReplyTos();
-        $m->addReplyTo($email, $name);
-        $m->Subject = 'Nová faktura ' . $no . ' – ' . $o['product']['name'] . ' – ' . $name;
-        $m->isHTML(true);
-        $m->Body = bb_email_internal($o, 'faktura');
-        $m->AltBody = strip_tags(str_replace(['</tr>', '</td>'], ["\n", ' '], $m->Body));
-        $m->addStringAttachment($pdf, $pdfName, 'base64', 'application/pdf');
-        $m->send();
+        bb_send_invoice_copy($cfg, $DATA, $o, 'Nová faktura');
     } catch (Throwable $e) {
     }
+    $o['sent_at'] = time();
+    bb_save_order($DATA, $o);
 
     log_order($DATA, [date('Y-m-d H:i'), 'faktura', $no, $o['product']['name'], $o['product']['price'], $for, $msg, $name, $phone, $email, $addr, $company, $ico, 'faktura odeslána']);
     out(['ok' => true, 'mode' => 'invoice', 'invoice' => $no]);
