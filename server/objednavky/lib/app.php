@@ -158,6 +158,21 @@ class BBInvoicePdf extends tFPDF
         $this->_out(sprintf('%.2F %.2F %.2F %.2F %.2F %.2F c', $x1 * $this->k, ($h - $y1) * $this->k, $x2 * $this->k, ($h - $y2) * $this->k, $x3 * $this->k, ($h - $y3) * $this->k));
     }
 
+    function SkewStart(float $t, float $baselineY): void
+    {
+        $this->_out(sprintf('q 1 0 %.4F 1 %.4F 0 cm', $t, -$t * ($this->h - $baselineY) * $this->k));
+    }
+
+    function SkewEnd(): void
+    {
+        $this->_out('Q');
+    }
+
+    function PtToMm(float $pt): float
+    {
+        return $pt / $this->k;
+    }
+
     function Label($x, $y, $text)
     {
         $this->SetFont('Manrope', 'B', 7);
@@ -667,113 +682,90 @@ function bb_voucher_code(): string
     return 'BB-' . substr($c, 0, 3) . '-' . substr($c, 3);
 }
 
-/* ---------- PDF poukaz ---------- */
+/* ---------- PDF poukaz – stejný jako karta na webu ---------- */
 
+/*
+ * Podklad assets/poukaz-*.jpg je přesný snímek karty poukazu z webu (bez textu),
+ * 616.6 × 510.3 CSS px (karta 528.6 × 326.3 px, okraj 44 px, dole 140 px). Do něj se dopisuje
+ * jméno a věnování na stejná místa a stejným písmem jako na webu.
+ */
 function bb_voucher_pdf(array $cfg, array $o): string
 {
     $clean = fn($t) => trim(preg_replace('/\s+/u', ' ', preg_replace('/[^\x{20}-\x{7E}\x{A0}-\x{17F}\x{2013}-\x{201E}\x{2022}\x{2026}]/u', '', (string) $t)));
     $gold = $o['kind'] === 'gold';
     $A = $gold ? [240, 207, 133] : [185, 150, 255];
-    $A2 = $gold ? [201, 160, 74] : [138, 77, 255];
 
-    $pdf = new BBInvoicePdf('L', 'mm', 'A5');
+    $W = 210.0;                        // šířka stránky v mm
+    $k = $W / 616.578;                 // mm na 1 CSS px
+    $imgH = 510.281 * $k;              // ≈ 173.8 mm
+    $H = round(482 * $k, 2);           // stránka končí kousek pod kódem poukazu
+    $pt = $k / 0.352778;               // pt na 1 CSS px
+
+    $pdf = new BBInvoicePdf('L', 'mm', [$H, $W]);
     $pdf->SetTitle('Dárkový poukaz Black Box ' . $o['voucher'], true);
     $pdf->SetAuthor($cfg['seller']['name'], true);
     $pdf->AddFont('Manrope', '', 'Manrope-Regular.ttf', true);
     $pdf->AddFont('Manrope', 'B', 'Manrope-Bold.ttf', true);
-    $pdf->AddFont('Manrope', 'I', 'Manrope-SemiBold.ttf', true);
     $pdf->AddFont('Unbounded', '', 'Unbounded-Regular.ttf', true);
     $pdf->SetAutoPageBreak(false);
+    $pdf->SetMargins(0, 0, 0);
     $pdf->AddPage();
-    $W = 210;
-    $H = 148;
 
-    /* pozadí + hvězdy */
     $pdf->SetFillColor(6, 5, 26);
     $pdf->Rect(0, 0, $W, $H, 'F');
-    mt_srand(crc32($o['voucher']));
-    for ($i = 0; $i < 140; $i++) {
-        $x = mt_rand(0, $W * 10) / 10;
-        $y = mt_rand(0, $H * 10) / 10;
-        $r = mt_rand(10, 45) / 100;
-        $b = mt_rand(90, 235);
-        $pdf->SetFillColor($b, $b, min(255, $b + 20));
-        $pdf->RoundedRect($x, $y, $r, $r, $r / 2, 'F');
+    $pdf->Image(__DIR__ . '/assets/poukaz-' . ($gold ? 'gold' : 'standard') . '.jpg', 0, 0, $W, $imgH);
+
+    $x = (37 + 44) * $k;
+    $maxW = 416.5 * $k;
+
+    /* Pro – Unbounded 32 px, bílá */
+    $name = $clean($o['for']) ?: ' ';
+    $size = 32 * $pt;
+    $pdf->SetFont('Unbounded', '', $size);
+    while ($pdf->GetStringWidth($name) > $maxW && $size > 10) {
+        $size -= 0.5;
+        $pdf->SetFont('Unbounded', '', $size);
     }
-    /* rámeček */
-    $pdf->SetDrawColor(...$A2);
-    $pdf->SetLineWidth(0.35);
-    $pdf->RoundedRect(7, 7, $W - 14, $H - 14, 5);
-    $pdf->SetDrawColor(...$A);
-    $pdf->SetLineWidth(0.15);
-    $pdf->RoundedRect(9, 9, $W - 18, $H - 18, 4);
-
-    /* logo */
-    $pdf->Image(__DIR__ . '/assets/logo-pdf.jpg', 16, 30, 62, 62);
-    $pdf->SetFont('Manrope', 'B', 7.5);
-    $pdf->SetTextColor(...$A);
-    $pdf->SetXY(16, 96);
-    $pdf->Cell(62, 4, 'TÁBOR · OD SLUNCE', 0, 0, 'C');
-
-    /* text */
-    $x = 90;
-    $w = $W - $x - 18;
-    $pdf->SetFont('Manrope', 'B', 8);
-    $pdf->SetTextColor(...$A);
-    $pdf->SetXY($x, 22);
-    $pdf->Cell($w, 4, 'DÁRKOVÝ POUKAZ');
-    $pdf->SetFont('Unbounded', '', 26);
     $pdf->SetTextColor(255, 255, 255);
-    $pdf->SetXY($x, 28);
-    $pdf->Cell($w, 13, $gold ? 'Gold Time' : 'Standard');
-    $pdf->SetFont('Manrope', '', 9.5);
-    $pdf->SetTextColor(190, 186, 220);
-    $pdf->SetXY($x, 42);
-    $pdf->MultiCell($w, 5, $o['product']['detail'] . '. Vířivka, hvězdné nebe, projekce a zvuk.');
+    $baseline = (179.44 + 19.2) * $k + 0.375 * $pdf->PtToMm($size);   // střed řádku + posun účaří (podle metrik písma)
+    $pdf->Text($x, $baseline, $name);
 
-    $y = $pdf->GetY() + 7;
-    $pdf->SetFont('Manrope', 'B', 7.5);
-    $pdf->SetTextColor(...$A);
-    $pdf->SetXY($x, $y);
-    $pdf->Cell($w, 4, 'PRO');
-    $pdf->SetFont('Unbounded', '', 15);
-    $pdf->SetTextColor(255, 255, 255);
-    $pdf->SetXY($x, $y + 5);
-    $pdf->MultiCell($w, 8, $clean($o['for']) ?: '—');
-    $y = $pdf->GetY();
-    if (($o['msg'] ?? '') !== '') {
-        $pdf->SetFont('Manrope', 'I', 10.5);
-        $pdf->SetTextColor(220, 214, 250);
-        $pdf->SetXY($x, $y + 2);
-        $pdf->MultiCell($w, 5.5, '„' . $clean($o['msg']) . '“');
+    /* Věnování – Manrope 16 px kurzívou, rgb(228,224,247) */
+    $msg = $clean($o['msg'] ?? '');
+    if ($msg !== '') {
+        $size = 16 * $pt;
+        $pdf->SetFont('Manrope', '', $size);
+        while ($pdf->GetStringWidth($msg) > $maxW && $size > 7) {
+            $size -= 0.25;
+            $pdf->SetFont('Manrope', '', $size);
+        }
+        $pdf->SetTextColor(228, 224, 247);
+        $by = (264.44 + 11.2) * $k + 0.383 * $pdf->PtToMm($size);
+        // synteticky skloněné písmo jako v prohlížeči (cca 14°)
+        $t = 0.25;
+        $pdf->SkewStart($t, $by);
+        $pdf->Text($x, $by, $msg);
+        $pdf->SkewEnd();
     }
 
-    /* kód + rezervace */
-    $by = $H - 38;
-    $pdf->SetFillColor(21, 17, 58);
-    $pdf->RoundedRect($x, $by, 46, 16, 3, 'F');
+    /* pruh pod kartou: kód + rezervace */
+    $y = (370.28 + 64) * $k;
     $pdf->SetFont('Manrope', 'B', 6.5);
     $pdf->SetTextColor(...$A);
-    $pdf->SetXY($x + 4, $by + 3);
-    $pdf->Cell(40, 3, 'KÓD POUKAZU');
-    $pdf->SetFont('Manrope', 'B', 12);
-    $pdf->SetTextColor(255, 255, 255);
-    $pdf->SetXY($x + 4, $by + 7.5);
-    $pdf->Cell(40, 6, $o['voucher']);
-
-    $pdf->SetFont('Manrope', 'B', 6.5);
-    $pdf->SetTextColor(...$A);
-    $pdf->SetXY($x + 52, $by + 3);
-    $pdf->Cell(50, 3, 'REZERVACE TERMÍNU');
-    $pdf->SetFont('Manrope', 'B', 12);
-    $pdf->SetTextColor(255, 255, 255);
-    $pdf->SetXY($x + 52, $by + 7.5);
-    $pdf->Cell(50, 6, $cfg['phone']);
-
-    $pdf->SetFont('Manrope', '', 7.5);
-    $pdf->SetTextColor(143, 137, 184);
-    $pdf->SetXY($x, $H - 18);
-    $pdf->Cell($w, 4, 'Purkyňova 2961, 390 02 Tábor  ·  ' . preg_replace('~^https?://~', '', $cfg['web']));
+    $cx = $x;
+    $parts = [['KÓD POUKAZU', $o['voucher']], ['REZERVACE TERMÍNU', $cfg['phone']], ['ADRESA', 'Purkyňova 2961, Tábor']];
+    $colW = [44, 52, 60];
+    foreach ($parts as $i => $p) {
+        $pdf->SetFont('Manrope', 'B', 6.3);
+        $pdf->SetTextColor(...$A);
+        $pdf->SetXY($cx, $y);
+        $pdf->Cell($colW[$i], 3, $p[0]);
+        $pdf->SetFont('Manrope', 'B', 10.5);
+        $pdf->SetTextColor(255, 255, 255);
+        $pdf->SetXY($cx, $y + 3.6);
+        $pdf->Cell($colW[$i], 5, $p[1]);
+        $cx += $colW[$i];
+    }
     return $pdf->Output('S');
 }
 
