@@ -240,11 +240,6 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 }
                 $_SESSION['flash'] = ['ok', "Faktura {$o['no']} vystavena a odeslána na {$o['customer']['email']}."];
                 break;
-            case 'generovat_poukaz':
-                bb_ensure_voucher($cfg, $DATA, $o);
-                bb_save_order($DATA, $o);
-                $_SESSION['flash'] = ['ok', "Poukaz {$o['voucher']} vygenerován."];
-                break;
             case 'upravit':
                 $o['for'] = trim((string) ($_POST['for'] ?? ''));
                 $o['msg'] = trim((string) ($_POST['msg'] ?? ''));
@@ -380,9 +375,6 @@ foreach ($list as $o) {
         if ($st === 'zaplaceno') {
             $out .= $btn($o, 'zaplaceno', 'Poslat poukaz znovu', 'ghost', 'Poslat potvrzení a poukaz znovu na ' . $c['email'] . '?');
         }
-    }
-    if (empty($o['voucher']) && $st !== 'storno') {
-        $out .= $btn($o, 'generovat_poukaz', 'Vygenerovat poukaz', 'ghost');
     }
     if ($st === 'storno') {
         $out .= $btn($o, 'obnovit', 'Obnovit');
