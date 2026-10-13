@@ -1105,17 +1105,19 @@ body:not(.go) .hero-copy .locb{animation-play-state:paused}
 @keyframes needName{10%,90%{transform:translateX(-1px)}20%,80%{transform:translateX(3px)}30%,50%,70%{transform:translateX(-5px)}40%,60%{transform:translateX(5px)}}
 @media (prefers-reduced-motion:reduce){.vcard.need-name .vline{animation:none}}
 /* ===== objednávka poukazu – modal ===== */
-.vo-dlg{border:0;padding:0;margin:auto;background:transparent;color:var(--chrome);max-width:min(560px,calc(100vw - 24px));width:100%;max-height:calc(100dvh - 24px);overflow:visible}
+.vo-dlg{border:0;margin:0;padding:12px;background:transparent;color:var(--chrome);position:fixed;top:0;right:0;bottom:0;left:0;width:100%;height:100%;max-width:none;max-height:none;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.vo-dlg[open]{display:flex}
 .vo-dlg::backdrop{background:rgba(3,2,14,.78);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
-.vo-dlg[open]{animation:voIn .45s cubic-bezier(.22,.61,.36,1)}
+.vo-dlg[open] .vo-box{animation:voIn .45s cubic-bezier(.22,.61,.36,1)}
 .vo-dlg[open]::backdrop{animation:voFade .35s ease}
 @keyframes voIn{from{opacity:0;transform:translateY(18px) scale(.97)}to{opacity:1;transform:none}}
 @keyframes voFade{from{opacity:0}to{opacity:1}}
-.vo-box{position:relative;max-height:calc(100dvh - 24px);overflow-y:auto;overscroll-behavior:contain;border-radius:24px;border:1px solid var(--line);background:radial-gradient(ellipse at 100% 0%,rgba(176,102,255,.22),transparent 55%),linear-gradient(160deg,#141036,#08061c 70%);box-shadow:0 30px 80px -20px rgba(109,40,255,.55),0 0 0 1px rgba(255,255,255,.04) inset;padding:28px clamp(18px,4vw,32px) 24px}
+.vo-box{position:relative;margin:auto;width:100%;max-width:560px;border-radius:24px;border:1px solid var(--line);background:radial-gradient(ellipse at 100% 0%,rgba(176,102,255,.22),transparent 55%),linear-gradient(160deg,#141036,#08061c 70%);box-shadow:0 30px 80px -20px rgba(109,40,255,.55),0 0 0 1px rgba(255,255,255,.04) inset;padding:28px clamp(18px,4vw,32px) 24px}
 .vo-dlg.is-gold .vo-box{background:radial-gradient(ellipse at 100% 0%,rgba(240,207,133,.22),transparent 55%),linear-gradient(160deg,#1c1530,#08061c 70%);border-color:rgba(240,207,133,.3)}
 .vo-x{position:absolute;top:14px;right:14px;width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--chrome);display:grid;place-items:center;cursor:pointer;transition:background .2s,transform .2s}
 .vo-x:hover{background:rgba(176,102,255,.18);transform:rotate(90deg)}
 .vo-x svg{width:16px;height:16px}
+.vo-box h3:focus{outline:none}
 .vo-box h3{font-size:clamp(20px,3.4vw,26px);line-height:1.15;padding-right:44px}
 .vo-sum{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:16px 0 20px;padding:12px 16px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.03);font-size:14px}
 .vo-sum b{font-family:var(--display);font-weight:400;font-size:15px;color:#fff}
@@ -1155,8 +1157,9 @@ body:not(.go) .hero-copy .locb{animation-play-state:paused}
 .vo-done p{color:var(--muted);font-size:15px;margin-top:10px}
 .vo-done .btn{margin-top:20px}
 html.vo-lock,html.vo-lock body{overflow:hidden}
+@media (max-width:600px){.vo-dlg{padding:0}.vo-box{max-width:none;min-height:100%;border-radius:0;border-width:0;padding:calc(20px + env(safe-area-inset-top,0px)) 18px calc(28px + env(safe-area-inset-bottom,0px))}.vo-x{position:sticky;top:calc(8px + env(safe-area-inset-top,0px));float:right;margin:-6px -6px 0 0;z-index:2;background:rgba(20,16,54,.9);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}.vo-box h3{padding-right:0}.vo-box input,.vo-box textarea{font-size:16px}.vo-done{padding-top:18vh}}
 @media (max-width:520px){.vo-opts,.vo-fields{grid-template-columns:1fr}.vo-opt span{flex-direction:row;align-items:center;flex-wrap:wrap;gap:4px 12px;padding:14px 44px 14px 14px}.vo-opt em{flex-basis:100%}}
-@media (prefers-reduced-motion:reduce){.vo-dlg[open],.vo-dlg[open]::backdrop{animation:none}}
+@media (prefers-reduced-motion:reduce){.vo-dlg[open] .vo-box,.vo-dlg[open]::backdrop{animation:none}}
 </style>
 <style>/* mobil: úvod vždy přesně na výšku obrazovky */
 @media (max-width:760px){
@@ -2108,7 +2111,7 @@ html.gold .gt-aura{opacity:1}
       <button type="button" class="vo-x" id="voX" aria-label="Zavřít"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
       <form id="voForm" novalidate>
         <div id="voStep">
-          <h3 id="voTitle">Jak chcete poukaz převzít?</h3>
+          <h3 id="voTitle" tabindex="-1" autofocus>Jak chcete poukaz převzít?</h3>
           <div class="vo-sum"><div><b id="voKind">Standard · 2 hodiny</b><small id="voFor"></small></div><span class="vo-price" id="voPrice">2 000 Kč</span></div>
           <fieldset class="vo-opts"><legend class="vo-lbl">Způsob převzetí</legend>
             <label class="vo-opt"><input type="radio" name="voWay" value="odber" checked><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0114 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><strong>Osobní odběr</strong><em>Zaplatíte a převezmete přímo u nás v Táboře.</em></span></label>
@@ -2698,7 +2701,7 @@ if('IntersectionObserver' in window&&!reduce){const io=new IntersectionObserver(
     $('voKind').textContent=$('vKind').textContent;$('voPrice').textContent=(btn.querySelector('span').textContent.split('·').pop()||'').trim();
     const f=$('vFor').value.trim(),m=$('vMsg').value.trim();$('voFor').textContent=[f&&'Pro: '+f,m&&'„'+m+'“'].filter(Boolean).join(' · ');
     D.classList.toggle('is-gold',g);$('voStep').hidden=false;$('voDone').hidden=true;$('voErr').textContent='';paint();
-    document.documentElement.classList.add('vo-lock');if(D.showModal)D.showModal();else D.setAttribute('open','');setTimeout(()=>$('voName').focus(),60);}
+    document.documentElement.classList.add('vo-lock');if(D.showModal)D.showModal();else D.setAttribute('open','');D.scrollTop=0;if(matchMedia('(min-width:601px)').matches)setTimeout(()=>$('voName').focus({preventScroll:true}),60);}
   function closeDlg(){if(D.close)D.close();else D.removeAttribute('open');}
   D.addEventListener('close',()=>document.documentElement.classList.remove('vo-lock'));
   D.addEventListener('click',e=>{if(e.target===D)closeDlg();});
@@ -2713,7 +2716,7 @@ if('IntersectionObserver' in window&&!reduce){const io=new IntersectionObserver(
   F.addEventListener('submit',e=>{e.preventDefault();const w=way(),err=$('voErr');let bad=null;
     const need=['voName','voTel','voMail'].concat(w==='faktura'?['voAddr']:[]);
     need.forEach(id=>{const i=$(id),ok=id==='voMail'?/^\S+@\S+\.\S+$/.test(i.value.trim()):!!i.value.trim();i.closest('.field').classList.toggle('vo-field-bad',!ok);if(!ok&&!bad)bad=i;});
-    if(bad){err.textContent='Doplňte prosím zvýrazněné údaje.';bad.focus();return;}err.textContent='';
+    if(bad){err.textContent='Doplňte prosím zvýrazněné údaje.';bad.scrollIntoView({block:'center',behavior:'smooth'});bad.focus({preventScroll:true});return;}err.textContent='';
     const v=id=>$(id).value.trim(),k=$('vKind').textContent;
     const lines=['Dobrý den,','','mám zájem o dárkový poukaz.','',
       'Typ: '+k+' ('+$('voPrice').textContent+')','Pro koho: '+(v('vFor')||'—'),'Věnování: '+(v('vMsg')||'—'),'',
@@ -2722,7 +2725,7 @@ if('IntersectionObserver' in window&&!reduce){const io=new IntersectionObserver(
     if(w==='faktura'){lines.push('Fakturační adresa: '+v('voAddr'));if(v('voIco'))lines.push('Firma / IČO: '+v('voIco'));}
     lines.push('','Děkuji');
     location.href='mailto:'+(w==='faktura'?'pavlatp@email.cz':'blackboxluxury@email.cz')+'?subject='+encodeURIComponent('Objednávka poukazu – '+k+' – '+(w==='faktura'?'faktura':'osobní odběr'))+'&body='+encodeURIComponent(lines.join('\n'));
-    $('voStep').hidden=true;$('voDone').hidden=false;$('voOk').focus();});
+    $('voStep').hidden=true;$('voDone').hidden=false;D.scrollTop=0;$('voOk').focus({preventScroll:true});});
 })();
 /* faq: one open at a time */
 (function(){const Q=[...document.querySelectorAll('.qa')];
