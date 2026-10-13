@@ -1,0 +1,5 @@
+objednavky/data/*
+!objednavky/data/.htaccess
+objednavky/lib/tfpdf/font/unifont/*.mtx.php
+objednavky/lib/tfpdf/font/unifont/*.cw.dat
+objednavky/lib/tfpdf/font/unifont/*.cw127.php

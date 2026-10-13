@@ -2130,13 +2130,14 @@ html.gold .gt-aura{opacity:1}
             </div>
           </div>
           <div class="vo-flow" aria-live="polite"><p class="vo-lbl">Co bude dál</p><ol id="voFlow"></ol></div>
-          <button class="btn" type="submit">Odeslat objednávku</button>
+          <input type="text" name="web" id="voWeb" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
+          <button class="btn" type="submit" id="voSend">Odeslat objednávku</button>
           <p class="vo-err" id="voErr" role="alert"></p>
         </div>
         <div class="vo-done" id="voDone" hidden>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M7.5 12.5l3 3 6-6.5"/></svg>
-          <h3>Skoro hotovo</h3>
-          <p>Otevřeli jsme vám e-mail s objednávkou. Stačí ho odeslat a my se vám obratem ozveme.</p>
+          <h3 id="voDoneH">Skoro hotovo</h3>
+          <p id="voDoneP">Otevřeli jsme vám e-mail s objednávkou. Stačí ho odeslat a my se vám obratem ozveme.</p>
           <button class="btn" type="button" id="voOk">Rozumím</button>
         </div>
       </form>
@@ -2694,7 +2695,7 @@ if('IntersectionObserver' in window&&!reduce){const io=new IntersectionObserver(
   /* objednávka poukazu → modal */
   const D=document.getElementById('voDlg'),F=document.getElementById('voForm'),$=id=>document.getElementById(id);
   const FLOW={odber:['Odešlete objednávku.','Ozveme se a domluvíme čas vyzvednutí.','Zaplatíte na místě a převezmete poukaz.'],
-              faktura:['Odešlete objednávku.','Pošleme vám fakturu e-mailem.','Po připsání platby vám pošleme poukaz.']};
+              faktura:['Odešlete objednávku.','Fakturu vám hned pošleme e-mailem.','Po připsání platby přijde potvrzení o platbě a poukaz.']};
   const LAST='Termín návštěvy si obdarovaný domluví telefonem na <a href="tel:+420737222266">+420 737 22 22 66</a>.';
   const way=()=>F.querySelector('input[name="voWay"]:checked').value;
   function paint(){const w=way();$('voInv').hidden=w!=='faktura';$('voAddr').required=w==='faktura';
@@ -2727,8 +2728,25 @@ if('IntersectionObserver' in window&&!reduce){const io=new IntersectionObserver(
       'Jméno: '+v('voName'),'Telefon: '+v('voTel'),'E-mail: '+v('voMail')];
     if(w==='faktura'){lines.push('Fakturační adresa: '+v('voAddr'));if(v('voIco'))lines.push('Firma / IČO: '+v('voIco'));}
     lines.push('','Děkuji');
-    location.href='mailto:'+(w==='faktura'?'pavlatp@email.cz':'blackboxluxury@email.cz')+'?subject='+encodeURIComponent('Objednávka poukazu – '+k+' – '+(w==='faktura'?'faktura':'osobní odběr'))+'&body='+encodeURIComponent(lines.join('\n'));
-    $('voStep').hidden=true;$('voDone').hidden=false;D.scrollTop=0;$('voOk').focus({preventScroll:true});});
+    const viaMail=()=>{location.href='mailto:'+(w==='faktura'?'pavlatp@email.cz':'blackboxluxury@email.cz')+'?subject='+encodeURIComponent('Objednávka poukazu – '+k+' – '+(w==='faktura'?'faktura':'osobní odběr'))+'&body='+encodeURIComponent(lines.join('\n'));
+};
+    const done=(h,p)=>{$('voDoneH').textContent=h;$('voDoneP').innerHTML=p;$('voStep').hidden=true;$('voDone').hidden=false;D.scrollTop=0;$('voOk').focus({preventScroll:true});};
+    const esc=t=>t.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    const send=$('voSend');if(send.disabled)return;send.disabled=true;const lbl=send.textContent;send.textContent='Odesílám…';
+    const payload={way:w,kind:$('vo2').getAttribute('aria-pressed')==='true'?'gold':'standard',name:v('voName'),phone:v('voTel'),email:v('voMail'),addr:v('voAddr'),company:v('voIco'),for:v('vFor'),msg:v('vMsg'),web:$('voWeb').value};
+    const ctl=new AbortController(),tm=setTimeout(()=>ctl.abort(),30000);
+    fetch('objednavka.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:ctl.signal})
+      .then(r=>r.json().catch(()=>({ok:false,_fallback:true})).then(j=>({r,j})))
+      .then(({r,j})=>{
+        if(j.ok){const m=esc(v('voMail'));
+          if(j.mode==='invoice')done('Faktura je na cestě','Poslali jsme ji na <b>'+m+'</b>. Po připsání platby vám přijde potvrzení o platbě a pak si zavoláte o termín.');
+          else if(j.mode==='manual')done('Objednávka přijata','Fakturu vám brzy pošleme na <b>'+m+'</b>. Po zaplacení přijde potvrzení o platbě.');
+          else done('Objednávka přijata','Potvrzení jsme poslali na <b>'+m+'</b>. Brzy se ozveme a domluvíme vyzvednutí.');
+          return;}
+        if(r.status===422||r.status===429){err.textContent=j.error||'Zkontrolujte prosím údaje.';return;}
+        throw new Error('server');})
+      .catch(()=>{viaMail();done('Skoro hotovo','Otevřeli jsme vám e-mail s objednávkou. Stačí ho odeslat a my se vám obratem ozveme.');})
+      .finally(()=>{clearTimeout(tm);send.disabled=false;send.textContent=lbl;});});
 })();
 /* faq: one open at a time */
 (function(){const Q=[...document.querySelectorAll('.qa')];
