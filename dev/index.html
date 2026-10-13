@@ -2505,7 +2505,7 @@ addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.classList.cont
 
 /* ambient sound: real track (atmosfera.mp3), starts only on click */
 let actx,master,playing=false,an=null,fbins=null,offT=null;const snd=document.getElementById('snd');
-const bgA=new Audio('atmosfera.mp3');bgA.loop=true;bgA.preload='none';bgA.crossOrigin='anonymous';
+const bgA=new Audio('atmosfera-f.mp3');bgA.loop=true;bgA.preload='none';bgA.crossOrigin='anonymous';
 function initSound(){actx=new (window.AudioContext||window.webkitAudioContext)();master=actx.createGain();master.gain.value=0;
   an=actx.createAnalyser();an.fftSize=128;an.smoothingTimeConstant=.8;fbins=new Uint8Array(an.frequencyBinCount);
   actx.createMediaElementSource(bgA).connect(master);master.connect(an);an.connect(actx.destination);}
