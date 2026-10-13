@@ -614,6 +614,7 @@ function bb_mailer(array $cfg): PHPMailer
     $m = new PHPMailer(true);
     $m->CharSet = 'UTF-8';
     $m->Encoding = 'base64';
+    $m->XMailer = ' ';          // skrýt hlavičku "X-Mailer: PHPMailer…" – ta občas zvyšuje spam skóre
     $smtp = $cfg['smtp'] ?? [];
     if (!empty($smtp['pass'])) {
         $m->isSMTP();
