@@ -800,14 +800,21 @@ function bb_list_orders(string $dataDir): array
     return $list;
 }
 
-function bb_voucher_code(): string
+/*
+ * Kód poukazu je stejné číslo jako variabilní symbol (VS) – u faktury se tedy
+ * poukaz pozná podle čísla faktury/VS. U osobního odběru (bez faktury) se mu
+ * přidělí další číslo ze stejné řady, takže formát je vždy stejný – jen číslice.
+ */
+function bb_ensure_voucher(array $cfg, string $dataDir, array &$o): string
 {
-    $alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    $c = '';
-    for ($i = 0; $i < 6; $i++) {
-        $c .= $alphabet[random_int(0, strlen($alphabet) - 1)];
+    if (!empty($o['voucher'])) {
+        return $o['voucher'];
     }
-    return 'BB-' . substr($c, 0, 3) . '-' . substr($c, 3);
+    if (empty($o['vs'])) {
+        $o['vs'] = preg_replace('/\D/', '', bb_next_invoice_no($cfg, $dataDir));
+    }
+    $o['voucher'] = $o['vs'];
+    return $o['voucher'];
 }
 
 /* ---------- PDF poukaz – stejný jako karta na webu ---------- */
