@@ -853,13 +853,13 @@ function bb_voucher_pdf(array $cfg, array $o): string
     $x = (37 + 44) * $k;
     $maxW = 416.5 * $k;
 
-    /* Kód poukazu – malým písmem v pravém horním rohu karty, pod „Standard · 2 hodiny" */
+    /* Kód poukazu – v pravém horním rohu karty, pod „Standard · 2 hodiny" */
     $codeTxt = 'KÓD ' . $o['voucher'];
-    $pdf->SetFont('Manrope', 'B', 9 * $pt);
+    $pdf->SetFont('Manrope', 'B', 13 * $pt);
     $pdf->SetTextColor(...$A);
     $cw = $pdf->GetStringWidth($codeTxt);
     $xr = 535.6 * $k - $cw;
-    $yr = 134 * $k;
+    $yr = 138 * $k;
     $pdf->Text($xr, $yr, $codeTxt);
 
     /* Pro – Unbounded 32 px, bílá */
@@ -892,13 +892,13 @@ function bb_voucher_pdf(array $cfg, array $o): string
         $pdf->SkewEnd();
     }
 
-    /* pruh pod kartou: rezervace a adresa (kód poukazu je už nahoře na kartě) */
+    /* pruh pod kartou: kód + rezervace + adresa */
     $y = (370.28 + 64) * $k;
     $pdf->SetFont('Manrope', 'B', 6.5);
     $pdf->SetTextColor(...$A);
     $cx = $x;
-    $parts = [['REZERVACE TERMÍNU', $cfg['phone']], ['ADRESA', 'Purkyňova 2961, Tábor']];
-    $colW = [70, 60];
+    $parts = [['KÓD POUKAZU', $o['voucher']], ['REZERVACE TERMÍNU', $cfg['phone']], ['ADRESA', 'Purkyňova 2961, Tábor']];
+    $colW = [44, 52, 60];
     foreach ($parts as $i => $p) {
         $pdf->SetFont('Manrope', 'B', 6.3);
         $pdf->SetTextColor(...$A);
