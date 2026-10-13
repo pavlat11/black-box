@@ -143,7 +143,11 @@ try {
         } catch (Throwable $e) {
             // potvrzení zákazníkovi není kritické – objednávka už dorazila
         }
-        bb_save_order($DATA, $o + ['id' => 'OD-' . date('ymd-His') . '-' . random_int(10, 99), 'way' => 'odber', 'status' => 'nova', 'created' => time()]);
+        try {
+            bb_save_order($DATA, $o + ['id' => 'OD-' . date('ymd-His') . '-' . random_int(10, 99), 'way' => 'odber', 'status' => 'nova', 'created' => time()]);
+        } catch (Throwable $e) {   // e-maily už odešly – chybu jen zapíšeme
+            @file_put_contents($DATA . '/chyby.log', date('c') . ' ulozeni ' . $e->getMessage() . "\n", FILE_APPEND);
+        }
         log_order($DATA, [date('Y-m-d H:i'), 'osobní odběr', '', $o['product']['name'], $o['product']['price'], $for, $msg, $name, $phone, $email, '', $company, $ico, 'přijato']);
         out(['ok' => true, 'mode' => 'pickup']);
     }
@@ -161,7 +165,11 @@ try {
         $m->Body = '<p style="font-family:Arial;color:#b00020"><b>Faktura nebyla vystavena automaticky – v objednavky/config.php chybí číslo účtu.</b></p>' . bb_email_internal($o, 'faktura');
         $m->AltBody = strip_tags($m->Body);
         $m->send();
-        bb_save_order($DATA, $o + ['id' => 'FR-' . date('ymd-His') . '-' . random_int(10, 99), 'way' => 'faktura', 'status' => 'bez_faktury', 'created' => time()]);
+        try {
+            bb_save_order($DATA, $o + ['id' => 'FR-' . date('ymd-His') . '-' . random_int(10, 99), 'way' => 'faktura', 'status' => 'bez_faktury', 'created' => time()]);
+        } catch (Throwable $e) {   // e-maily už odešly – chybu jen zapíšeme
+            @file_put_contents($DATA . '/chyby.log', date('c') . ' ulozeni ' . $e->getMessage() . "\n", FILE_APPEND);
+        }
         log_order($DATA, [date('Y-m-d H:i'), 'faktura', '', $o['product']['name'], $o['product']['price'], $for, $msg, $name, $phone, $email, $addr, $company, $ico, 'čeká na ruční fakturu']);
         out(['ok' => true, 'mode' => 'manual']);
     }

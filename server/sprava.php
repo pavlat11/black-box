@@ -126,6 +126,13 @@ if (empty($_SESSION['bb_admin'])) {
         . ($err ? '<p style="color:#ff6b8a;margin:14px 0 0">' . bb_h($err) . '</p>' : '') . '</div>');
 }
 
+/* ---- databáze ---- */
+try {
+    bb_db();
+} catch (Throwable $e) {
+    page('Chyba databáze', '<div class="login"><img src="img/logo-520.webp" alt=""><h2>Nelze se připojit k databázi</h2><p style="color:#8f89b8">Zkontrolujte údaje <code>db</code> v <code>objednavky/config.php</code>.</p><p style="color:#ff6b8a;font-size:13px">' . bb_h($e->getMessage()) . '</p></div>');
+}
+
 /* ---- stažení PDF ---- */
 if (isset($_GET['dl'], $_GET['id'])) {
     $o = bb_load_order($DATA, (string) $_GET['id']);
@@ -150,6 +157,25 @@ if (isset($_GET['dl'], $_GET['id'])) {
     header('Content-Type: application/pdf');
     header('Content-Disposition: inline; filename="' . $name . '"');
     echo $pdf;
+    exit;
+}
+
+/* ---- export do CSV (Excel) ---- */
+if (isset($_GET['export'])) {
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="objednavky-poukazu-' . date('Y-m-d') . '.csv"');
+    $out = fopen('php://output', 'w');
+    fwrite($out, "\xEF\xBB\xBF");
+    fputcsv($out, ['Objednáno', 'Způsob', 'Stav', 'Faktura / VS', 'Splatnost', 'Zaplaceno', 'Poukaz', 'Kód poukazu', 'Cena', 'Pro koho', 'Věnování', 'Jméno', 'Telefon', 'E-mail', 'Adresa', 'Firma', 'IČO'], ';');
+    foreach (bb_list_orders($DATA) as $o) {
+        $c = $o['customer'];
+        fputcsv($out, [
+            date('j. n. Y H:i', (int) $o['created']), $o['way'] === 'faktura' ? 'faktura' : 'osobní odběr', $o['status'], $o['no'] ?? '',
+            !empty($o['due']) ? date('j. n. Y', (int) $o['due']) : '', !empty($o['paid_at']) ? date('j. n. Y', (int) $o['paid_at']) : '',
+            $o['kind'] === 'gold' ? 'Gold Time' : 'Standard', $o['voucher'] ?? '', $o['product']['price'], $o['for'] ?? '', $o['msg'] ?? '',
+            $c['name'], $c['phone'], $c['email'], $c['addr'] ?? '', $c['company'] ?? '', $c['ico'] ?? '',
+        ], ';');
+    }
     exit;
 }
 
@@ -197,7 +223,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 $o['sent_at'] = time();
                 bb_save_order($DATA, $o);
                 if ($oldId !== $o['id']) {
-                    @unlink(bb_orders_dir($DATA) . '/' . bb_safe_id($oldId) . '.json');
+                    bb_delete_order($DATA, $oldId);
                 }
                 try {
                     bb_send_invoice_copy($cfg, $DATA, $o, 'Vystavena faktura');
@@ -265,12 +291,15 @@ foreach (['aktivni' => 'K vyřízení', 'zaplaceno' => 'Zaplacené', 'vse' => 'V
     $out .= '<a class="' . ($f === $k ? 'on' : '') . '" href="?f=' . $k . '">' . $t . '<b>' . $counts[$k] . '</b></a>';
 }
 $out .= '</div><form class="search" method="get"><input type="hidden" name="f" value="' . $h($f) . '"><input type="search" name="q" value="' . $h($q) . '" placeholder="Hledat jméno, VS, kód…"></form>
-<a href="?odhlasit=1" style="color:#8f89b8;font-size:13px">Odhlásit</a></header>';
+<a href="?export=csv" style="color:#8f89b8;font-size:13px">Export do Excelu</a> <a href="?odhlasit=1" style="color:#8f89b8;font-size:13px">Odhlásit</a></header>';
 
 if (!empty($_SESSION['flash'])) {
     [$t, $m] = $_SESSION['flash'];
     unset($_SESSION['flash']);
     $out .= '<div class="flash ' . $t . '">' . $h($m) . '</div>';
+}
+if (!bb_db()) {
+    $out .= '<div class="warn">Databáze není nastavená – objednávky se ukládají do souborů. Doplňte údaje <code>db</code> v <code>objednavky/config.php</code>.</div>';
 }
 if (!bb_iban((string) $cfg['bank_account'])) {
     $out .= '<div class="warn">V <code>objednavky/config.php</code> chybí číslo účtu – faktury se zatím nevystavují automaticky.</div>';

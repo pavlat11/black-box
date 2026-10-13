@@ -99,26 +99,32 @@ function bb_qr_png(string $data, int $scale = 8): ?string
     return ob_get_clean();
 }
 
-/** Pořadové číslo faktury: prefix + rok + 4 číslice (zamyká soubor, aby se čísla neopakovala) */
+/** Pořadové číslo faktury: prefix + rok + 4 číslice (v databázi atomicky, jinak zamčený soubor) */
 function bb_next_invoice_no(array $cfg, string $dataDir): string
 {
-    $year = date('Y');
-    $file = $dataDir . '/cislovani-faktur.json';
-    $fh = fopen($file, 'c+');
-    if (!$fh) {
-        throw new RuntimeException('Nelze zapisovat do složky data – zkontrolujte práva (chmod 755/777).');
+    $year = (int) date('Y');
+    $db = bb_db();
+    if ($db) {
+        $db->prepare('INSERT INTO bb_cislovani (rok, posledni) VALUES (?, LAST_INSERT_ID(1)) ON DUPLICATE KEY UPDATE posledni = LAST_INSERT_ID(posledni + 1)')->execute([$year]);
+        $seq = (int) $db->query('SELECT LAST_INSERT_ID()')->fetchColumn();
+    } else {
+        $file = $dataDir . '/cislovani-faktur.json';
+        $fh = fopen($file, 'c+');
+        if (!$fh) {
+            throw new RuntimeException('Nelze zapisovat do složky data – zkontrolujte práva (chmod 755/777).');
+        }
+        flock($fh, LOCK_EX);
+        $raw = stream_get_contents($fh);
+        $st = $raw ? (json_decode($raw, true) ?: []) : [];
+        $seq = (int) ($st[$year] ?? 0) + 1;
+        $st[$year] = $seq;
+        ftruncate($fh, 0);
+        rewind($fh);
+        fwrite($fh, json_encode($st));
+        fflush($fh);
+        flock($fh, LOCK_UN);
+        fclose($fh);
     }
-    flock($fh, LOCK_EX);
-    $raw = stream_get_contents($fh);
-    $st = $raw ? (json_decode($raw, true) ?: []) : [];
-    $seq = (int) ($st[$year] ?? 0) + 1;
-    $st[$year] = $seq;
-    ftruncate($fh, 0);
-    rewind($fh);
-    fwrite($fh, json_encode($st));
-    fflush($fh);
-    flock($fh, LOCK_UN);
-    fclose($fh);
     return ($cfg['invoice_prefix'] ?? '') . $year . str_pad((string) $seq, 4, '0', STR_PAD_LEFT);
 }
 
@@ -627,7 +633,100 @@ function bb_mailer(array $cfg): PHPMailer
     return $m;
 }
 
-/* ---------- uložené objednávky ---------- */
+/* ---------- uložené objednávky: MySQL databáze (nebo soubory, když databáze není nastavená) ---------- */
+
+/** Připojení k MySQL podle config.php ('db'). Při prvním připojení vytvoří tabulky a převezme starší data ze souborů. */
+function bb_db(): ?PDO
+{
+    static $pdo = false;
+    if ($pdo !== false) {
+        return $pdo;
+    }
+    $pdo = null;
+    $c = $GLOBALS['cfg']['db'] ?? [];
+    if (empty($c['name']) || empty($c['user'])) {
+        return null;
+    }
+    $pdo = new PDO(
+        'mysql:host=' . ($c['host'] ?: 'localhost') . (!empty($c['port']) ? ';port=' . (int) $c['port'] : '') . ';dbname=' . $c['name'] . ';charset=utf8mb4',
+        $c['user'],
+        (string) ($c['pass'] ?? ''),
+        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC, PDO::ATTR_EMULATE_PREPARES => false]
+    );
+    $pdo->exec("SET time_zone = '" . date('P') . "'");
+    bb_db_install($pdo);
+    return $pdo;
+}
+
+function bb_db_install(PDO $db): void
+{
+    $db->exec("CREATE TABLE IF NOT EXISTS bb_objednavky (
+        id            VARCHAR(40)  NOT NULL PRIMARY KEY,
+        zpusob        VARCHAR(10)  NOT NULL COMMENT 'faktura / odber',
+        poukaz        VARCHAR(10)  NOT NULL COMMENT 'standard / gold',
+        stav          VARCHAR(15)  NOT NULL COMMENT 'ceka, nova, bez_faktury, zaplaceno, vyrizeno, storno',
+        cislo_faktury VARCHAR(20)  NULL UNIQUE,
+        kod_poukazu   VARCHAR(20)  NULL UNIQUE,
+        cena          INT          NOT NULL,
+        pro_koho      VARCHAR(100) NOT NULL DEFAULT '',
+        venovani      VARCHAR(200) NOT NULL DEFAULT '',
+        jmeno         VARCHAR(150) NOT NULL,
+        email         VARCHAR(190) NOT NULL,
+        telefon       VARCHAR(50)  NOT NULL,
+        adresa        VARCHAR(255) NOT NULL DEFAULT '',
+        firma         VARCHAR(160) NOT NULL DEFAULT '',
+        ico           VARCHAR(12)  NOT NULL DEFAULT '',
+        vytvoreno     DATETIME     NOT NULL,
+        splatnost     DATE         NULL,
+        zaplaceno     DATETIME     NULL,
+        upraveno      DATETIME     NOT NULL,
+        data          MEDIUMTEXT   NOT NULL COMMENT 'kompletní objednávka (JSON)',
+        KEY k_stav (stav),
+        KEY k_vytvoreno (vytvoreno)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_czech_ci COMMENT='Black Box – objednávky dárkových poukazů'");
+    $db->exec("CREATE TABLE IF NOT EXISTS bb_cislovani (
+        rok      INT NOT NULL PRIMARY KEY,
+        posledni INT NOT NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Black Box – poslední číslo faktury v roce'");
+
+    // jednorázový převod starších objednávek a číslování ze souborů
+    $dataDir = dirname(__DIR__) . '/data';
+    if ((int) $db->query('SELECT COUNT(*) FROM bb_objednavky')->fetchColumn() === 0) {
+        foreach (glob($dataDir . '/objednavky/*.json') ?: [] as $f) {
+            $o = json_decode((string) file_get_contents($f), true);
+            if (is_array($o) && !empty($o['id'])) {
+                bb_db_save($db, $o);
+            }
+        }
+    }
+    $cnt = $dataDir . '/cislovani-faktur.json';
+    if (is_file($cnt)) {
+        foreach (json_decode((string) file_get_contents($cnt), true) ?: [] as $rok => $n) {
+            $db->prepare('INSERT INTO bb_cislovani (rok, posledni) VALUES (?, ?) ON DUPLICATE KEY UPDATE posledni = GREATEST(posledni, VALUES(posledni))')->execute([(int) $rok, (int) $n]);
+        }
+        @rename($cnt, $cnt . '.prevedeno');
+    }
+}
+
+function bb_db_save(PDO $db, array $o): void
+{
+    $c = $o['customer'];
+    $dt = fn($ts) => $ts ? date('Y-m-d H:i:s', (int) $ts) : null;
+    $db->prepare('INSERT INTO bb_objednavky
+        (id, zpusob, poukaz, stav, cislo_faktury, kod_poukazu, cena, pro_koho, venovani, jmeno, email, telefon, adresa, firma, ico, vytvoreno, splatnost, zaplaceno, upraveno, data)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+        ON DUPLICATE KEY UPDATE zpusob=VALUES(zpusob), poukaz=VALUES(poukaz), stav=VALUES(stav), cislo_faktury=VALUES(cislo_faktury),
+        kod_poukazu=VALUES(kod_poukazu), cena=VALUES(cena), pro_koho=VALUES(pro_koho), venovani=VALUES(venovani), jmeno=VALUES(jmeno),
+        email=VALUES(email), telefon=VALUES(telefon), adresa=VALUES(adresa), firma=VALUES(firma), ico=VALUES(ico),
+        splatnost=VALUES(splatnost), zaplaceno=VALUES(zaplaceno), upraveno=VALUES(upraveno), data=VALUES(data)')
+        ->execute([
+            $o['id'], $o['way'], $o['kind'], $o['status'], $o['no'] ?? null, $o['voucher'] ?? null, (int) $o['product']['price'],
+            mb_substr((string) ($o['for'] ?? ''), 0, 100), mb_substr((string) ($o['msg'] ?? ''), 0, 200),
+            $c['name'], $c['email'], $c['phone'], (string) ($c['addr'] ?? ''), (string) ($c['company'] ?? ''), (string) ($c['ico'] ?? ''),
+            $dt($o['created'] ?? time()), !empty($o['due']) ? date('Y-m-d', (int) $o['due']) : null, $dt($o['paid_at'] ?? null), $dt(time()),
+            json_encode($o, JSON_UNESCAPED_UNICODE),
+        ]);
+}
 
 function bb_orders_dir(string $dataDir): string
 {
@@ -646,11 +745,22 @@ function bb_safe_id(string $id): string
 function bb_save_order(string $dataDir, array $o): void
 {
     $o['updated'] = time();
+    if ($db = bb_db()) {
+        bb_db_save($db, $o);
+        return;
+    }
     file_put_contents(bb_orders_dir($dataDir) . '/' . bb_safe_id($o['id']) . '.json', json_encode($o, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT), LOCK_EX);
 }
 
 function bb_load_order(string $dataDir, string $id): ?array
 {
+    if ($db = bb_db()) {
+        $st = $db->prepare('SELECT data FROM bb_objednavky WHERE id = ?');
+        $st->execute([$id]);
+        $raw = $st->fetchColumn();
+        $o = $raw ? json_decode((string) $raw, true) : null;
+        return is_array($o) ? $o : null;
+    }
     $f = bb_orders_dir($dataDir) . '/' . bb_safe_id($id) . '.json';
     if (!is_file($f)) {
         return null;
@@ -659,9 +769,27 @@ function bb_load_order(string $dataDir, string $id): ?array
     return is_array($o) ? $o : null;
 }
 
+function bb_delete_order(string $dataDir, string $id): void
+{
+    if ($db = bb_db()) {
+        $db->prepare('DELETE FROM bb_objednavky WHERE id = ?')->execute([$id]);
+        return;
+    }
+    @unlink(bb_orders_dir($dataDir) . '/' . bb_safe_id($id) . '.json');
+}
+
 function bb_list_orders(string $dataDir): array
 {
     $list = [];
+    if ($db = bb_db()) {
+        foreach ($db->query('SELECT data FROM bb_objednavky ORDER BY vytvoreno DESC') as $r) {
+            $o = json_decode((string) $r['data'], true);
+            if (is_array($o)) {
+                $list[] = $o;
+            }
+        }
+        return $list;
+    }
     foreach (glob(bb_orders_dir($dataDir) . '/*.json') ?: [] as $f) {
         $o = json_decode((string) file_get_contents($f), true);
         if (is_array($o)) {

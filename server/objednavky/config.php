@@ -57,6 +57,18 @@ return [
     'from_fallback' => 'objednavky@black-box-luxury.cz',
     'from_name'     => 'Black Box Luxury',
 
+    // ===== Databáze MySQL (objednávky a číslování faktur) ======================
+    // Údaje najdete v administraci hostingu (Endora → Databáze).
+    // Tabulky se vytvoří samy při první objednávce. Když 'name' necháte prázdné,
+    // objednávky se ukládají do souborů ve složce objednavky/data.
+    'db' => [
+        'host' => 'localhost',
+        'port' => '',
+        'name' => '',            // název databáze
+        'user' => '',            // uživatel databáze
+        'pass' => '',            // heslo databáze
+    ],
+
     // ===== Správa objednávek (stránka /sprava.php) ==========================
     // Heslo pro přihlášení do správy. Prázdné = správa je vypnutá.
     'admin_password' => '',
