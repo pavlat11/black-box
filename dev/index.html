@@ -1105,8 +1105,8 @@ body:not(.go) .hero-copy .locb{animation-play-state:paused}
 @keyframes needName{10%,90%{transform:translateX(-1px)}20%,80%{transform:translateX(3px)}30%,50%,70%{transform:translateX(-5px)}40%,60%{transform:translateX(5px)}}
 @media (prefers-reduced-motion:reduce){.vcard.need-name .vline{animation:none}}
 /* ===== objednávka poukazu – modal ===== */
-.vo-dlg{border:0;margin:0;padding:12px;background:transparent;color:var(--chrome);position:fixed;top:0;right:0;bottom:0;left:0;width:100%;height:100%;max-width:none;max-height:none;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
-.vo-dlg[open]{display:flex}
+.vo-dlg{border:0;margin:0;padding:12px;background:transparent;color:var(--chrome);position:fixed;inset:0;width:auto;height:auto;max-width:none;max-height:none;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.vo-dlg[open]{display:flex;align-items:center;justify-content:center}
 .vo-dlg::backdrop{background:rgba(3,2,14,.78);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
 .vo-dlg[open] .vo-box{animation:voIn .45s cubic-bezier(.22,.61,.36,1)}
 .vo-dlg[open]::backdrop{animation:voFade .35s ease}
