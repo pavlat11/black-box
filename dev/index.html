@@ -359,7 +359,7 @@
           <span class="pr-tag">Standard</span>
           <h3>Dvě hodiny jen vaše</h3>
           <p class="pr-sub">Libovolný volný blok</p>
-          <div class="pr-price">2&nbsp;000<small>Kč</small></div>
+          <div class="pr-price"><span data-price="standard">1&nbsp;990</span><small>Kč</small></div>
           <ul>
             <li>Vířivka pro dva</li>
             <li>Hvězdné nebe a projekce</li>
@@ -373,7 +373,7 @@
           <span class="pr-tag">Gold Time</span>
           <h3>Celá budova jen pro vás</h3>
           <p class="pr-sub">22:00 – 24:00 · poslední blok večera</p>
-          <div class="pr-price">2&nbsp;900<small>Kč</small></div>
+          <div class="pr-price"><span data-price="gold">2&nbsp;490</span><small>Kč</small></div>
           <ul>
             <li>Vše ze Standardu</li>
             <li><b>Nikdo jiný v budově</b></li>
@@ -403,8 +403,8 @@
         <p class="lead">K výročí, na Valentýna, k narozeninám nebo jen tak. Vyberte zážitek a jméno i věnování napište rovnou do poukazu.</p>
         <div class="occ" aria-hidden="true"><span>Výročí</span><span>Valentýn</span><span>Narozeniny</span><span>Vánoce</span><span>Jen tak</span></div>
         <div class="vswitch" role="group" aria-label="Typ poukazu"><span class="vsw-thumb" aria-hidden="true"></span>
-          <button type="button" class="vopt" id="vo1" aria-pressed="true" data-k="Standard · 2 hodiny" data-b="2 HOD"><strong>Standard</strong><span>2 hodiny · 2 000 Kč</span></button>
-          <button type="button" class="vopt g" id="vo2" aria-pressed="false" data-k="Gold Time · 2 hodiny" data-b="22 – 24"><strong><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 019.5 4a8 8 0 1010.5 10.5z"/></svg>Gold Time</strong><span>celá budova · 2 900 Kč</span></button>
+          <button type="button" class="vopt" id="vo1" aria-pressed="true" data-k="Standard · 2 hodiny" data-b="2 HOD"><strong>Standard</strong><span>2 hodiny · <span data-price="standard">1 990</span> Kč</span></button>
+          <button type="button" class="vopt g" id="vo2" aria-pressed="false" data-k="Gold Time · 2 hodiny" data-b="22 – 24"><strong><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 019.5 4a8 8 0 1010.5 10.5z"/></svg>Gold Time</strong><span>celá budova · <span data-price="gold">2 490</span> Kč</span></button>
         </div>
         <p class="vsw-q">Vyberte poukaz: <b>Standard</b> nebo <b class="g">Gold Time</b></p>
         <div class="vsteps"><div class="vs"><b>1</b><span>Vyberte Standard nebo Gold Time</span></div><div class="vs vs2"><b>2</b><span>Jméno a věnování napište <em>přímo do poukazu</em></span></div><div class="vs"><b>3</b><span>Vyzvednete na místě, nebo pošleme fakturu</span></div></div>
@@ -421,7 +421,7 @@
       <form id="voForm" novalidate>
         <div id="voStep">
           <h3 id="voTitle" tabindex="-1" autofocus>Jak chcete poukaz převzít?</h3>
-          <div class="vo-sum"><div><b id="voKind">Standard · 2 hodiny</b><small id="voFor"></small></div><span class="vo-price" id="voPrice">2 000 Kč</span></div>
+          <div class="vo-sum"><div><b id="voKind">Standard · 2 hodiny</b><small id="voFor"></small></div><span class="vo-price" id="voPrice">1 990 Kč</span></div>
           <fieldset class="vo-opts"><legend class="vo-lbl">Způsob převzetí</legend>
             <label class="vo-opt"><input type="radio" name="voWay" value="odber" checked><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0114 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><strong>Osobní odběr</strong><em>Zaplatíte a převezmete přímo u nás v Táboře.</em></span></label>
             <label class="vo-opt"><input type="radio" name="voWay" value="faktura"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg><strong>Poslat fakturu</strong><em>Zaplatíte převodem, poukaz pošleme e-mailem.</em></span></label>
@@ -523,8 +523,8 @@
         <h3 id="qoTitle" tabindex="-1">Objednávka</h3>
         <p class="qo-lead">Vyplňte e-mail a telefon. Fakturu vám pošleme hned e-mailem.</p>
         <fieldset class="vo-opts"><legend class="vo-lbl">Co objednáváte</legend>
-          <label class="vo-opt"><input type="radio" name="qoKind" value="standard" checked><span><strong>Standard</strong><em>2 hodiny · <i style="font-style:normal;white-space:nowrap">2 000 Kč</i></em></span></label>
-          <label class="vo-opt qo-gold"><input type="radio" name="qoKind" value="gold"><span><strong>Gold Time</strong><em>Pá–So 22–24 h · <i style="font-style:normal;white-space:nowrap">2 900 Kč</i></em></span></label>
+          <label class="vo-opt"><input type="radio" name="qoKind" value="standard" checked><span><strong>Standard</strong><em>2 hodiny · <i style="font-style:normal;white-space:nowrap"><span data-price="standard">1 990</span> Kč</i></em></span></label>
+          <label class="vo-opt qo-gold"><input type="radio" name="qoKind" value="gold"><span><strong>Gold Time</strong><em>Pá–So 22–24 h · <i style="font-style:normal;white-space:nowrap"><span data-price="gold">2 490</span> Kč</i></em></span></label>
         </fieldset>
         <div class="vo-fields">
           <div class="field"><label for="qoMail">E-mail</label><input id="qoMail" type="email" autocomplete="email" required></div>

@@ -1,3 +1,14 @@
+/* Ceník: ceny se mění ve správě (sprava.php → Ceník), web si je načte z ceny.php */
+window.BB_PRICES={standard:1990,gold:2490};
+function bbFmt(n){return String(n).replace(/\B(?=(\d{3})+(?!\d))/g,'\u00a0');}
+function bbKc(k){return bbFmt(window.BB_PRICES[k])+'\u00a0Kč';}
+(function(){
+  const apply=()=>{document.querySelectorAll('[data-price]').forEach(el=>{const v=window.BB_PRICES[el.dataset.price];if(v)el.textContent=bbFmt(v);});
+    const vp=document.getElementById('voPrice'),on=document.querySelector('.vopt[aria-pressed="true"] span');if(vp&&on)vp.textContent=(on.textContent.split('·').pop()||'').trim();};
+  if(!window.fetch)return;
+  fetch('ceny.php',{cache:'no-cache'}).then(r=>r.ok?r.json():null).then(p=>{if(!p)return;['standard','gold'].forEach(k=>{const n=parseInt(p[k],10);if(n>0)window.BB_PRICES[k]=n;});
+    if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply);else apply();}).catch(()=>{});
+})();
 try{
 (()=>{
 const reduce=false;/* site ambience stays on; large motions are calmed in CSS */
@@ -1144,7 +1155,7 @@ try{
     const need=['qoMail','qoTel'].concat(wantV()?['qoName']:[]);
     need.forEach(id=>{const i=$(id),val=i.value.trim(),ok=id==='qoMail'?/^\S+@\S+\.\S+$/.test(val):id==='qoTel'?/^[+0-9 ()\-\/]{6,}$/.test(val):val.length>=2;i.closest('.field').classList.toggle('vo-field-bad',!ok);if(!ok&&!bad)bad=i;});
     if(bad){err.textContent=bad.id==='qoName'?'Napište jméno, které má být na poukazu.':'Doplňte prosím zvýrazněné údaje.';bad.scrollIntoView({block:'center',behavior:'smooth'});bad.focus({preventScroll:true});return;}err.textContent='';
-    const k=kind(),kl=k==='gold'?'Gold Time (2 900 Kč)':'Standard – 2 hodiny (2 000 Kč)',wv=wantV();
+    const k=kind(),kl=k==='gold'?'Gold Time ('+bbKc('gold')+')':'Standard – 2 hodiny ('+bbKc('standard')+')',wv=wantV();
     const lines=['Dobrý den,','','objednávám: '+kl,'Zaslat dárkový poukaz: '+(wv?'ano – jméno na poukaz: '+v('qoName')+(v('qoMsg')?', věnování: '+v('qoMsg'):''):'ne'),'','E-mail: '+v('qoMail'),'Telefon: '+v('qoTel'),'','Prosím o zaslání faktury. Děkuji'];
     const viaMail=()=>{location.href='mailto:'+'pavlatp@email.cz'+'?subject='+encodeURIComponent('Objednávka – '+kl)+'&body='+encodeURIComponent(lines.join('\n'));};
     const esc=t=>t.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));

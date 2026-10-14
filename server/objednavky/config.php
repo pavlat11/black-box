@@ -29,9 +29,11 @@ return [
     'invoice_prefix' => '',                     // číslo faktury = prefix + rok + pořadí, např. 20260001
 
     // ===== Poukazy a ceny (kontroluje server, ne prohlížeč) ==================
+    // Ceny se mění ve SPRÁVĚ (sprava.php → Ceník). Tady jsou jen výchozí hodnoty pro případ,
+    // že ve správě ještě nic uloženo není.
     'products' => [
-        'standard' => ['name' => 'Dárkový poukaz Black Box – Standard',  'detail' => 'Privátní blok 2 hodiny pro pár',                      'price' => 2000],
-        'gold'     => ['name' => 'Dárkový poukaz Black Box – Gold Time', 'detail' => 'Pátek nebo sobota 22–24 h, celá budova jen pro vás', 'price' => 2900],
+        'standard' => ['name' => 'Dárkový poukaz Black Box – Standard',  'detail' => 'Privátní blok 2 hodiny pro pár',                      'price' => 1990],
+        'gold'     => ['name' => 'Dárkový poukaz Black Box – Gold Time', 'detail' => 'Pátek nebo sobota 22–24 h, celá budova jen pro vás', 'price' => 2490],
     ],
 
     // ===== E-maily ===========================================================

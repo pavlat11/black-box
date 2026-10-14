@@ -99,6 +99,14 @@ details.edit[open] summary{color:var(--txt)}
 .editform input,.editform textarea{width:100%;margin-top:5px;padding:9px 11px;border-radius:10px;border:1px solid var(--line);background:#15113a;color:#fff;font-family:inherit;font-size:14px}
 .editform textarea{resize:vertical;min-height:42px}
 .editform button.full{grid-column:1/-1;width:100%;justify-content:center}
+.prices{max-width:520px}
+.pc{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;cursor:text}
+.pc .ttl em{display:block;margin:2px 0 0}
+.pin{display:flex;align-items:center;gap:8px}
+.pin input{width:130px;padding:11px 12px;border-radius:12px;border:1px solid var(--line);background:#15113a;color:#fff;font:700 20px/1 Manrope,"Segoe UI",system-ui,sans-serif;text-align:right}
+.pc.gold .pin input{color:var(--gold);border-color:#5c4a22}
+.pin b{color:var(--mut);font-size:14px}
+.prices .btn{margin-top:6px}
 </style></head><body>' . $body . '</body></html>';
     exit;
 }
@@ -145,6 +153,50 @@ if (empty($_SESSION['bb_admin'])) {
     page('Přihlášení', '<div class="login"><img src="?logo=1" alt="Black Box"><h2 style="margin:16px 0 0;font-weight:600">Správa objednávek</h2>
 <form method="post"><input type="password" name="heslo" placeholder="Heslo" autocomplete="current-password" autofocus required><button class="btn" type="submit">Přihlásit</button></form>'
         . ($err ? '<p style="color:#ff6b8a;margin:14px 0 0">' . bb_h($err) . '</p>' : '') . '</div>');
+}
+
+/* ---- ceník ---- */
+if (isset($_GET['cenik'])) {
+    $prices = bb_prices($cfg);
+    $NAMES = ['standard' => ['Standard', '2 hodiny · libovolný blok'], 'gold' => ['Gold Time', 'Pátek a sobota 22–24 h']];
+    if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
+        try {
+            if (!hash_equals($_SESSION['csrf'] ?? '', (string) ($_POST['csrf'] ?? ''))) {
+                throw new RuntimeException('Platnost stránky vypršela, zkuste to znovu.');
+            }
+            $new = [];
+            foreach ($prices as $k => $v) {
+                $raw = preg_replace('/[^\d]/', '', (string) ($_POST['cena_' . $k] ?? ''));
+                $n = (int) $raw;
+                if ($raw === '' || $n < 100 || $n > 100000) {
+                    throw new RuntimeException('Zadejte platnou cenu pro ' . $NAMES[$k][0] . ' (v Kč, celé číslo).');
+                }
+                $new[$k] = $n;
+            }
+            bb_save_prices($new);
+            $_SESSION['flash'] = ['ok', 'Ceník uložen. Na webu se nové ceny projeví do minuty.'];
+        } catch (Throwable $e) {
+            $_SESSION['flash'] = ['err', 'Nepovedlo se: ' . $e->getMessage()];
+        }
+        header('Location: ' . $self . '?cenik=1');
+        exit;
+    }
+    $out = '<div class="wrap"><header><h1><small>Black Box Luxury</small>Ceník</h1>
+<div class="tabs"><a href="' . $h($self) . '">Objednávky</a><a class="on" href="?cenik=1">Ceník</a></div>
+<a href="?odhlasit=1" style="color:#8f89b8;font-size:13px">Odhlásit</a></header>';
+    if (!empty($_SESSION['flash'])) {
+        [$t, $m] = $_SESSION['flash'];
+        unset($_SESSION['flash']);
+        $out .= '<div class="flash ' . $t . '">' . $h($m) . '</div>';
+    }
+    $out .= '<form method="post" class="prices"><input type="hidden" name="csrf" value="' . $h($_SESSION['csrf'] ?? '') . '">';
+    foreach ($prices as $k => $v) {
+        $out .= '<label class="o' . ($k === 'gold' ? ' gold' : '') . ' pc"><span class="ttl">' . $h($NAMES[$k][0]) . '<em>' . $h($NAMES[$k][1]) . '</em></span>
+<span class="pin"><input type="text" inputmode="numeric" pattern="[0-9 ]*" name="cena_' . $h($k) . '" value="' . $h((string) $v) . '" required><b>Kč</b></span></label>';
+    }
+    $out .= '<button class="btn" type="submit">Uložit ceník</button>
+<p class="meta" style="margin-top:14px">Cena se změní všude najednou: v ceníku na webu, u dárkových poukazů, v objednávce i na nových fakturách. Už vystavené faktury a objednávky si nechají původní cenu.</p></form></div>';
+    page('Ceník', $out);
 }
 
 /* ---- databáze ---- */
@@ -332,7 +384,7 @@ $out = '<div class="wrap"><header><h1><small>Black Box Luxury</small>Objednávky
 foreach (['aktivni' => 'K vyřízení', 'zaplaceno' => 'Zaplacené', 'vse' => 'Vše'] as $k => $t) {
     $out .= '<a class="' . ($f === $k ? 'on' : '') . '" href="?f=' . $k . '">' . $t . '<b>' . $counts[$k] . '</b></a>';
 }
-$out .= '</div><form class="search" method="get"><input type="hidden" name="f" value="' . $h($f) . '"><input type="search" name="q" value="' . $h($q) . '" placeholder="Hledat jméno, VS, kód…"></form>
+$out .= '<a href="?cenik=1">Ceník</a></div><form class="search" method="get"><input type="hidden" name="f" value="' . $h($f) . '"><input type="search" name="q" value="' . $h($q) . '" placeholder="Hledat jméno, VS, kód…"></form>
 <a href="?export=csv" style="color:#8f89b8;font-size:13px">Export do Excelu</a> <a href="?odhlasit=1" style="color:#8f89b8;font-size:13px">Odhlásit</a></header>';
 
 if (!empty($_SESSION['flash'])) {

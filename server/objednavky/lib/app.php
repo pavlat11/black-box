@@ -30,6 +30,49 @@ function bb_money(float $n): string
     return number_format($n, 0, ',', "\u{00A0}") . "\u{00A0}Kč";
 }
 
+/* ---------- ceník (upravuje se ve správě, ukládá se do objednavky/data/ceny.json) ---------- */
+
+/** Aktuální ceny: uložené ze správy, jinak výchozí z config.php. Vrací ['standard' => 1990, 'gold' => 2490]. */
+function bb_prices(array $cfg): array
+{
+    $p = [];
+    foreach ($cfg['products'] as $k => $prod) {
+        $p[$k] = (int) $prod['price'];
+    }
+    $f = dirname(__DIR__) . '/data/ceny.json';
+    $saved = is_file($f) ? json_decode((string) file_get_contents($f), true) : null;
+    if (is_array($saved)) {
+        foreach ($p as $k => $v) {
+            if (isset($saved[$k]) && is_numeric($saved[$k]) && (int) $saved[$k] > 0) {
+                $p[$k] = (int) $saved[$k];
+            }
+        }
+    }
+    return $p;
+}
+
+function bb_save_prices(array $prices): void
+{
+    $d = dirname(__DIR__) . '/data';
+    if (!is_dir($d)) {
+        @mkdir($d, 0755, true);
+    }
+    $prices['upraveno'] = date('c');
+    if (file_put_contents($d . '/ceny.json', json_encode($prices, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT), LOCK_EX) === false) {
+        throw new RuntimeException('Nelze zapsat soubor s cenami (objednavky/data/ceny.json).');
+    }
+}
+
+/** Produkty z config.php s aktuálními cenami */
+function bb_products(array $cfg): array
+{
+    $out = $cfg['products'];
+    foreach (bb_prices($cfg) as $k => $v) {
+        $out[$k]['price'] = $v;
+    }
+    return $out;
+}
+
 function bb_date(int $ts): string
 {
     return date('j. n. Y', $ts);

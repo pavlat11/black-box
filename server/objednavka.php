@@ -78,7 +78,7 @@ if (preg_match('/\b(\d{8})\b/', $compRaw, $m)) {
     $ico = $m[1];
     $company = trim(preg_replace('/\s*[,;\-–]?\s*(IČO?:?\s*)?' . $ico . '\s*[,;]?/iu', ' ', $compRaw));
 }
-$product = $cfg['products'][$kind];
+$product = bb_products($cfg)[$kind];
 if (!$sendV) {   // bez poukazu – na faktuře se neobjeví „Dárkový poukaz“
     $product['name'] = $product['name_visit'] ?? ('Black Box – ' . ($kind === 'gold' ? 'Gold Time' : 'Standard'));
 }
