@@ -1,5 +1,5 @@
 <?php
-/* Black Box Luxury – aktuální ceník pro web (čte ho stránka, mění se ve správě) */
+/* Black Box Luxury – data pro web: aktuální ceník a oznámení (mění se ve správě) */
 
 declare(strict_types=1);
 header('Content-Type: application/json; charset=utf-8');
@@ -10,4 +10,6 @@ $BASE = __DIR__ . '/objednavky';
 $cfg = require $BASE . '/config.php';
 require $BASE . '/lib/app.php';
 
-echo json_encode(bb_prices($cfg), JSON_UNESCAPED_UNICODE);
+$out = bb_prices($cfg);
+$out['oznameni'] = bb_notice_public();
+echo json_encode($out, JSON_UNESCAPED_UNICODE);

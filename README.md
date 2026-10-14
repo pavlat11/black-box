@@ -19,7 +19,12 @@ Kód už není v jednom souboru:
 
 Při nahrání na live je potřeba zkopírovat celou složku (index.html + css/ js/ img/ fonts/).
 
-## Ceník (od 14. 10. 2026)
+## Správa (sprava.php): Objednávky · Ceník · Oznámení · Statistiky
+
+- **Oznámení** – text, který se ukáže nahoře na webu (lze zavřít, volitelné datum „zobrazovat do“).
+- **Statistiky** – prodané poukazy a tržby (měsíc, rok, celkem, po měsících).
+
+### Ceník (od 14. 10. 2026)
 
 Ceny Standard / Gold Time se mění ve **správě**: `sprava.php` → záložka **Ceník**.
 Ukládají se do databáze (tabulka `bb_nastaveni`, vytvoří se sama). Web si je načítá z `ceny.php`,

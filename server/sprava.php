@@ -107,6 +107,52 @@ details.edit[open] summary{color:var(--txt)}
 .pc.gold .pin input{color:var(--gold);border-color:#5c4a22}
 .pin b{color:var(--mut);font-size:14px}
 .prices .btn{margin-top:6px}
+.menu{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:14px;padding:10px 16px;background:rgba(8,6,30,.86);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.mlogo{display:flex;align-items:center;gap:9px;color:var(--txt);text-decoration:none;font-weight:700;letter-spacing:.14em;text-transform:uppercase;font-size:12px;white-space:nowrap}
+.mlogo img{width:30px;height:30px;border-radius:8px}
+.mi{display:flex;gap:4px;flex:1;justify-content:center;overflow-x:auto;scrollbar-width:none}
+.mi::-webkit-scrollbar{display:none}
+.mi a{padding:8px 14px;border-radius:999px;color:var(--mut);text-decoration:none;font-size:14px;font-weight:600;white-space:nowrap}
+.mi a:hover{color:var(--txt)}
+.mi a.on{background:rgba(185,140,255,.16);color:#fff}
+.mout{color:var(--mut);font-size:13px;white-space:nowrap}
+@media (max-width:640px){.menu{flex-wrap:wrap;gap:8px}.mlogo{order:1}.mout{order:2;margin-left:auto}.mi{order:3;flex-basis:100%;justify-content:space-between;gap:2px}.mi a{padding:8px 10px;font-size:13.5px}}
+.ph{font-size:22px;font-weight:700;margin:4px 0 18px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.notice{max-width:620px;padding:22px}
+.notice::before{display:none}
+.lbl{display:block;font-size:12px;color:var(--mut);font-weight:600}
+.lbl textarea,.lbl input{width:100%;margin-top:6px;padding:12px 13px;border-radius:12px;border:1px solid var(--line);background:#15113a;color:#fff;font-family:inherit;font-size:15px;color-scheme:dark}
+.lbl textarea{resize:vertical;min-height:84px}
+.nrow{display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap;margin:14px 0 18px}
+.nrow .lbl{flex:1;min-width:180px}
+.sw{display:flex;align-items:center;gap:10px;cursor:pointer;font-weight:600;padding-bottom:10px}
+.sw input{position:absolute;opacity:0}
+.sw i{width:44px;height:26px;border-radius:99px;background:#2a2160;position:relative;transition:.2s}
+.sw i::after{content:"";position:absolute;left:3px;top:3px;width:20px;height:20px;border-radius:50%;background:#8f89b8;transition:.2s}
+.sw input:checked+i{background:var(--acc2)}
+.sw input:checked+i::after{left:21px;background:#fff}
+.sw input:focus-visible+i{outline:2px solid var(--acc);outline-offset:2px}
+.scards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:12px}
+.sc{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px}
+.sc span{display:block;color:var(--mut);font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.sc b{display:block;font-size:26px;margin:8px 0 4px;white-space:nowrap}
+.sc small{color:var(--mut);font-size:13px}
+.sc.hi{border-color:var(--acc2);background:linear-gradient(180deg,rgba(138,77,255,.18),var(--card))}
+.sc.wait b{color:var(--warn)}
+.split{padding:18px}
+.bar2{display:flex;height:12px;border-radius:99px;overflow:hidden;background:#15113a;margin:12px 0 8px}
+.bar2 i{background:var(--acc2)}
+.bar2 i.g{background:var(--gold)}
+.leg{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--mut)}
+.leg .g,.st .g{color:var(--gold)}
+.st{width:100%;border-collapse:collapse;font-size:14px}
+.st th{text-align:left;color:var(--mut);font-size:12px;font-weight:600;padding:6px 8px;border-bottom:1px solid var(--line)}
+.st td{padding:9px 8px;border-bottom:1px solid rgba(42,33,96,.6)}
+.st .r{text-align:right;white-space:nowrap}
+.st tr.zero td{color:#5d5888}
+.st .barc{width:28%}
+.st .barc i{display:block;height:8px;border-radius:99px;background:linear-gradient(90deg,var(--acc2),var(--acc))}
+@media (max-width:640px){.st .barc{display:none}}
 </style></head><body>' . $body . '</body></html>';
     exit;
 }
@@ -155,20 +201,50 @@ if (empty($_SESSION['bb_admin'])) {
         . ($err ? '<p style="color:#ff6b8a;margin:14px 0 0">' . bb_h($err) . '</p>' : '') . '</div>');
 }
 
+/* ---- databáze ---- */
+try {
+    bb_db();
+} catch (Throwable $e) {
+    page('Chyba databáze', '<div class="login"><img src="?logo=1" alt=""><h2>Nelze se připojit k databázi</h2><p style="color:#8f89b8">Zkontrolujte údaje <code>db</code> v <code>objednavky/config.php</code>.</p><p style="color:#ff6b8a;font-size:13px">' . bb_h($e->getMessage()) . '</p></div>');
+}
+
+/* ---- hlavní menu správy ---- */
+function menu(string $on): string
+{
+    $items = ['objednavky' => 'Objednávky', 'cenik' => 'Ceník', 'oznameni' => 'Oznámení', 'statistiky' => 'Statistiky'];
+    $self = strtok($_SERVER['REQUEST_URI'] ?? 'sprava.php', '?') ?: 'sprava.php';
+    $o = '<nav class="menu"><a class="mlogo" href="' . bb_h($self) . '"><img src="?logo=1" alt="">Black Box</a><div class="mi">';
+    foreach ($items as $k => $t) {
+        $href = $k === 'objednavky' ? $self : '?' . $k . '=1';
+        $o .= '<a' . ($on === $k ? ' class="on"' : '') . ' href="' . bb_h($href) . '">' . $t . '</a>';
+    }
+    return $o . '</div><a class="mout" href="?odhlasit=1">Odhlásit</a></nav>';
+}
+function flash(): string
+{
+    if (empty($_SESSION['flash'])) {
+        return '';
+    }
+    [$t, $m] = $_SESSION['flash'];
+    unset($_SESSION['flash']);
+    return '<div class="flash ' . $t . '">' . bb_h($m) . '</div>';
+}
+function csrf_ok(): void
+{
+    if (!hash_equals($_SESSION['csrf'] ?? '', (string) ($_POST['csrf'] ?? ''))) {
+        throw new RuntimeException('Platnost stránky vypršela, zkuste to znovu.');
+    }
+}
+$isPost = ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST';
+$csrfIn = '<input type="hidden" name="csrf" value="' . $h($_SESSION['csrf'] ?? '') . '">';
+
 /* ---- ceník ---- */
 if (isset($_GET['cenik'])) {
-    try {
-        bb_db();
-    } catch (Throwable $e) {
-        page('Chyba databáze', '<div class="login"><img src="?logo=1" alt=""><h2>Nelze se připojit k databázi</h2><p style="color:#8f89b8">Ceník se ukládá do databáze. Zkontrolujte údaje <code>db</code> v <code>objednavky/config.php</code>.</p><p style="color:#ff6b8a;font-size:13px">' . bb_h($e->getMessage()) . '</p></div>');
-    }
     $prices = bb_prices($cfg);
     $NAMES = ['standard' => ['Standard', '2 hodiny · libovolný blok'], 'gold' => ['Gold Time', 'Pátek a sobota 22–24 h']];
-    if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
+    if ($isPost) {
         try {
-            if (!hash_equals($_SESSION['csrf'] ?? '', (string) ($_POST['csrf'] ?? ''))) {
-                throw new RuntimeException('Platnost stránky vypršela, zkuste to znovu.');
-            }
+            csrf_ok();
             $new = [];
             foreach ($prices as $k => $v) {
                 $raw = preg_replace('/[^\d]/', '', (string) ($_POST['cena_' . $k] ?? ''));
@@ -186,15 +262,7 @@ if (isset($_GET['cenik'])) {
         header('Location: ' . $self . '?cenik=1');
         exit;
     }
-    $out = '<div class="wrap"><header><h1><small>Black Box Luxury</small>Ceník</h1>
-<div class="tabs"><a href="' . $h($self) . '">Objednávky</a><a class="on" href="?cenik=1">Ceník</a></div>
-<a href="?odhlasit=1" style="color:#8f89b8;font-size:13px">Odhlásit</a></header>';
-    if (!empty($_SESSION['flash'])) {
-        [$t, $m] = $_SESSION['flash'];
-        unset($_SESSION['flash']);
-        $out .= '<div class="flash ' . $t . '">' . $h($m) . '</div>';
-    }
-    $out .= '<form method="post" class="prices"><input type="hidden" name="csrf" value="' . $h($_SESSION['csrf'] ?? '') . '">';
+    $out = menu('cenik') . '<div class="wrap"><h1 class="ph">Ceník</h1>' . flash() . '<form method="post" class="prices">' . $csrfIn;
     foreach ($prices as $k => $v) {
         $out .= '<label class="o' . ($k === 'gold' ? ' gold' : '') . ' pc"><span class="ttl">' . $h($NAMES[$k][0]) . '<em>' . $h($NAMES[$k][1]) . '</em></span>
 <span class="pin"><input type="text" inputmode="numeric" pattern="[0-9 ]*" name="cena_' . $h($k) . '" value="' . $h((string) $v) . '" required><b>Kč</b></span></label>';
@@ -204,11 +272,95 @@ if (isset($_GET['cenik'])) {
     page('Ceník', $out);
 }
 
-/* ---- databáze ---- */
-try {
-    bb_db();
-} catch (Throwable $e) {
-    page('Chyba databáze', '<div class="login"><img src="?logo=1" alt=""><h2>Nelze se připojit k databázi</h2><p style="color:#8f89b8">Zkontrolujte údaje <code>db</code> v <code>objednavky/config.php</code>.</p><p style="color:#ff6b8a;font-size:13px">' . bb_h($e->getMessage()) . '</p></div>');
+/* ---- oznámení na web ---- */
+if (isset($_GET['oznameni'])) {
+    $n = bb_notice();
+    if ($isPost) {
+        try {
+            csrf_ok();
+            $text = trim(preg_replace('/\s+/u', ' ', (string) ($_POST['text'] ?? '')) ?? '');
+            $do = (string) ($_POST['do'] ?? '');
+            if ($do !== '' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $do)) {
+                $do = '';
+            }
+            $on = !empty($_POST['zapnuto']);
+            if ($on && $text === '') {
+                throw new RuntimeException('Napište text oznámení.');
+            }
+            bb_setting_set('oznameni', ['zapnuto' => $on, 'text' => mb_substr($text, 0, 220), 'do' => $do]);
+            $_SESSION['flash'] = ['ok', $on ? 'Oznámení je zapnuté. Na webu se objeví do minuty.' : 'Oznámení je vypnuté.'];
+        } catch (Throwable $e) {
+            $_SESSION['flash'] = ['err', 'Nepovedlo se: ' . $e->getMessage()];
+        }
+        header('Location: ' . $self . '?oznameni=1');
+        exit;
+    }
+    $live = bb_notice_public();
+    $state = $live ? '<span class="badge b-zaplaceno">Zobrazuje se na webu</span>' : ($n['zapnuto'] && $n['do'] !== '' ? '<span class="badge b-storno">Platnost vypršela</span>' : '<span class="badge b-storno">Vypnuto</span>');
+    $out = menu('oznameni') . '<div class="wrap"><h1 class="ph">Oznámení na webu ' . $state . '</h1>' . flash() . '
+<form method="post" class="o notice">' . $csrfIn . '
+<label class="lbl">Text oznámení<textarea name="text" rows="3" maxlength="220" placeholder="Např. Od 20. do 27. 10. máme zavřeno. Poukazy objednávejte dál.">' . $h($n['text']) . '</textarea></label>
+<div class="nrow"><label class="lbl">Zobrazovat do (nepovinné)<input type="date" name="do" value="' . $h($n['do']) . '"></label>
+<label class="sw"><input type="checkbox" name="zapnuto" value="1"' . ($n['zapnuto'] ? ' checked' : '') . '><i></i>Zobrazit na webu</label></div>
+<button class="btn" type="submit">Uložit oznámení</button>
+<p class="meta">Oznámení se ukáže nahoře na webu pod menu. Návštěvník ho může zavřít křížkem. Když text změníte, ukáže se mu znovu. Po zadaném datu zmizí samo.</p>
+</form></div>';
+    page('Oznámení', $out);
+}
+
+/* ---- statistiky prodeje ---- */
+if (isset($_GET['statistiky'])) {
+    $MES = [1 => 'leden', 'únor', 'březen', 'duben', 'květen', 'červen', 'červenec', 'srpen', 'září', 'říjen', 'listopad', 'prosinec'];
+    $sold = ['zaplaceno', 'vyrizeno'];
+    $wait = ['ceka', 'nova', 'bez_faktury'];
+    $z = fn() => ['standard' => 0, 'gold' => 0, 'ks' => 0, 'kc' => 0];
+    $tot = $z(); $year = $z(); $month = $z(); $pend = $z();
+    $byMonth = [];
+    $y = (int) date('Y'); $ym = date('Y-m');
+    foreach (bb_list_orders($DATA) as $o) {
+        $st = $o['status'] ?? '';
+        $k = ($o['kind'] ?? '') === 'gold' ? 'gold' : 'standard';
+        $kc = (int) ($o['product']['price'] ?? 0);
+        if (in_array($st, $wait, true)) {
+            $pend[$k]++; $pend['ks']++; $pend['kc'] += $kc;
+            continue;
+        }
+        if (!in_array($st, $sold, true)) {
+            continue;
+        }
+        $ts = (int) ($o['paid_at'] ?? $o['done_at'] ?? $o['created'] ?? time());
+        $add = function (array &$a) use ($k, $kc) { $a[$k]++; $a['ks']++; $a['kc'] += $kc; };
+        $add($tot);
+        if ((int) date('Y', $ts) === $y) $add($year);
+        if (date('Y-m', $ts) === $ym) $add($month);
+        $key = date('Y-m', $ts);
+        $byMonth[$key] = $byMonth[$key] ?? $z();
+        $add($byMonth[$key]);
+    }
+    $card = function (string $t, array $a, string $cls = '') use ($h) {
+        return '<div class="sc ' . $cls . '"><span>' . $t . '</span><b>' . $h(bb_money((float) $a['kc'])) . '</b><small>' . $a['ks'] . ' ks · Standard ' . $a['standard'] . ' · Gold ' . $a['gold'] . '</small></div>';
+    };
+    $out = menu('statistiky') . '<div class="wrap"><h1 class="ph">Statistiky prodeje</h1>
+<div class="scards">' . $card('Tento měsíc', $month, 'hi') . $card('Letos', $year) . $card('Celkem', $tot) . $card('Čeká na zaplacení / vyzvednutí', $pend, 'wait') . '</div>';
+    if ($tot['ks'] > 0) {
+        $gPct = (int) round($tot['gold'] / $tot['ks'] * 100);
+        $out .= '<div class="o split"><div class="ttl">Poměr poukazů</div><div class="bar2"><i style="width:' . (100 - $gPct) . '%"></i><i class="g" style="width:' . $gPct . '%"></i></div>
+<div class="leg"><span>Standard ' . $tot['standard'] . ' ks (' . (100 - $gPct) . ' %)</span><span class="g">Gold Time ' . $tot['gold'] . ' ks (' . $gPct . ' %)</span></div></div>';
+    }
+    $out .= '<div class="o"><div class="ttl" style="margin-bottom:10px">Po měsících <em>posledních 12 měsíců</em></div><table class="st"><thead><tr><th>Měsíc</th><th>Standard</th><th>Gold</th><th class="r">Tržba</th><th class="barc"></th></tr></thead><tbody>';
+    $max = 1;
+    for ($i = 0; $i < 12; $i++) {
+        $key = date('Y-m', strtotime(date('Y-m-01') . " -$i month"));
+        $max = max($max, $byMonth[$key]['kc'] ?? 0);
+    }
+    for ($i = 0; $i < 12; $i++) {
+        $t = strtotime(date('Y-m-01') . " -$i month");
+        $a = $byMonth[date('Y-m', $t)] ?? $z();
+        $out .= '<tr' . ($a['ks'] ? '' : ' class="zero"') . '><td>' . $MES[(int) date('n', $t)] . ' ' . date('Y', $t) . '</td><td>' . $a['standard'] . '</td><td class="g">' . $a['gold'] . '</td><td class="r"><b>' . $h(bb_money((float) $a['kc'])) . '</b></td><td class="barc"><i style="width:' . round($a['kc'] / $max * 100) . '%"></i></td></tr>';
+    }
+    $out .= '</tbody></table></div>
+<p class="meta">Počítají se zaplacené a vyzvednuté objednávky (podle data platby). Stornované se nepočítají. Částky jsou za cenu, za kterou se objednávka prodala.</p></div>';
+    page('Statistiky', $out);
 }
 
 /* ---- stažení PDF ---- */
@@ -384,13 +536,13 @@ $btn = function (array $o, string $a, string $label, string $cls = 'ghost', stri
     return '<form method="post"' . ($confirm ? ' onsubmit="return confirm(\'' . $h($confirm) . '\')"' : '') . '><input type="hidden" name="csrf" value="' . $h($csrf) . '"><input type="hidden" name="id" value="' . $h($o['id']) . '"><input type="hidden" name="a" value="' . $a . '"><input type="hidden" name="f" value="' . $h($f) . '"><button class="btn ' . $cls . '" type="submit">' . $label . '</button></form>';
 };
 
-$out = '<div class="wrap"><header><h1><small>Black Box Luxury</small>Objednávky poukazů</h1>
+$out = menu('objednavky') . '<div class="wrap"><header><h1 class="ph" style="margin:0">Objednávky poukazů</h1>
 <div class="tabs">';
 foreach (['aktivni' => 'K vyřízení', 'zaplaceno' => 'Zaplacené', 'vse' => 'Vše'] as $k => $t) {
     $out .= '<a class="' . ($f === $k ? 'on' : '') . '" href="?f=' . $k . '">' . $t . '<b>' . $counts[$k] . '</b></a>';
 }
-$out .= '<a href="?cenik=1">Ceník</a></div><form class="search" method="get"><input type="hidden" name="f" value="' . $h($f) . '"><input type="search" name="q" value="' . $h($q) . '" placeholder="Hledat jméno, VS, kód…"></form>
-<a href="?export=csv" style="color:#8f89b8;font-size:13px">Export do Excelu</a> <a href="?odhlasit=1" style="color:#8f89b8;font-size:13px">Odhlásit</a></header>';
+$out .= '</div><form class="search" method="get"><input type="hidden" name="f" value="' . $h($f) . '"><input type="search" name="q" value="' . $h($q) . '" placeholder="Hledat jméno, VS, kód…"></form>
+<a href="?export=csv" style="color:#8f89b8;font-size:13px">Export do Excelu</a></header>';
 
 if (!empty($_SESSION['flash'])) {
     [$t, $m] = $_SESSION['flash'];

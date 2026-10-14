@@ -30,7 +30,42 @@ function bb_money(float $n): string
     return number_format($n, 0, ',', "\u{00A0}") . "\u{00A0}Kč";
 }
 
-/* ---------- ceník (upravuje se ve správě; ukládá se do databáze, tabulka bb_nastaveni) ---------- */
+/* ---------- nastavení ze správy (ceník, oznámení) – tabulka bb_nastaveni, bez DB soubor data/<klic>.json ---------- */
+
+function bb_setting_get(string $key): ?array
+{
+    try {
+        if ($db = bb_db()) {
+            $st = $db->prepare('SELECT hodnota FROM bb_nastaveni WHERE klic = ?');
+            $st->execute([$key]);
+            $raw = $st->fetchColumn();
+            $v = $raw ? json_decode((string) $raw, true) : null;
+            return is_array($v) ? $v : null;
+        }
+    } catch (Throwable $e) {
+        return null;
+    }
+    $f = dirname(__DIR__) . '/data/' . preg_replace('/[^a-z0-9_-]/', '', $key) . '.json';
+    $v = is_file($f) ? json_decode((string) file_get_contents($f), true) : null;
+    return is_array($v) ? $v : null;
+}
+
+function bb_setting_set(string $key, array $value): void
+{
+    $json = json_encode($value, JSON_UNESCAPED_UNICODE);
+    if ($db = bb_db()) {
+        $db->prepare('INSERT INTO bb_nastaveni (klic, hodnota, upraveno) VALUES (?, ?, NOW())
+            ON DUPLICATE KEY UPDATE hodnota = VALUES(hodnota), upraveno = VALUES(upraveno)')->execute([$key, $json]);
+        return;
+    }
+    $d = dirname(__DIR__) . '/data';
+    if (!is_dir($d)) {
+        @mkdir($d, 0755, true);
+    }
+    if (file_put_contents($d . '/' . preg_replace('/[^a-z0-9_-]/', '', $key) . '.json', $json, LOCK_EX) === false) {
+        throw new RuntimeException('Nelze uložit nastavení (databáze není nastavená a soubor nejde zapsat).');
+    }
+}
 
 /** Aktuální ceny: uložené ze správy, jinak výchozí z config.php. Vrací ['standard' => 1990, 'gold' => 2490]. */
 function bb_prices(array $cfg): array
@@ -39,21 +74,7 @@ function bb_prices(array $cfg): array
     foreach ($cfg['products'] as $k => $prod) {
         $p[$k] = (int) $prod['price'];
     }
-    $saved = null;
-    try {
-        if ($db = bb_db()) {
-            $st = $db->prepare("SELECT hodnota FROM bb_nastaveni WHERE klic = 'ceny'");
-            $st->execute();
-            $raw = $st->fetchColumn();
-            $saved = $raw ? json_decode((string) $raw, true) : null;
-        }
-    } catch (Throwable $e) {
-        $saved = null;   // databáze nedostupná → zkusí se soubor / výchozí ceny
-    }
-    if (!is_array($saved)) {
-        $f = dirname(__DIR__) . '/data/ceny.json';
-        $saved = is_file($f) ? json_decode((string) file_get_contents($f), true) : null;
-    }
+    $saved = bb_setting_get('ceny');
     if (is_array($saved)) {
         foreach ($p as $k => $v) {
             if (isset($saved[$k]) && is_numeric($saved[$k]) && (int) $saved[$k] > 0) {
@@ -66,20 +87,27 @@ function bb_prices(array $cfg): array
 
 function bb_save_prices(array $prices): void
 {
-    $json = json_encode($prices, JSON_UNESCAPED_UNICODE);
-    if ($db = bb_db()) {
-        $db->prepare("INSERT INTO bb_nastaveni (klic, hodnota, upraveno) VALUES ('ceny', ?, NOW())
-            ON DUPLICATE KEY UPDATE hodnota = VALUES(hodnota), upraveno = VALUES(upraveno)")->execute([$json]);
-        return;
+    bb_setting_set('ceny', $prices);
+}
+
+/** Oznámení na web: ['zapnuto' => bool, 'text' => '', 'do' => 'YYYY-MM-DD' | ''] */
+function bb_notice(): array
+{
+    $n = bb_setting_get('oznameni') ?? [];
+    return ['zapnuto' => !empty($n['zapnuto']), 'text' => (string) ($n['text'] ?? ''), 'do' => (string) ($n['do'] ?? '')];
+}
+
+/** Oznámení, které se má právě teď zobrazit na webu (nebo null) */
+function bb_notice_public(): ?array
+{
+    $n = bb_notice();
+    if (!$n['zapnuto'] || trim($n['text']) === '') {
+        return null;
     }
-    // bez databáze: náhradně do souboru
-    $d = dirname(__DIR__) . '/data';
-    if (!is_dir($d)) {
-        @mkdir($d, 0755, true);
+    if ($n['do'] !== '' && strtotime($n['do'] . ' 23:59:59') < time()) {
+        return null;
     }
-    if (file_put_contents($d . '/ceny.json', $json, LOCK_EX) === false) {
-        throw new RuntimeException('Nelze uložit ceny (databáze není nastavená a soubor nejde zapsat).');
-    }
+    return ['text' => $n['text'], 'id' => substr(sha1($n['text']), 0, 10)];
 }
 
 /** Produkty z config.php s aktuálními cenami */

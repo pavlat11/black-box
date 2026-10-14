@@ -1,13 +1,20 @@
-/* Ceník: ceny se mění ve správě (sprava.php → Ceník), web si je načte z ceny.php */
+/* Ceník a oznámení: mění se ve správě (sprava.php), web si je načte z ceny.php */
 window.BB_PRICES={standard:1990,gold:2490};
 function bbFmt(n){return String(n).replace(/\B(?=(\d{3})+(?!\d))/g,'\u00a0');}
 function bbKc(k){return bbFmt(window.BB_PRICES[k])+'\u00a0Kč';}
 (function(){
   const apply=()=>{document.querySelectorAll('[data-price]').forEach(el=>{const v=window.BB_PRICES[el.dataset.price];if(v)el.textContent=bbFmt(v);});
     const vp=document.getElementById('voPrice'),on=document.querySelector('.vopt[aria-pressed="true"] span');if(vp&&on)vp.textContent=(on.textContent.split('·').pop()||'').trim();};
+  const notice=n=>{if(!n||!n.text)return;const key='bbNotice';let seen='';try{seen=localStorage.getItem(key)||'';}catch(e){}if(seen===n.id)return;
+    const el=document.createElement('div');el.className='bbnote';el.setAttribute('role','status');
+    el.innerHTML='<i class="bbn-dot" aria-hidden="true"></i><p></p><button type="button" aria-label="Zavřít oznámení"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>';
+    el.querySelector('p').textContent=n.text;
+    el.querySelector('button').addEventListener('click',()=>{el.classList.remove('in');try{localStorage.setItem(key,n.id);}catch(e){}setTimeout(()=>el.remove(),500);});
+    document.body.appendChild(el);setTimeout(()=>el.classList.add('in'),1200);};
   if(!window.fetch)return;
   fetch('ceny.php',{cache:'no-cache'}).then(r=>r.ok?r.json():null).then(p=>{if(!p)return;['standard','gold'].forEach(k=>{const n=parseInt(p[k],10);if(n>0)window.BB_PRICES[k]=n;});
-    if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply);else apply();}).catch(()=>{});
+    const go=()=>{apply();notice(p.oznameni);};
+    if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',go);else go();}).catch(()=>{});
 })();
 try{
 (()=>{
