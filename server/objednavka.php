@@ -42,7 +42,9 @@ if ($g('web') !== '') {                       // past na roboty (skryté pole)
     out(['ok' => true, 'mode' => 'pickup']);
 }
 
-$way = $g('way') === 'faktura' ? 'faktura' : 'odber';
+$quick = $g('way') === 'objednavka';            // rychlá objednávka z patičky webu (vždy faktura)
+$way = ($quick || $g('way') === 'faktura') ? 'faktura' : 'odber';
+$sendV = $quick ? in_array($g('voucher'), ['1', 'true', 'ano'], true) : true;
 $kind = $g('kind') === 'gold' ? 'gold' : 'standard';
 $name = $g('name', 120);
 $phone = $g('phone', 40);
@@ -52,12 +54,19 @@ $compRaw = $g('company', 160);
 $for = $g('for', 80);
 $msg = $g('msg', 120);
 
+if ($quick && $for === '' && $name !== '') {
+    $for = $name;                               // jméno zadané k poukazu
+}
 $bad = [];
-if (mb_strlen($name) < 2) $bad[] = 'name';
+if (!$quick && mb_strlen($name) < 2) $bad[] = 'name';
 if (!preg_match('/^[+0-9 ()\-\/]{6,}$/', $phone)) $bad[] = 'phone';
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) $bad[] = 'email';
-if ($way === 'faktura' && mb_strlen($addr) < 5) $bad[] = 'addr';
-if ($for === '') $bad[] = 'for';
+if (!$quick && $way === 'faktura' && mb_strlen($addr) < 5) $bad[] = 'addr';
+if ($sendV && mb_strlen($for) < 2) $bad[] = 'for';
+if (!$sendV) {
+    $for = '';
+    $msg = '';
+}
 if ($bad) {
     out(['ok' => false, 'error' => 'Zkontrolujte prosím vyplněné údaje.', 'fields' => $bad], 422);
 }
@@ -69,9 +78,15 @@ if (preg_match('/\b(\d{8})\b/', $compRaw, $m)) {
     $ico = $m[1];
     $company = trim(preg_replace('/\s*[,;\-–]?\s*(IČO?:?\s*)?' . $ico . '\s*[,;]?/iu', ' ', $compRaw));
 }
+$product = $cfg['products'][$kind];
+if (!$sendV) {   // bez poukazu – na faktuře se neobjeví „Dárkový poukaz“
+    $product['name'] = $product['name_visit'] ?? ('Black Box – ' . ($kind === 'gold' ? 'Gold Time' : 'Standard'));
+}
 $o = [
     'kind' => $kind,
-    'product' => $cfg['products'][$kind],
+    'product' => $product,
+    'quick' => $quick,
+    'send_voucher' => $sendV,
     'for' => $for,
     'msg' => $msg,
     'customer' => ['name' => $name, 'phone' => $phone, 'email' => $email, 'addr' => $addr, 'company' => $company, 'ico' => $ico],
@@ -134,7 +149,7 @@ try {
         $m->addAddress($cfg['invoice_copy_to']);
         $m->clearReplyTos();
         $m->addReplyTo($email, $name);
-        $m->Subject = 'Objednávka poukazu – FAKTURU POŠLETE RUČNĚ – ' . $name;
+        $m->Subject = ($sendV ? 'Objednávka poukazu' : 'Objednávka') . ' – FAKTURU POŠLETE RUČNĚ – ' . ($name !== '' ? $name : $email);
         $m->isHTML(true);
         $m->Body = '<p style="font-family:Arial;color:#b00020"><b>Faktura nebyla vystavena automaticky – v objednavky/config.php chybí číslo účtu.</b></p>' . bb_email_internal($o, 'faktura');
         $m->AltBody = strip_tags($m->Body);
@@ -144,7 +159,7 @@ try {
         } catch (Throwable $e) {   // e-maily už odešly – chybu jen zapíšeme
             @file_put_contents($DATA . '/chyby.log', date('c') . ' ulozeni ' . $e->getMessage() . "\n", FILE_APPEND);
         }
-        log_order($DATA, [date('Y-m-d H:i'), 'faktura', '', $o['product']['name'], $o['product']['price'], $for, $msg, $name, $phone, $email, $addr, $company, $ico, 'čeká na ruční fakturu']);
+        log_order($DATA, [date('Y-m-d H:i'), $quick ? 'objednávka (faktura)' : 'faktura', '', $o['product']['name'], $o['product']['price'], $for, $msg, $name, $phone, $email, $addr, $company, $ico, 'čeká na ruční fakturu']);
         out(['ok' => true, 'mode' => 'manual']);
     }
 
@@ -158,7 +173,7 @@ try {
     $o['sent_at'] = time();
     bb_save_order($DATA, $o);
 
-    log_order($DATA, [date('Y-m-d H:i'), 'faktura', $no, $o['product']['name'], $o['product']['price'], $for, $msg, $name, $phone, $email, $addr, $company, $ico, 'faktura odeslána']);
+    log_order($DATA, [date('Y-m-d H:i'), $quick ? 'objednávka (faktura)' : 'faktura', $no, $o['product']['name'], $o['product']['price'], $for, $msg, $name, $phone, $email, $addr, $company, $ico, 'faktura odeslána']);
     out(['ok' => true, 'mode' => 'invoice', 'invoice' => $no]);
 } catch (Throwable $e) {
     @file_put_contents($DATA . '/chyby.log', date('c') . ' ' . $e->getMessage() . "\n", FILE_APPEND);

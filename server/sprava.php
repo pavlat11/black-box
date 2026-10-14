@@ -181,7 +181,7 @@ if (isset($_GET['export'])) {
     foreach (bb_list_orders($DATA) as $o) {
         $c = $o['customer'];
         fputcsv($out, [
-            date('j. n. Y H:i', (int) $o['created']), $o['way'] === 'faktura' ? 'faktura' : 'osobní odběr', $o['status'], $o['no'] ?? '',
+            date('j. n. Y H:i', (int) $o['created']), !empty($o['quick']) ? 'objednávka z webu (faktura)' : ($o['way'] === 'faktura' ? 'faktura' : 'osobní odběr'), $o['status'], $o['no'] ?? '',
             !empty($o['due']) ? date('j. n. Y', (int) $o['due']) : '', !empty($o['paid_at']) ? date('j. n. Y', (int) $o['paid_at']) : '',
             $o['kind'] === 'gold' ? 'Gold Time' : 'Standard', $o['voucher'] ?? '', $o['product']['price'], $o['for'] ?? '', $o['msg'] ?? '',
             $c['name'], $c['phone'], $c['email'], $c['addr'] ?? '', $c['company'] ?? '', $c['ico'] ?? '',
@@ -204,16 +204,18 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         if (!$o) {
             throw new RuntimeException('Objednávka nenalezena.');
         }
-        $who = $o['customer']['name'];
+        $who = bb_who($o);
         switch ($a) {
             case 'zaplaceno':
-                bb_ensure_voucher($cfg, $DATA, $o);
+                if (bb_has_voucher($o)) {
+                    bb_ensure_voucher($cfg, $DATA, $o);
+                }
                 $o['paid_at'] = $o['paid_at'] ?? time();
                 bb_send_paid($cfg, $o);
                 $o['status'] = 'zaplaceno';
                 $o['paid_mail_at'] = time();
                 bb_save_order($DATA, $o);
-                $_SESSION['flash'] = ['ok', "Platba potvrzena – potvrzení a poukaz {$o['voucher']} odešly na {$o['customer']['email']}. Nezapomeňte zákazníkovi zavolat a domluvit termín návštěvy."];
+                $_SESSION['flash'] = ['ok', (bb_has_voucher($o) ? "Platba potvrzena – potvrzení a poukaz {$o['voucher']} odešly" : "Platba potvrzena – potvrzení odešlo") . " na {$o['customer']['email']}. Nezapomeňte zákazníkovi zavolat a domluvit termín návštěvy."];
                 break;
             case 'faktura_znovu':
                 bb_send_invoice_customer($cfg, $DATA, $o);
@@ -248,17 +250,17 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 $o['customer']['email'] = trim((string) ($_POST['email'] ?? ''));
                 $o['customer']['addr'] = trim((string) ($_POST['adresa'] ?? ($o['customer']['addr'] ?? '')));
                 $o['customer']['company'] = trim((string) ($_POST['firma'] ?? ($o['customer']['company'] ?? '')));
-                if (mb_strlen($o['for']) < 1) {
+                if (bb_has_voucher($o) && mb_strlen($o['for']) < 1) {
                     throw new RuntimeException('Vyplňte, pro koho poukaz je.');
                 }
-                if (mb_strlen($o['customer']['name']) < 2) {
+                if (empty($o['quick']) && mb_strlen($o['customer']['name']) < 2) {
                     throw new RuntimeException('Vyplňte jméno zákazníka.');
                 }
                 if (!filter_var($o['customer']['email'], FILTER_VALIDATE_EMAIL)) {
                     throw new RuntimeException('Neplatný e-mail.');
                 }
                 bb_save_order($DATA, $o);
-                $who = $o['customer']['name'];
+                $who = bb_who($o);
                 $_SESSION['flash'] = ['ok', "Údaje objednávky – $who – uloženy."];
                 break;
             case 'vyrizeno':
@@ -342,19 +344,21 @@ foreach ($list as $o) {
     $gold = $o['kind'] === 'gold';
     $c = $o['customer'];
     $st = $o['status'];
+    $hasV = bb_has_voucher($o);
+    $quick = !empty($o['quick']);
     $out .= '<div class="o' . ($gold ? ' gold' : '') . '"><div class="top"><div>
-<div class="ttl">' . ($gold ? 'Gold Time' : 'Standard') . '<em>' . ($o['way'] === 'faktura' ? (!empty($o['no']) ? 'Faktura ' . $h($o['no']) : 'Faktura') : 'Osobní odběr') . '</em><span class="badge b-' . $h($st) . '">' . $h($LABEL[$st] ?? $st) . '</span></div>
+<div class="ttl">' . ($gold ? 'Gold Time' : 'Standard') . '<em>' . ($quick ? 'Objednávka z webu · ' : '') . ($o['way'] === 'faktura' ? (!empty($o['no']) ? 'Faktura ' . $h($o['no']) : 'Faktura') : 'Osobní odběr') . '</em><span class="badge b-' . $h($st) . '">' . $h($LABEL[$st] ?? $st) . '</span></div>
 <div class="meta" style="margin-top:2px">Objednáno ' . $h(date('j. n. Y H:i', (int) $o['created'])) . (!empty($o['due']) && $st === 'ceka' ? ' · splatnost ' . $h(bb_date((int) $o['due'])) . ((int) $o['due'] < time() ? ' <b style="color:#ff6b8a">po splatnosti</b>' : '') : '') . '</div>
 </div><div class="price">' . $h(bb_money((float) $o['product']['price'])) . '</div></div>
 <div class="grid">
-<div><span>Zákazník</span>' . $h($c['name']) . ($c['company'] ? '<br>' . $h($c['company']) : '') . '</div>
+<div><span>Zákazník</span>' . $h($c['name'] ?: '—') . ($c['company'] ? '<br>' . $h($c['company']) : '') . '</div>
 <div><span>Kontakt</span><a href="tel:' . $h(preg_replace('/\s+/', '', $c['phone'])) . '">' . $h($c['phone']) . '</a><br><a href="mailto:' . $h($c['email']) . '">' . $h($c['email']) . '</a></div>
-<div><span>Poukaz pro</span>' . $h($o['for'] ?: '—') . (!empty($o['voucher']) ? '<br><span style="display:inline;color:#8f89b8">kód</span> <b>' . $h($o['voucher']) . '</b>' : '') . '</div>
+<div><span>Poukaz pro</span>' . ($hasV ? $h($o['for'] ?: '—') : '<i style="color:#8f89b8">bez poukazu</i>') . (!empty($o['voucher']) ? '<br><span style="display:inline;color:#8f89b8">kód</span> <b>' . $h($o['voucher']) . '</b>' : '') . '</div>
 ' . (!empty($o['vs']) && $o['vs'] !== ($o['voucher'] ?? null) ? '<div><span>Variabilní symbol</span><b>' . $h($o['vs']) . '</b></div>' : '') . '
 </div>' . (($o['msg'] ?? '') !== '' ? '<p class="ded">„' . $h($o['msg']) . '“</p>' : '') . '<div class="act">';
 
     if ($st === 'ceka') {
-        $out .= $btn($o, 'zaplaceno', 'Platba přišla – poslat potvrzení a poukaz', $gold ? 'gold' : '', 'Potvrdit platbu ' . bb_money((float) $o['product']['price']) . ' a poslat poukaz na ' . $c['email'] . '?');
+        $out .= $btn($o, 'zaplaceno', $hasV ? 'Platba přišla – poslat potvrzení a poukaz' : 'Platba přišla – poslat potvrzení', $gold ? 'gold' : '', 'Potvrdit platbu ' . bb_money((float) $o['product']['price']) . ($hasV ? ' a poslat poukaz' : ' a poslat potvrzení') . ' na ' . $c['email'] . '?');
         $out .= $btn($o, 'faktura_znovu', 'Poslat fakturu znovu', 'ghost', 'Poslat fakturu znovu na ' . $c['email'] . '?');
     }
     if ($st === 'ceka' || $st === 'bez_faktury') {
@@ -371,9 +375,11 @@ foreach ($list as $o) {
         $out .= '<a class="btn ghost" href="?dl=faktura&id=' . urlencode($o['id']) . '" target="_blank">Faktura PDF</a>';
     }
     if ($st !== 'nova') {
-        $out .= '<a class="btn ghost" href="?dl=poukaz&id=' . urlencode($o['id']) . '" target="_blank">Poukaz PDF</a>';
+        if ($hasV) {
+            $out .= '<a class="btn ghost" href="?dl=poukaz&id=' . urlencode($o['id']) . '" target="_blank">Poukaz PDF</a>';
+        }
         if ($st === 'zaplaceno') {
-            $out .= $btn($o, 'zaplaceno', 'Poslat poukaz znovu', 'ghost', 'Poslat potvrzení a poukaz znovu na ' . $c['email'] . '?');
+            $out .= $btn($o, 'zaplaceno', $hasV ? 'Poslat poukaz znovu' : 'Poslat potvrzení znovu', 'ghost', ($hasV ? 'Poslat potvrzení a poukaz znovu na ' : 'Poslat potvrzení o platbě znovu na ') . $c['email'] . '?');
         }
     }
     if ($st === 'storno') {
@@ -384,9 +390,9 @@ foreach ($list as $o) {
     $out .= '</div>';
     $out .= '<details class="edit"><summary>Upravit údaje</summary><form method="post" class="editform">
 <input type="hidden" name="csrf" value="' . $h($csrf) . '"><input type="hidden" name="id" value="' . $h($o['id']) . '"><input type="hidden" name="a" value="upravit"><input type="hidden" name="f" value="' . $h($f) . '">
-<label class="full">Pro koho je poukaz<input type="text" name="for" value="' . $h($o['for'] ?? '') . '" required></label>
+<label class="full">Pro koho je poukaz' . ($hasV ? '' : ' (bez poukazu)') . '<input type="text" name="for" value="' . $h($o['for'] ?? '') . '"' . ($hasV ? ' required' : '') . '></label>
 <label class="full">Věnování (text na poukazu)<textarea name="msg" rows="2">' . $h($o['msg'] ?? '') . '</textarea></label>
-<label>Jméno zákazníka<input type="text" name="jmeno" value="' . $h($c['name']) . '" required></label>
+<label>Jméno zákazníka<input type="text" name="jmeno" value="' . $h($c['name']) . '"' . ($quick ? '' : ' required') . '></label>
 <label>Telefon<input type="text" name="telefon" value="' . $h($c['phone']) . '" required></label>
 <label>E-mail<input type="email" name="email" value="' . $h($c['email']) . '" required></label>
 <label>Adresa' . ($o['way'] === 'faktura' ? ' (fakturační)' : '') . '<input type="text" name="adresa" value="' . $h($c['addr'] ?? '') . '"></label>

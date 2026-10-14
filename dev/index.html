@@ -1723,6 +1723,39 @@ html.gold .gt-aura{opacity:1}
 @media (max-width:860px){.foot-info{grid-template-columns:1fr 1fr;gap:24px 18px}}
 @media (max-width:480px){.foot-info{grid-template-columns:1fr;text-align:center}}
 </style>
+<style>/* mobil: nejdřív čistá fotka, popisky naběhnou po chvíli */
+@media (max-width:760px){
+ html body:not(.hs-show) .hero-img .hs{opacity:0;transform:scale(.6);transition:none}
+ html body.go.hs-show .hero-img .hs{opacity:1;transform:none;transition:opacity .6s ease,transform .7s cubic-bezier(.2,.9,.3,1.3);transition-delay:0s}
+ html body.go.hs-show .hero-img .hs:nth-child(3){transition-delay:.12s}html body.go.hs-show .hero-img .hs:nth-child(4){transition-delay:.24s}
+ html body.go.hs-show .hero-img .hs:nth-child(5){transition-delay:.36s}html body.go.hs-show .hero-img .hs:nth-child(6){transition-delay:.48s}
+ html body.go.hs-show .hero-img .hs:nth-child(7){transition-delay:.6s}html body.go.hs-show .hero-img .hs:nth-child(8){transition-delay:.72s}
+}
+</style>
+<style>/* patička: objednávka */
+.foot-order{appearance:none;display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:999px;border:1px solid rgba(176,102,255,.55);background:rgba(176,102,255,.1);color:#fff;font:700 13px var(--body);letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:background .4s,border-color .4s,box-shadow .4s}
+.foot-order svg{width:16px;height:16px;color:var(--violet)}
+.foot-order:hover{background:rgba(176,102,255,.22);border-color:var(--violet);box-shadow:0 0 24px -4px rgba(176,102,255,.6)}
+.foot-order:focus-visible{outline:2px solid var(--ice);outline-offset:3px}
+.qo-lead{color:var(--muted);font-size:14.5px;margin:8px 0 18px}
+.qo-dlg .vo-opt span{display:block;padding:14px 40px 14px 16px}.qo-dlg .vo-opt em{display:block;margin-top:3px}
+.qo-dlg .qo-gold input:checked+span{border-color:var(--gold);background:rgba(240,207,133,.1);box-shadow:0 0 0 3px rgba(240,207,133,.16)}
+.qo-dlg .qo-gold strong{color:var(--gold)}
+.qo-chk{position:relative;display:flex;align-items:flex-start;gap:14px;margin:16px 0 0;padding:14px 16px;border-radius:16px;border:1px solid var(--line);background:rgba(255,255,255,.03);cursor:pointer;transition:border-color .25s,background .25s}
+.qo-chk input{position:absolute;opacity:0;pointer-events:none}
+.qo-sw{flex:none;position:relative;width:42px;height:24px;border-radius:999px;background:rgba(255,255,255,.12);transition:background .25s;margin-top:1px}
+.qo-sw::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .25s cubic-bezier(.3,1.4,.5,1)}
+.qo-chk input:checked~.qo-sw{background:var(--violet)}
+.qo-chk input:checked~.qo-sw::after{transform:translateX(18px)}
+.qo-chk input:focus-visible~.qo-sw{outline:2px solid var(--ice);outline-offset:2px}
+.qo-chk:has(input:checked){border-color:var(--violet);background:rgba(176,102,255,.1)}
+.qo-chk strong{display:block;font-size:15px;color:#fff}
+.qo-chk em{display:block;font-style:normal;font-size:12.5px;color:var(--muted);margin-top:2px}
+.qo-vname{margin-top:12px}
+.qo-vname[hidden]{display:none}
+.qo-dlg.is-gold .vo-box{background:radial-gradient(ellipse at 100% 0%,rgba(240,207,133,.22),transparent 55%),linear-gradient(160deg,#1c1530,#08061c 70%);border-color:rgba(240,207,133,.3)}
+@media (max-width:520px){.qo-dlg .vo-opts{grid-template-columns:1fr 1fr}.qo-dlg .vo-opt span{padding:12px 34px 12px 12px}.qo-dlg .vo-opt input:checked+span::after{top:10px;right:10px}}
+</style>
 </head>
 <body>
 
@@ -2092,14 +2125,14 @@ html.gold .gt-aura{opacity:1}
           <label class="vf vf2" for="vMsg"><span class="vl">Věnování</span><span class="vline"><input class="vin vmsg" id="vMsg" type="text" maxlength="90" autocomplete="off" placeholder="pár slov od srdce…" aria-label="Věnování – napište přímo do poukazu"><i class="vpen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg></i></span></label>
         </div>
         
-        <div class="vbot"><span>Privátní relaxační prostor</span><b id="vBlock">2 hod</b></div>
+        <div class="vbot"><span>Privátní relaxační prostor</span><b id="vBlock">2 HOD</b></div>
       </div>
       <form class="vform" id="vform" novalidate>
         <div><span class="eyebrow">Dárkové poukazy</span><h2>Darujte večer, na který se nezapomíná.</h2></div>
         <p class="lead">K výročí, na Valentýna, k narozeninám nebo jen tak. Vyberte zážitek a jméno i věnování napište rovnou do poukazu.</p>
         <div class="occ" aria-hidden="true"><span>Výročí</span><span>Valentýn</span><span>Narozeniny</span><span>Vánoce</span><span>Jen tak</span></div>
         <div class="vswitch" role="group" aria-label="Typ poukazu"><span class="vsw-thumb" aria-hidden="true"></span>
-          <button type="button" class="vopt" id="vo1" aria-pressed="true" data-k="Standard · 2 hodiny" data-b="2 hod"><strong>Standard</strong><span>2 hodiny · 2 000 Kč</span></button>
+          <button type="button" class="vopt" id="vo1" aria-pressed="true" data-k="Standard · 2 hodiny" data-b="2 HOD"><strong>Standard</strong><span>2 hodiny · 2 000 Kč</span></button>
           <button type="button" class="vopt g" id="vo2" aria-pressed="false" data-k="Gold Time · 2 hodiny" data-b="22 – 24"><strong><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 019.5 4a8 8 0 1010.5 10.5z"/></svg>Gold Time</strong><span>celá budova · 2 900 Kč</span></button>
         </div>
         <p class="vsw-q">Vyberte poukaz: <b>Standard</b> nebo <b class="g">Gold Time</b></p>
@@ -2200,6 +2233,7 @@ html.gold .gt-aura{opacity:1}
     <span>Black Box Luxury · privátní relaxační prostor</span>
     <span class="locb sm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0114 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><b>Tábor</b><i></i>Od Slunce</span>
     <a class="foot-tel" href="tel:+420737222266">+420 737 22 22 66</a>
+    <button type="button" class="foot-order" id="qoOpen" aria-haspopup="dialog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg>Objednávka</button>
   </div>
   <div class="wrap foot-info">
     <div class="fi"><small>Adresa</small><a href="https://maps.google.com/?q=Purky%C5%88ova+2961,+390+02+T%C3%A1bor" target="_blank" rel="noopener">BLACK BOX LUXURY<br>Od Slunce<br>Purkyňova 2961<br>390 02 Tábor</a></div>
@@ -2209,6 +2243,40 @@ html.gold .gt-aura{opacity:1}
   </div>
   <p class="wrap foot-copy">© <span id="fyr">2026</span> Black Box Lounge s.r.o.</p>
 </footer>
+
+<dialog class="vo-dlg qo-dlg" id="qoDlg" aria-labelledby="qoTitle">
+  <div class="vo-box">
+    <button type="button" class="vo-x" id="qoX" aria-label="Zavřít"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    <form id="qoForm" novalidate>
+      <div id="qoStep">
+        <h3 id="qoTitle" tabindex="-1">Objednávka</h3>
+        <p class="qo-lead">Vyplňte e-mail a telefon. Fakturu vám pošleme hned e-mailem.</p>
+        <fieldset class="vo-opts"><legend class="vo-lbl">Co objednáváte</legend>
+          <label class="vo-opt"><input type="radio" name="qoKind" value="standard" checked><span><strong>Standard</strong><em>2 hodiny · <i style="font-style:normal;white-space:nowrap">2 000 Kč</i></em></span></label>
+          <label class="vo-opt qo-gold"><input type="radio" name="qoKind" value="gold"><span><strong>Gold Time</strong><em>Pá–So 22–24 h · <i style="font-style:normal;white-space:nowrap">2 900 Kč</i></em></span></label>
+        </fieldset>
+        <div class="vo-fields">
+          <div class="field"><label for="qoMail">E-mail</label><input id="qoMail" type="email" autocomplete="email" required></div>
+          <div class="field"><label for="qoTel">Telefon</label><input id="qoTel" type="tel" autocomplete="tel" inputmode="tel" placeholder="+420" required></div>
+        </div>
+        <label class="qo-chk"><input type="checkbox" id="qoV"><span class="qo-sw" aria-hidden="true"></span><span><strong>Zaslat dárkový poukaz</strong><em>Po zaplacení přijde e-mailem k tisku.</em></span></label>
+        <div class="vo-fields qo-vname" id="qoVBox" hidden>
+          <div class="field full"><label for="qoName">Jméno na poukaz</label><input id="qoName" type="text" maxlength="32" autocomplete="off" placeholder="pro koho je poukaz"></div>
+        </div>
+        <div class="vo-flow" aria-live="polite"><p class="vo-lbl">Co bude dál</p><ol id="qoFlow"></ol></div>
+        <input type="text" name="web" id="qoWeb" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
+        <button class="btn" type="submit" id="qoSend">Objednat</button>
+        <p class="vo-err" id="qoErr" role="alert"></p>
+      </div>
+      <div class="vo-done" id="qoDone" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M7.5 12.5l3 3 6-6.5"/></svg>
+        <h3 id="qoDoneH">Hotovo</h3>
+        <p id="qoDoneP"></p>
+        <button class="btn" type="button" id="qoOk">Rozumím</button>
+      </div>
+    </form>
+  </div>
+</dialog>
 
 <div class="bbmenu" id="mmenu" aria-hidden="true">
   <nav aria-label="Mobilní menu">
@@ -2565,9 +2633,10 @@ let exitT=0,ex=0,ey=0,dnX=0,dnY=0,dnT=0,tOn=false,tW=0,tH=0,brC,dkC,mkC,tmC,px=0
 const mk=()=>document.createElement('canvas');
 let tKey='';function tSize(){tKey=innerWidth+'x'+innerHeight;const d=Math.min(devicePixelRatio||1,1.5);tW=Math.round(innerWidth*d);tH=Math.round(innerHeight*d);tcv.width=tW;tcv.height=tH;
   [brC,dkC,mkC,tmC]=[mk(),mk(),mk(),mk()];[brC,dkC,mkC,tmC].forEach(c=>{c.width=tW;c.height=tH;});
-  const s=Math.max(tW/tImg.width,tH/tImg.height),iw=tImg.width*s,ih=tImg.height*s,uc=tW<tH*.9?.79:.5,ox=Math.min(0,Math.max(tW-iw,tW*.5-uc*iw)),oy=(tH-ih)*.45;HS.forEach(h=>{h.x=ox+h.u*iw;h.y=oy+h.v*ih;{const hw=(h.el.offsetWidth||120)/2+12;h.el.style.left=Math.min(innerWidth-hw,Math.max(hw,h.x/d))+'px';}h.el.style.top=(h.y/d)+'px';h.on=h.x>20*d&&h.x<tW-20*d&&h.y>20*d&&h.y<tH-20*d;});TUB.x=ox+.865*iw;TUB.y=oy+.69*ih;TUB.rx=.05*iw;TUB.ry=.03*ih;
+  const por=tW<tH*.9,s=por?Math.max(tW/tImg.width,tH/tImg.height*.53):Math.max(tW/tImg.width,tH/tImg.height),iw=tImg.width*s,ih=tImg.height*s,uc=por?.645:.5,ox=Math.min(0,Math.max(tW-iw,tW*.5-uc*iw)),oy=(tH-ih)*(por?.52:.45);HS.forEach(h=>{h.x=ox+h.u*iw;h.y=oy+h.v*ih;{const hw=(h.el.offsetWidth||120)/2+12;h.el.style.left=Math.min(innerWidth-hw,Math.max(hw,h.x/d))+'px';}h.el.style.top=(h.y/d)+'px';h.on=h.x>20*d&&h.x<tW-20*d&&h.y>20*d&&h.y<tH-20*d;});TUB.x=ox+.865*iw;TUB.y=oy+.69*ih;TUB.rx=.05*iw;TUB.ry=.03*ih;
   const b=brC.getContext('2d');b.drawImage(tImg,ox,oy,iw,ih);b.globalCompositeOperation='lighter';b.globalAlpha=.12;b.drawImage(tImg,ox,oy,iw,ih);
-  const k=dkC.getContext('2d');k.drawImage(tImg,ox,oy,iw,ih);k.fillStyle='rgba(2,1,10,.93)';k.fillRect(0,0,tW,tH);
+  const k=dkC.getContext('2d');k.drawImage(tImg,ox,oy,iw,ih);
+  if(ih<tH-2){[b,k].forEach(c=>{c.globalAlpha=1;c.globalCompositeOperation='destination-in';const fg=c.createLinearGradient(0,oy,0,oy+ih);fg.addColorStop(0,'rgba(0,0,0,0)');fg.addColorStop(.14,'#000');fg.addColorStop(.86,'#000');fg.addColorStop(1,'rgba(0,0,0,0)');c.fillStyle=fg;c.fillRect(0,0,tW,tH);c.globalCompositeOperation='source-over';});}k.fillStyle='rgba(2,1,10,.93)';k.fillRect(0,0,tW,tH);
   TS=[];for(let i=0;i<180;i++){const u=.34+Math.random()*.64,v=Math.random()*.3;if(v>.255+(u-.33)*.27&&u<.6)continue;TS.push({x:ox+u*iw,y:oy+v*ih,r:(Math.random()*1.5+.5)*d,p:Math.random()*6.28,s:Math.random()*1.3+.4});}}
 function tLoop(t){if(!tOn)return;requestAnimationFrame(tLoop);
   if(t-lastMove>2600){const q=(t-tStart)*.00035;gx=tW*(.5+.34*Math.sin(q*1.3));gy=tH*(.5+.26*Math.sin(q*2.1+1));}
@@ -3324,5 +3393,46 @@ document.querySelectorAll('a[href="#poukazy"]').forEach(a=>{if(/gold/i.test(a.te
   const p=Math.max(0,Math.min(1,(vh*.6-(r.top+f))/max)),h=max*p;list.style.setProperty('--lh',h+'px');
   li.forEach((l,i)=>l.classList.toggle('lit',dots[i]-f<=h+2));}
  addEventListener('scroll',()=>{if(!q)q=requestAnimationFrame(upd);},{passive:true});addEventListener('resize',upd);upd();})();</script>
+<script>/* mobil: popisky v úvodní fotce až po ~1,5 s čisté fotky */
+(function(){const b=document.body;(function w(){if(!window.bbGo)return setTimeout(w,100);setTimeout(()=>b.classList.add('hs-show'),3600);})();setTimeout(()=>b.classList.add('hs-show'),9000);})();
+</script>
+<script>/* patička: rychlá objednávka (e-mail, telefon, volitelně poukaz) */
+(function(){const D=document.getElementById('qoDlg');if(!D)return;const F=document.getElementById('qoForm'),$=id=>document.getElementById(id);
+  const TEL='<a href="tel:+420737222266">+420 737 22 22 66</a>';
+  const kind=()=>F.querySelector('input[name="qoKind"]:checked').value,wantV=()=>$('qoV').checked;
+  function paint(){const g=kind()==='gold',v=wantV();D.classList.toggle('is-gold',g);$('qoVBox').hidden=!v;$('qoName').required=v;
+    $('qoFlow').innerHTML=['Odešlete objednávku.','Fakturu vám hned pošleme e-mailem.',v?'Po připsání platby přijde potvrzení o platbě a dárkový poukaz.':'Po připsání platby přijde potvrzení o platbě.'].map(t=>'<li>'+t+'</li>').join('')+'<li class="vo-last">Termín si domluvíte telefonem na '+TEL+'.</li>';}
+  F.querySelectorAll('input[name="qoKind"]').forEach(r=>r.addEventListener('change',paint));
+  $('qoV').addEventListener('change',()=>{paint();if(wantV())setTimeout(()=>$('qoName').focus({preventScroll:false}),60);else $('qoName').closest('.field').classList.remove('vo-field-bad');});
+  F.querySelectorAll('input').forEach(i=>i.addEventListener('input',()=>i.closest('.field')&&i.closest('.field').classList.remove('vo-field-bad')));
+  let y=0;
+  function open(){$('qoStep').hidden=false;$('qoDone').hidden=true;$('qoErr').textContent='';paint();y=window.scrollY||document.documentElement.scrollTop||0;document.body.style.top=(-y)+'px';
+    document.documentElement.classList.add('vo-lock');if(D.showModal)D.showModal();else D.setAttribute('open','');D.scrollTop=0;if(matchMedia('(min-width:601px)').matches)setTimeout(()=>$('qoMail').focus({preventScroll:true}),60);}
+  function close(){if(D.close)D.close();else{D.removeAttribute('open');D.dispatchEvent(new Event('close'));}}
+  D.addEventListener('close',()=>{document.documentElement.classList.remove('vo-lock');document.body.style.top='';window.scrollTo(0,y);});
+  D.addEventListener('click',e=>{if(e.target===D)close();});
+  $('qoOpen').addEventListener('click',open);$('qoX').addEventListener('click',close);$('qoOk').addEventListener('click',close);
+  F.addEventListener('submit',e=>{e.preventDefault();const err=$('qoErr');let bad=null;const v=id=>$(id).value.trim();
+    const need=['qoMail','qoTel'].concat(wantV()?['qoName']:[]);
+    need.forEach(id=>{const i=$(id),val=i.value.trim(),ok=id==='qoMail'?/^\S+@\S+\.\S+$/.test(val):id==='qoTel'?/^[+0-9 ()\-\/]{6,}$/.test(val):val.length>=2;i.closest('.field').classList.toggle('vo-field-bad',!ok);if(!ok&&!bad)bad=i;});
+    if(bad){err.textContent=bad.id==='qoName'?'Napište jméno, které má být na poukazu.':'Doplňte prosím zvýrazněné údaje.';bad.scrollIntoView({block:'center',behavior:'smooth'});bad.focus({preventScroll:true});return;}err.textContent='';
+    const k=kind(),kl=k==='gold'?'Gold Time (2 900 Kč)':'Standard – 2 hodiny (2 000 Kč)',wv=wantV();
+    const lines=['Dobrý den,','','objednávám: '+kl,'Zaslat dárkový poukaz: '+(wv?'ano – jméno na poukaz: '+v('qoName'):'ne'),'','E-mail: '+v('qoMail'),'Telefon: '+v('qoTel'),'','Prosím o zaslání faktury. Děkuji'];
+    const viaMail=()=>{location.href='mailto:'+'pavlatp@email.cz'+'?subject='+encodeURIComponent('Objednávka – '+kl)+'&body='+encodeURIComponent(lines.join('\n'));};
+    const esc=t=>t.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    const done=(h,p)=>{$('qoDoneH').textContent=h;$('qoDoneP').innerHTML=p;$('qoStep').hidden=true;$('qoDone').hidden=false;D.scrollTop=0;$('qoOk').focus({preventScroll:true});};
+    const send=$('qoSend');if(send.disabled)return;send.disabled=true;const lbl=send.textContent;send.textContent='Odesílám…';
+    const payload={way:'objednavka',kind:k,phone:v('qoTel'),email:v('qoMail'),voucher:wv?'1':'0',for:wv?v('qoName'):'',name:wv?v('qoName'):'',web:$('qoWeb').value};
+    const ctl=new AbortController(),tm=setTimeout(()=>ctl.abort(),30000);
+    fetch('objednavka.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:ctl.signal})
+      .then(r=>r.json().catch(()=>({ok:false})).then(j=>({r,j})))
+      .then(({r,j})=>{if(j.ok){const m=esc(v('qoMail'));
+          if(j.mode==='invoice')done('Faktura je na cestě','Poslali jsme ji na <b>'+m+'</b>. Po připsání platby vám přijde potvrzení'+(wv?' a dárkový poukaz':'')+'.');
+          else done('Objednávka přijata','Fakturu vám brzy pošleme na <b>'+m+'</b>.');return;}
+        if(r.status===422||r.status===429){err.textContent=j.error||'Zkontrolujte prosím údaje.';return;}throw new Error('server');})
+      .catch(()=>{viaMail();done('Skoro hotovo','Otevřeli jsme vám e-mail s objednávkou. Stačí ho odeslat a fakturu vám pošleme.');})
+      .finally(()=>{clearTimeout(tm);send.disabled=false;send.textContent=lbl;});});
+})();
+</script>
 </body>
 </html>
