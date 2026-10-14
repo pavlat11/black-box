@@ -116,7 +116,11 @@ details.edit[open] summary{color:var(--txt)}
 .mi a:hover{color:var(--txt)}
 .mi a.on{background:rgba(185,140,255,.16);color:#fff}
 .mout{color:var(--mut);font-size:13px;white-space:nowrap}
-@media (max-width:640px){.menu{flex-wrap:wrap;gap:8px}.mlogo{order:1}.mout{order:2;margin-left:auto}.mi{order:3;flex-basis:100%;justify-content:space-between;gap:2px}.mi a{padding:8px 10px;font-size:13.5px}}
+.mr{display:flex;align-items:center;gap:14px}
+.mweb{padding:7px 14px;border-radius:999px;border:1px solid var(--line);color:var(--txt);text-decoration:none;font-size:13px;font-weight:600;white-space:nowrap}
+.mweb:hover{border-color:var(--acc);color:#fff}
+.mweb span{color:var(--acc)}
+@media (max-width:640px){.menu{flex-wrap:wrap;gap:8px}.mlogo{order:1}.mr{order:2;margin-left:auto;gap:10px}.mweb{padding:6px 11px;font-size:12.5px}.mi{order:3;flex-basis:100%;justify-content:space-between;gap:2px}.mi a{padding:8px 10px;font-size:13.5px}}
 .ph{font-size:22px;font-weight:700;margin:4px 0 18px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .notice{max-width:620px;padding:22px}
 .notice::before{display:none}
@@ -218,7 +222,8 @@ function menu(string $on): string
         $href = $k === 'objednavky' ? $self : '?' . $k . '=1';
         $o .= '<a' . ($on === $k ? ' class="on"' : '') . ' href="' . bb_h($href) . '">' . $t . '</a>';
     }
-    return $o . '</div><a class="mout" href="?odhlasit=1">Odhlásit</a></nav>';
+    $web = rtrim(dirname($self), '/\\') . '/';
+    return $o . '</div><div class="mr"><a class="mweb" href="' . bb_h($web) . '" target="_blank" rel="noopener">Přejít na web <span aria-hidden="true">↗</span></a><a class="mout" href="?odhlasit=1">Odhlásit</a></div></nav>';
 }
 function flash(): string
 {
