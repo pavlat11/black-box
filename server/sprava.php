@@ -19,6 +19,16 @@ session_name('bbsprava');
 session_set_cookie_params(['lifetime' => 0, 'path' => '/', 'httponly' => true, 'secure' => $secure, 'samesite' => 'Strict']);
 session_start();
 
+/* ---- logo (bere se z objednavky/lib/assets, nezávisle na složce img/ webu) ---- */
+if (isset($_GET['logo'])) {
+    $f = $BASE . '/lib/assets/logo-email.png';
+    header('Content-Type: image/png');
+    header('Cache-Control: public, max-age=604800');
+    header_remove('X-Robots-Tag');
+    readfile($f);
+    exit;
+}
+
 $PW = (string) ($cfg['admin_password'] ?? '');
 $h = fn($s) => bb_h((string) $s);
 $self = strtok($_SERVER['REQUEST_URI'] ?? 'sprava.php', '?') ?: 'sprava.php';
@@ -26,7 +36,7 @@ $self = strtok($_SERVER['REQUEST_URI'] ?? 'sprava.php', '?') ?: 'sprava.php';
 function page(string $title, string $body): void
 {
     echo '<!doctype html><html lang="cs"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>' . bb_h($title) . ' · Black Box</title>
-<link rel="icon" href="favicon.ico">
+<link rel="icon" type="image/png" href="?logo=1">
 <style>
 :root{--bg:#06051a;--card:#0e0b2c;--line:#2a2160;--txt:#e9e6ff;--mut:#8f89b8;--acc:#b98cff;--acc2:#8a4dff;--gold:#f0cf85;--ok:#5fd39a;--warn:#ffb86b;--bad:#ff6b8a}
 *{box-sizing:border-box}html{-webkit-text-size-adjust:100%;background:#06051a}
@@ -95,7 +105,7 @@ details.edit[open] summary{color:var(--txt)}
 
 /* ---- správa vypnutá ---- */
 if ($PW === '') {
-    page('Správa', '<div class="login"><img src="img/logo-520.webp" alt=""><h2>Správa je vypnutá</h2><p style="color:#8f89b8">Nastavte heslo <code>admin_password</code> v souboru <code>objednavky/config.php</code>.</p></div>');
+    page('Správa', '<div class="login"><img src="?logo=1" alt=""><h2>Správa je vypnutá</h2><p style="color:#8f89b8">Nastavte heslo <code>admin_password</code> v souboru <code>objednavky/config.php</code>.</p></div>');
 }
 
 /* ---- přihlášení (s ochranou proti hádání hesla) ---- */
@@ -132,7 +142,7 @@ if (empty($_SESSION['bb_admin'])) {
             $err = 'Špatné heslo.';
         }
     }
-    page('Přihlášení', '<div class="login"><img src="img/logo-520.webp" alt="Black Box"><h2 style="margin:16px 0 0;font-weight:600">Správa objednávek</h2>
+    page('Přihlášení', '<div class="login"><img src="?logo=1" alt="Black Box"><h2 style="margin:16px 0 0;font-weight:600">Správa objednávek</h2>
 <form method="post"><input type="password" name="heslo" placeholder="Heslo" autocomplete="current-password" autofocus required><button class="btn" type="submit">Přihlásit</button></form>'
         . ($err ? '<p style="color:#ff6b8a;margin:14px 0 0">' . bb_h($err) . '</p>' : '') . '</div>');
 }
@@ -141,7 +151,7 @@ if (empty($_SESSION['bb_admin'])) {
 try {
     bb_db();
 } catch (Throwable $e) {
-    page('Chyba databáze', '<div class="login"><img src="img/logo-520.webp" alt=""><h2>Nelze se připojit k databázi</h2><p style="color:#8f89b8">Zkontrolujte údaje <code>db</code> v <code>objednavky/config.php</code>.</p><p style="color:#ff6b8a;font-size:13px">' . bb_h($e->getMessage()) . '</p></div>');
+    page('Chyba databáze', '<div class="login"><img src="?logo=1" alt=""><h2>Nelze se připojit k databázi</h2><p style="color:#8f89b8">Zkontrolujte údaje <code>db</code> v <code>objednavky/config.php</code>.</p><p style="color:#ff6b8a;font-size:13px">' . bb_h($e->getMessage()) . '</p></div>');
 }
 
 /* ---- stažení PDF ---- */
