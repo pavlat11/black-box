@@ -5,6 +5,7 @@
  * Tady upravujete vše, co se objevuje na faktuře a v e-mailech.
  * Po úpravě stačí soubor znovu nahrát na FTP.
  */
+// HESLA (smtp pass, db user + pass, admin_password) se do GitHubu NEUKLÁDAJÍ – doplňují se jen v souboru na serveru.
 return [
 
     // ===== Dodavatel (vystavovatel faktury) =================================
@@ -21,7 +22,7 @@ return [
 
     // ===== Platba ============================================================
     // !!! BEZ ČÍSLA ÚČTU SE FAKTURA NEODEŠLE (objednávka přijde jen vám e-mailem) !!!
-    'bank_account' => '',                       // např. '123456789/0100' nebo '19-123456789/0800'
+    'bank_account' => '3719400017/3030',                     // např. '123456789/0100' nebo '19-123456789/0800'
     'bank_name'    => '',                       // např. 'Komerční banka' (nepovinné)
     'due_days'     => 7,                        // splatnost faktury ve dnech
     'invoice_title'=> 'Faktura',                // nadpis dokladu
@@ -35,10 +36,10 @@ return [
 
     // ===== E-maily ===========================================================
     // Kam chodí objednávky a kopie (faktury, osobní odběr, potvrzení plateb):
-    'invoice_copy_to' => 'pavlatp@email.cz',
-    'pickup_to'       => 'pavlatp@email.cz',
-    'reply_to'        => 'pavlatp@email.cz',          // když zákazník na e-mail odpoví, přijde to sem
-    'contact_email'   => 'blackboxluxury@email.cz',   // kontakt zobrazený v e-mailech a na faktuře
+    'invoice_copy_to' => 'info@black-box-luxury.cz',
+    'pickup_to'       => 'info@black-box-luxury.cz',
+    'reply_to'        => 'info@black-box-luxury.cz',          // když zákazník na e-mail odpoví, přijde to sem
+    'contact_email'   => 'info@black-box-luxury.cz',   // kontakt zobrazený v e-mailech a na faktuře
     'phone'           => '+420 737 22 22 66',
     'web'             => 'https://www.black-box-luxury.cz',
 
@@ -47,10 +48,10 @@ return [
     // přihlášení = celá e-mailová adresa + heslo k ní.
     // Když necháte 'pass' prázdné, použije se funkce mail() hostingu.
     'smtp' => [
-        'host'   => 'smtp.seznam.cz',
+        'host'   => 'smtp.websupport.cz',
         'port'   => 465,
         'secure' => 'ssl',
-        'user'   => 'blackboxluxury@email.cz',
+        'user'   => 'info@black-box-luxury.cz',
         'pass'   => '',
     ],
     // Odesílatel, pokud se NEposílá přes SMTP (musí být na vaší doméně):
@@ -62,9 +63,9 @@ return [
     // Tabulky se vytvoří samy při první objednávce. Když 'name' necháte prázdné,
     // objednávky se ukládají do souborů ve složce objednavky/data.
     'db' => [
-        'host' => 'localhost',
-        'port' => '',
-        'name' => '',            // název databáze
+        'host' => 'db.r4.active24.cz',
+        'port' => '3306',
+        'name' => 'black-box',   // název databáze
         'user' => '',            // uživatel databáze
         'pass' => '',            // heslo databáze
     ],
