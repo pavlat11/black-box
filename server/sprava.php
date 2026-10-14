@@ -40,7 +40,7 @@ function page(string $title, string $body): void
 <style>
 :root{--bg:#06051a;--card:#0e0b2c;--line:#2a2160;--txt:#e9e6ff;--mut:#8f89b8;--acc:#b98cff;--acc2:#8a4dff;--gold:#f0cf85;--ok:#5fd39a;--warn:#ffb86b;--bad:#ff6b8a}
 *{box-sizing:border-box}html{-webkit-text-size-adjust:100%;background:#06051a}
-body{margin:0;background:radial-gradient(ellipse at 50% -10%,#24125e,var(--bg) 60%) fixed;color:var(--txt);font:15px/1.5 Manrope,"Segoe UI",system-ui,sans-serif;min-height:100vh}
+body{margin:0;background:radial-gradient(ellipse at 50% -10%,#24125e,var(--bg) 60%) fixed;color:var(--txt);font:15px/1.5 Manrope,"Segoe UI",system-ui,sans-serif;min-height:100vh;display:flow-root}
 a{color:var(--acc)}
 .wrap{max-width:980px;margin:0 auto;padding:22px 16px 60px}
 header{display:flex;align-items:center;gap:14px;justify-content:space-between;flex-wrap:wrap;margin-bottom:18px}
