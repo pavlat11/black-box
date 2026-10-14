@@ -34,3 +34,13 @@ CREATE TABLE IF NOT EXISTS `bb_cislovani` (
   `posledni` int(11) NOT NULL,
   PRIMARY KEY (`rok`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Black Box – poslední číslo faktury v roce';
+
+CREATE TABLE IF NOT EXISTS `bb_nastaveni` (
+  `klic` varchar(40) NOT NULL,
+  `hodnota` text NOT NULL,
+  `upraveno` datetime NOT NULL,
+  PRIMARY KEY (`klic`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Black Box – nastavení ze správy (ceník)';
+
+-- výchozí ceník (lze pak měnit ve správě → Ceník)
+INSERT IGNORE INTO `bb_nastaveni` (`klic`, `hodnota`, `upraveno`) VALUES ('ceny', '{"standard":1990,"gold":2490}', NOW());

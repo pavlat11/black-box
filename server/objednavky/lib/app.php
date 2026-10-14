@@ -30,7 +30,7 @@ function bb_money(float $n): string
     return number_format($n, 0, ',', "\u{00A0}") . "\u{00A0}Kč";
 }
 
-/* ---------- ceník (upravuje se ve správě, ukládá se do objednavky/data/ceny.json) ---------- */
+/* ---------- ceník (upravuje se ve správě; ukládá se do databáze, tabulka bb_nastaveni) ---------- */
 
 /** Aktuální ceny: uložené ze správy, jinak výchozí z config.php. Vrací ['standard' => 1990, 'gold' => 2490]. */
 function bb_prices(array $cfg): array
@@ -39,8 +39,21 @@ function bb_prices(array $cfg): array
     foreach ($cfg['products'] as $k => $prod) {
         $p[$k] = (int) $prod['price'];
     }
-    $f = dirname(__DIR__) . '/data/ceny.json';
-    $saved = is_file($f) ? json_decode((string) file_get_contents($f), true) : null;
+    $saved = null;
+    try {
+        if ($db = bb_db()) {
+            $st = $db->prepare("SELECT hodnota FROM bb_nastaveni WHERE klic = 'ceny'");
+            $st->execute();
+            $raw = $st->fetchColumn();
+            $saved = $raw ? json_decode((string) $raw, true) : null;
+        }
+    } catch (Throwable $e) {
+        $saved = null;   // databáze nedostupná → zkusí se soubor / výchozí ceny
+    }
+    if (!is_array($saved)) {
+        $f = dirname(__DIR__) . '/data/ceny.json';
+        $saved = is_file($f) ? json_decode((string) file_get_contents($f), true) : null;
+    }
     if (is_array($saved)) {
         foreach ($p as $k => $v) {
             if (isset($saved[$k]) && is_numeric($saved[$k]) && (int) $saved[$k] > 0) {
@@ -53,13 +66,19 @@ function bb_prices(array $cfg): array
 
 function bb_save_prices(array $prices): void
 {
+    $json = json_encode($prices, JSON_UNESCAPED_UNICODE);
+    if ($db = bb_db()) {
+        $db->prepare("INSERT INTO bb_nastaveni (klic, hodnota, upraveno) VALUES ('ceny', ?, NOW())
+            ON DUPLICATE KEY UPDATE hodnota = VALUES(hodnota), upraveno = VALUES(upraveno)")->execute([$json]);
+        return;
+    }
+    // bez databáze: náhradně do souboru
     $d = dirname(__DIR__) . '/data';
     if (!is_dir($d)) {
         @mkdir($d, 0755, true);
     }
-    $prices['upraveno'] = date('c');
-    if (file_put_contents($d . '/ceny.json', json_encode($prices, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT), LOCK_EX) === false) {
-        throw new RuntimeException('Nelze zapsat soubor s cenami (objednavky/data/ceny.json).');
+    if (file_put_contents($d . '/ceny.json', $json, LOCK_EX) === false) {
+        throw new RuntimeException('Nelze uložit ceny (databáze není nastavená a soubor nejde zapsat).');
     }
 }
 
@@ -749,6 +768,11 @@ function bb_db_install(PDO $db): void
         KEY k_stav (stav),
         KEY k_vytvoreno (vytvoreno)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_czech_ci COMMENT='Black Box – objednávky dárkových poukazů'");
+    $db->exec("CREATE TABLE IF NOT EXISTS bb_nastaveni (
+        klic     VARCHAR(40) NOT NULL PRIMARY KEY,
+        hodnota  TEXT        NOT NULL,
+        upraveno DATETIME    NOT NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Black Box – nastavení ze správy (ceník)'");
     $db->exec("CREATE TABLE IF NOT EXISTS bb_cislovani (
         rok      INT NOT NULL PRIMARY KEY,
         posledni INT NOT NULL

@@ -157,6 +157,11 @@ if (empty($_SESSION['bb_admin'])) {
 
 /* ---- ceník ---- */
 if (isset($_GET['cenik'])) {
+    try {
+        bb_db();
+    } catch (Throwable $e) {
+        page('Chyba databáze', '<div class="login"><img src="?logo=1" alt=""><h2>Nelze se připojit k databázi</h2><p style="color:#8f89b8">Ceník se ukládá do databáze. Zkontrolujte údaje <code>db</code> v <code>objednavky/config.php</code>.</p><p style="color:#ff6b8a;font-size:13px">' . bb_h($e->getMessage()) . '</p></div>');
+    }
     $prices = bb_prices($cfg);
     $NAMES = ['standard' => ['Standard', '2 hodiny · libovolný blok'], 'gold' => ['Gold Time', 'Pátek a sobota 22–24 h']];
     if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {

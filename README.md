@@ -22,6 +22,6 @@ Při nahrání na live je potřeba zkopírovat celou složku (index.html + css/ 
 ## Ceník (od 14. 10. 2026)
 
 Ceny Standard / Gold Time se mění ve **správě**: `sprava.php` → záložka **Ceník**.
-Uloží se do `objednavky/data/ceny.json` na serveru. Web si je načítá z `ceny.php`,
+Ukládají se do databáze (tabulka `bb_nastaveni`, vytvoří se sama). Web si je načítá z `ceny.php`,
 platí i pro objednávky poukazů a nové faktury. V HTML jsou jen výchozí ceny (1 990 / 2 490 Kč)
 pro případ, že `ceny.php` není dostupný (např. GitHub Pages).
