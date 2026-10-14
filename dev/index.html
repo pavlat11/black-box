@@ -2262,6 +2262,7 @@ html.gold .gt-aura{opacity:1}
         <label class="qo-chk"><input type="checkbox" id="qoV"><span class="qo-sw" aria-hidden="true"></span><span><strong>Zaslat dárkový poukaz</strong><em>Po zaplacení přijde e-mailem k tisku.</em></span></label>
         <div class="vo-fields qo-vname" id="qoVBox" hidden>
           <div class="field full"><label for="qoName">Jméno na poukaz</label><input id="qoName" type="text" maxlength="32" autocomplete="off" placeholder="pro koho je poukaz"></div>
+          <div class="field full"><label for="qoMsg">Věnování <i>(nepovinné)</i></label><input id="qoMsg" type="text" maxlength="90" autocomplete="off" placeholder="pár slov od srdce…"></div>
         </div>
         <div class="vo-flow" aria-live="polite"><p class="vo-lbl">Co bude dál</p><ol id="qoFlow"></ol></div>
         <input type="text" name="web" id="qoWeb" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
@@ -3417,12 +3418,12 @@ document.querySelectorAll('a[href="#poukazy"]').forEach(a=>{if(/gold/i.test(a.te
     need.forEach(id=>{const i=$(id),val=i.value.trim(),ok=id==='qoMail'?/^\S+@\S+\.\S+$/.test(val):id==='qoTel'?/^[+0-9 ()\-\/]{6,}$/.test(val):val.length>=2;i.closest('.field').classList.toggle('vo-field-bad',!ok);if(!ok&&!bad)bad=i;});
     if(bad){err.textContent=bad.id==='qoName'?'Napište jméno, které má být na poukazu.':'Doplňte prosím zvýrazněné údaje.';bad.scrollIntoView({block:'center',behavior:'smooth'});bad.focus({preventScroll:true});return;}err.textContent='';
     const k=kind(),kl=k==='gold'?'Gold Time (2 900 Kč)':'Standard – 2 hodiny (2 000 Kč)',wv=wantV();
-    const lines=['Dobrý den,','','objednávám: '+kl,'Zaslat dárkový poukaz: '+(wv?'ano – jméno na poukaz: '+v('qoName'):'ne'),'','E-mail: '+v('qoMail'),'Telefon: '+v('qoTel'),'','Prosím o zaslání faktury. Děkuji'];
+    const lines=['Dobrý den,','','objednávám: '+kl,'Zaslat dárkový poukaz: '+(wv?'ano – jméno na poukaz: '+v('qoName')+(v('qoMsg')?', věnování: '+v('qoMsg'):''):'ne'),'','E-mail: '+v('qoMail'),'Telefon: '+v('qoTel'),'','Prosím o zaslání faktury. Děkuji'];
     const viaMail=()=>{location.href='mailto:'+'pavlatp@email.cz'+'?subject='+encodeURIComponent('Objednávka – '+kl)+'&body='+encodeURIComponent(lines.join('\n'));};
     const esc=t=>t.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
     const done=(h,p)=>{$('qoDoneH').textContent=h;$('qoDoneP').innerHTML=p;$('qoStep').hidden=true;$('qoDone').hidden=false;D.scrollTop=0;$('qoOk').focus({preventScroll:true});};
     const send=$('qoSend');if(send.disabled)return;send.disabled=true;const lbl=send.textContent;send.textContent='Odesílám…';
-    const payload={way:'objednavka',kind:k,phone:v('qoTel'),email:v('qoMail'),voucher:wv?'1':'0',for:wv?v('qoName'):'',name:wv?v('qoName'):'',web:$('qoWeb').value};
+    const payload={way:'objednavka',kind:k,phone:v('qoTel'),email:v('qoMail'),voucher:wv?'1':'0',for:wv?v('qoName'):'',msg:wv?v('qoMsg'):'',name:wv?v('qoName'):'',web:$('qoWeb').value};
     const ctl=new AbortController(),tm=setTimeout(()=>ctl.abort(),30000);
     fetch('objednavka.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:ctl.signal})
       .then(r=>r.json().catch(()=>({ok:false})).then(j=>({r,j})))
