@@ -1759,3 +1759,20 @@ html.gold .gt-aura{opacity:1}
 
 /* ceník: na tabletu stejná výška nadpisů → ceny v jedné řadě */
 @media (min-width:761px) and (max-width:1000px){#cenik .pr h3{min-height:2.3em}}
+
+/* dárkový poukaz: univerzální (na doručitele) – uprostřed název */
+.vmid.vbrand{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:10px;margin:0!important}
+.vbrand b{font:300 clamp(24px,3vw,38px)/1.05 var(--display);letter-spacing:.02em;color:transparent;background:linear-gradient(100deg,#ffffff 10%,#d9c8ff 55%,#ffffff 90%);-webkit-background-clip:text;background-clip:text}
+.vbrand span{display:flex;align-items:center;gap:12px;font:600 clamp(10px,1vw,12px) var(--body);letter-spacing:.42em;text-transform:uppercase;color:var(--violet)}
+.vbrand span::before{content:"";width:28px;height:1px;background:currentColor;opacity:.7}
+.vcard.gold .vbrand b{background:linear-gradient(100deg,#fff3d6 10%,#f0cf85 50%,#c9a24e 90%);-webkit-background-clip:text;background-clip:text}
+.vcard.gold .vbrand span{color:var(--gold)}
+@media (max-width:760px){.vbrand b{font-size:clamp(22px,7vw,30px)}.vbrand span{font-size:9.5px;letter-spacing:.34em}.vbrand{gap:7px}}
+/* rychlá objednávka: volba doručení poukazu */
+.qo-vbox{margin-top:12px}
+.qo-vbox[hidden]{display:none}
+.qo-way{margin-bottom:12px}
+.qo-way .vo-opt span{padding:12px 40px 12px 14px;gap:4px}
+.qo-way .vo-opt svg{width:20px;height:20px}
+#qoAddr[hidden]{display:none}
+.qo-way .vo-opt svg{margin-right:8px;vertical-align:-4px}

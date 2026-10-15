@@ -465,22 +465,20 @@ if('IntersectionObserver' in window&&!reduce){const io=new IntersectionObserver(
 
 /* vouchers */
 (function(){const vc=document.getElementById('vcard'),o=[document.getElementById('vo1'),document.getElementById('vo2')];
-  ['vFor','vMsg'].forEach(id=>{const e=document.getElementById(id);e.addEventListener('input',()=>vc.classList.toggle('typed',!!(document.getElementById('vFor').value.trim()||document.getElementById('vMsg').value.trim())));e.addEventListener('keydown',ev=>{if(ev.key==='Enter'){ev.preventDefault();e.blur();}});});
   o.forEach(b=>b.addEventListener('click',()=>{o.forEach(x=>x.setAttribute('aria-pressed',x===b));vc.classList.toggle('gold',b.id==='vo2');document.getElementById('vKind').textContent=b.dataset.k;document.getElementById('vBlock').textContent=b.dataset.b;}));
-  if(matchMedia('(pointer:fine)').matches&&!reduce){vc.addEventListener('mousemove',e=>{if(document.activeElement&&vc.contains(document.activeElement)&&document.activeElement.tagName==='INPUT'){vc.style.transform='';return;}const r=vc.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;vc.style.transform=`perspective(1000px) rotateY(${x*10}deg) rotateX(${-y*10}deg)`;});vc.addEventListener('mouseleave',()=>vc.style.transform='');}
-  /* objednávka poukazu → modal */
+  if(matchMedia('(pointer:fine)').matches&&!reduce){vc.addEventListener('mousemove',e=>{const r=vc.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;vc.style.transform=`perspective(1000px) rotateY(${x*10}deg) rotateX(${-y*10}deg)`;});vc.addEventListener('mouseleave',()=>vc.style.transform='');}
+  /* objednávka poukazu → modal (doručení e-mailem nebo poštou, platba fakturou) */
   const D=document.getElementById('voDlg'),F=document.getElementById('voForm'),$=id=>document.getElementById(id);
-  const FLOW={odber:['Odešlete objednávku.','Ozveme se a domluvíme čas vyzvednutí.','Zaplatíte na místě a převezmete poukaz.'],
-              faktura:['Odešlete objednávku.','Fakturu vám hned pošleme e-mailem.','Po připsání platby přijde potvrzení o platbě a poukaz.']};
+  const FLOW={email:['Odešlete objednávku.','Fakturu vám hned pošleme e-mailem.','Po připsání platby přijde poukaz e-mailem (PDF k tisku).'],
+              posta:['Odešlete objednávku.','Fakturu vám hned pošleme e-mailem.','Po připsání platby pošleme tištěný poukaz poštou.']};
   const LAST='Termín návštěvy si obdarovaný domluví telefonem na <a href="tel:+420737222266">+420 737 22 22 66</a>.';
   const way=()=>F.querySelector('input[name="voWay"]:checked').value;
-  function paint(){const w=way();$('voInv').hidden=w!=='faktura';$('voAddr').required=w==='faktura';
+  function paint(){const w=way(),p=w==='posta';$('voInv').hidden=!p;['voStreet','voZip','voCity'].forEach(id=>$(id).required=p);
     $('voFlow').innerHTML=FLOW[w].map(t=>'<li>'+t+'</li>').join('')+'<li class="vo-last">'+LAST+'</li>';}
-  F.querySelectorAll('input[name="voWay"]').forEach(r=>r.addEventListener('change',paint));
+  F.querySelectorAll('input[name="voWay"]').forEach(r=>r.addEventListener('change',()=>{paint();if(way()==='posta')setTimeout(()=>$('voStreet').focus({preventScroll:false}),60);}));
   let voScrollY=0;
   function openDlg(){const g=$('vo2').getAttribute('aria-pressed')==='true',btn=g?$('vo2'):$('vo1');
     $('voKind').textContent=$('vKind').textContent;$('voPrice').textContent=(btn.querySelector('span').textContent.split('·').pop()||'').trim();
-    const f=$('vFor').value.trim(),m=$('vMsg').value.trim();$('voFor').textContent=[f&&'Pro: '+f,m&&'„'+m+'“'].filter(Boolean).join(' · ');
     D.classList.toggle('is-gold',g);$('voStep').hidden=false;$('voDone').hidden=true;$('voErr').textContent='';paint();
     voScrollY=window.scrollY||document.documentElement.scrollTop||0;
     document.body.style.top=(-voScrollY)+'px';
@@ -490,37 +488,30 @@ if('IntersectionObserver' in window&&!reduce){const io=new IntersectionObserver(
   D.addEventListener('click',e=>{if(e.target===D)closeDlg();});
   $('voX').addEventListener('click',closeDlg);$('voOk').addEventListener('click',closeDlg);
   F.querySelectorAll('input').forEach(i=>i.addEventListener('input',()=>i.closest('.field')&&i.closest('.field').classList.remove('vo-field-bad')));
-  const vBtn=document.querySelector('#vform button[type=submit]'),vF=$('vFor');
-  const syncBtn=()=>{const ok=!!vF.value.trim();vBtn.classList.toggle('is-off',!ok);vBtn.setAttribute('aria-disabled',String(!ok));if(ok){$('vnote').textContent='';vc.classList.remove('need-name');}};
-  vF.addEventListener('input',syncBtn);syncBtn();
-  document.getElementById('vform').addEventListener('submit',e=>{e.preventDefault();
-    if(!vF.value.trim()){$('vnote').textContent='Nejdřív napište do poukazu jméno obdarovaného.';vc.classList.remove('need-name');void vc.offsetWidth;vc.classList.add('need-name');vc.scrollIntoView({behavior:'smooth',block:'center'});setTimeout(()=>vF.focus({preventScroll:true}),350);return;}
-    $('vnote').textContent='';openDlg();});
+  document.getElementById('vform').addEventListener('submit',e=>{e.preventDefault();$('vnote').textContent='';openDlg();});
   F.addEventListener('submit',e=>{e.preventDefault();const w=way(),err=$('voErr');let bad=null;
-    const need=['voName','voTel','voMail'].concat(w==='faktura'?['voAddr']:[]);
-    need.forEach(id=>{const i=$(id),ok=id==='voMail'?/^\S+@\S+\.\S+$/.test(i.value.trim()):!!i.value.trim();i.closest('.field').classList.toggle('vo-field-bad',!ok);if(!ok&&!bad)bad=i;});
-    if(bad){err.textContent='Doplňte prosím zvýrazněné údaje.';bad.scrollIntoView({block:'center',behavior:'smooth'});bad.focus({preventScroll:true});return;}err.textContent='';
+    const need=['voName','voTel','voMail'].concat(w==='posta'?['voStreet','voZip','voCity']:[]);
+    need.forEach(id=>{const i=$(id),val=i.value.trim(),ok=id==='voMail'?/^\S+@\S+\.\S+$/.test(val):id==='voTel'?/^[+0-9 ()\-\/]{6,}$/.test(val):id==='voZip'?/^\d{3}\s?\d{2}$/.test(val):val.length>=2;i.closest('.field').classList.toggle('vo-field-bad',!ok);if(!ok&&!bad)bad=i;});
+    if(bad){err.textContent=bad.id==='voZip'?'PSČ má 5 číslic.':'Doplňte prosím zvýrazněné údaje.';bad.scrollIntoView({block:'center',behavior:'smooth'});bad.focus({preventScroll:true});return;}err.textContent='';
     const v=id=>$(id).value.trim(),k=$('vKind').textContent;
-    const lines=['Dobrý den,','','mám zájem o dárkový poukaz.','',
-      'Typ: '+k+' ('+$('voPrice').textContent+')','Pro koho: '+(v('vFor')||'—'),'Věnování: '+(v('vMsg')||'—'),'',
-      'Způsob převzetí: '+(w==='faktura'?'Poslat fakturu (platba převodem)':'Osobní odběr na místě'),'',
+    const addr=w==='posta'?v('voStreet')+', '+v('voZip')+' '+v('voCity'):'';
+    const lines=['Dobrý den,','','objednávám dárkový poukaz.','','Typ: '+k+' ('+$('voPrice').textContent+')','Doručení: '+(w==='posta'?'poštou – '+addr:'e-mailem'),'',
       'Jméno: '+v('voName'),'Telefon: '+v('voTel'),'E-mail: '+v('voMail')];
-    if(w==='faktura'){lines.push('Fakturační adresa: '+v('voAddr'));if(v('voIco'))lines.push('Firma / IČO: '+v('voIco'));}
-    lines.push('','Děkuji');
-    const viaMail=()=>{location.href='mailto:'+'info@black-box-luxury.cz'+'?subject='+encodeURIComponent('Objednávka poukazu – '+k+' – '+(w==='faktura'?'faktura':'osobní odběr'))+'&body='+encodeURIComponent(lines.join('\n'));
-};
+    if(v('voIco'))lines.push('Firma / IČO: '+v('voIco'));
+    lines.push('','Prosím o zaslání faktury. Děkuji');
+    const viaMail=()=>{location.href='mailto:'+'info@black-box-luxury.cz'+'?subject='+encodeURIComponent('Objednávka poukazu – '+k+' – '+(w==='posta'?'poštou':'e-mailem'))+'&body='+encodeURIComponent(lines.join('\n'));};
     const done=(h,p)=>{$('voDoneH').textContent=h;$('voDoneP').innerHTML=p;$('voStep').hidden=true;$('voDone').hidden=false;D.scrollTop=0;$('voOk').focus({preventScroll:true});};
     const esc=t=>t.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
     const send=$('voSend');if(send.disabled)return;send.disabled=true;const lbl=send.textContent;send.textContent='Odesílám…';
-    const payload={way:w,kind:$('vo2').getAttribute('aria-pressed')==='true'?'gold':'standard',name:v('voName'),phone:v('voTel'),email:v('voMail'),addr:v('voAddr'),company:v('voIco'),for:v('vFor'),msg:v('vMsg'),web:$('voWeb').value};
+    const payload={way:'faktura',delivery:w,kind:$('vo2').getAttribute('aria-pressed')==='true'?'gold':'standard',name:v('voName'),phone:v('voTel'),email:v('voMail'),street:v('voStreet'),zip:v('voZip'),city:v('voCity'),company:v('voIco'),web:$('voWeb').value};
     const ctl=new AbortController(),tm=setTimeout(()=>ctl.abort(),30000);
+    const after=w==='posta'?'Po připsání platby vám poukaz pošleme poštou.':'Po připsání platby vám poukaz přijde e-mailem.';
     fetch('objednavka.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:ctl.signal})
       .then(r=>r.json().catch(()=>({ok:false,_fallback:true})).then(j=>({r,j})))
       .then(({r,j})=>{
         if(j.ok){const m=esc(v('voMail'));
-          if(j.mode==='invoice')done('Faktura je na cestě','Poslali jsme ji na <b>'+m+'</b>. Po připsání platby vám přijde potvrzení o platbě a pak si zavoláte o termín.');
-          else if(j.mode==='manual')done('Objednávka přijata','Fakturu vám brzy pošleme na <b>'+m+'</b>. Po zaplacení přijde potvrzení o platbě.');
-          else done('Objednávka přijata','Potvrzení jsme poslali na <b>'+m+'</b>. Brzy se ozveme a domluvíme vyzvednutí.');
+          if(j.mode==='invoice')done('Faktura je na cestě','Poslali jsme ji na <b>'+m+'</b>. '+after);
+          else done('Objednávka přijata','Fakturu vám brzy pošleme na <b>'+m+'</b>. '+after);
           return;}
         if(r.status===422||r.status===429){err.textContent=j.error||'Zkontrolujte prosím údaje.';return;}
         throw new Error('server');})
@@ -1142,14 +1133,16 @@ try{
 }catch(e){console.error(e)}
 ;
 try{
-/* patička: rychlá objednávka (e-mail, telefon, volitelně poukaz) */
+/* rychlá objednávka (Rezervace → Objednávka): e-mail, telefon, volitelně poukaz e-mailem/poštou */
 (function(){const D=document.getElementById('qoDlg');if(!D)return;const F=document.getElementById('qoForm'),$=id=>document.getElementById(id);
   const TEL='<a href="tel:+420737222266">+420 737 22 22 66</a>';
-  const kind=()=>F.querySelector('input[name="qoKind"]:checked').value,wantV=()=>$('qoV').checked;
-  function paint(){const g=kind()==='gold',v=wantV();D.classList.toggle('is-gold',g);$('qoVBox').hidden=!v;$('qoName').required=v;
-    $('qoFlow').innerHTML=['Odešlete objednávku.','Fakturu vám hned pošleme e-mailem.',v?'Po připsání platby přijde potvrzení o platbě a dárkový poukaz.':'Po připsání platby přijde potvrzení o platbě.'].map(t=>'<li>'+t+'</li>').join('')+'<li class="vo-last">Termín si domluvíte telefonem na '+TEL+'.</li>';}
-  F.querySelectorAll('input[name="qoKind"]').forEach(r=>r.addEventListener('change',paint));
-  $('qoV').addEventListener('change',()=>{paint();if(wantV())setTimeout(()=>$('qoName').focus({preventScroll:false}),60);else $('qoName').closest('.field').classList.remove('vo-field-bad');});
+  const kind=()=>F.querySelector('input[name="qoKind"]:checked').value,wantV=()=>$('qoV').checked,qway=()=>F.querySelector('input[name="qoWay"]:checked').value;
+  const post=()=>wantV()&&qway()==='posta',ADDR=['qoName','qoStreet','qoZip','qoCity'];
+  function paint(){const g=kind()==='gold',v=wantV(),p=post();D.classList.toggle('is-gold',g);$('qoVBox').hidden=!v;$('qoAddr').hidden=!p;ADDR.forEach(id=>$(id).required=p);
+    const third=!v?'Po připsání platby přijde potvrzení o platbě.':p?'Po připsání platby pošleme tištěný poukaz poštou.':'Po připsání platby přijde poukaz e-mailem (PDF).';
+    $('qoFlow').innerHTML=['Odešlete objednávku.','Fakturu vám hned pošleme e-mailem.',third].map(t=>'<li>'+t+'</li>').join('')+'<li class="vo-last">Termín si domluvíte telefonem na '+TEL+'.</li>';}
+  F.querySelectorAll('input[name="qoKind"],input[name="qoWay"]').forEach(r=>r.addEventListener('change',()=>{paint();if(post()&&r.name==='qoWay')setTimeout(()=>$('qoName').focus({preventScroll:false}),60);}));
+  $('qoV').addEventListener('change',()=>{paint();if(!wantV())ADDR.forEach(id=>$(id).closest('.field').classList.remove('vo-field-bad'));});
   F.querySelectorAll('input').forEach(i=>i.addEventListener('input',()=>i.closest('.field')&&i.closest('.field').classList.remove('vo-field-bad')));
   let y=0;
   function open(){$('qoStep').hidden=false;$('qoDone').hidden=true;$('qoErr').textContent='';paint();y=window.scrollY||document.documentElement.scrollTop||0;document.body.style.top=(-y)+'px';
@@ -1159,22 +1152,24 @@ try{
   D.addEventListener('click',e=>{if(e.target===D)close();});
   document.querySelectorAll('#qoOpen,.js-qo').forEach(b=>b.addEventListener('click',open));$('qoX').addEventListener('click',close);$('qoOk').addEventListener('click',close);
   F.addEventListener('submit',e=>{e.preventDefault();const err=$('qoErr');let bad=null;const v=id=>$(id).value.trim();
-    const need=['qoMail','qoTel'].concat(wantV()?['qoName']:[]);
-    need.forEach(id=>{const i=$(id),val=i.value.trim(),ok=id==='qoMail'?/^\S+@\S+\.\S+$/.test(val):id==='qoTel'?/^[+0-9 ()\-\/]{6,}$/.test(val):val.length>=2;i.closest('.field').classList.toggle('vo-field-bad',!ok);if(!ok&&!bad)bad=i;});
-    if(bad){err.textContent=bad.id==='qoName'?'Napište jméno, které má být na poukazu.':'Doplňte prosím zvýrazněné údaje.';bad.scrollIntoView({block:'center',behavior:'smooth'});bad.focus({preventScroll:true});return;}err.textContent='';
-    const k=kind(),kl=k==='gold'?'Gold Time ('+bbKc('gold')+')':'Standard – 2 hodiny ('+bbKc('standard')+')',wv=wantV();
-    const lines=['Dobrý den,','','objednávám: '+kl,'Zaslat dárkový poukaz: '+(wv?'ano – jméno na poukaz: '+v('qoName')+(v('qoMsg')?', věnování: '+v('qoMsg'):''):'ne'),'','E-mail: '+v('qoMail'),'Telefon: '+v('qoTel'),'','Prosím o zaslání faktury. Děkuji'];
+    const need=['qoMail','qoTel'].concat(post()?ADDR:[]);
+    need.forEach(id=>{const i=$(id),val=i.value.trim(),ok=id==='qoMail'?/^\S+@\S+\.\S+$/.test(val):id==='qoTel'?/^[+0-9 ()\-\/]{6,}$/.test(val):id==='qoZip'?/^\d{3}\s?\d{2}$/.test(val):val.length>=2;i.closest('.field').classList.toggle('vo-field-bad',!ok);if(!ok&&!bad)bad=i;});
+    if(bad){err.textContent=bad.id==='qoZip'?'PSČ má 5 číslic.':'Doplňte prosím zvýrazněné údaje.';bad.scrollIntoView({block:'center',behavior:'smooth'});bad.focus({preventScroll:true});return;}err.textContent='';
+    const k=kind(),kl=k==='gold'?'Gold Time ('+bbKc('gold')+')':'Standard – 2 hodiny ('+bbKc('standard')+')',wv=wantV(),p=post();
+    const addr=p?v('qoName')+', '+v('qoStreet')+', '+v('qoZip')+' '+v('qoCity'):'';
+    const lines=['Dobrý den,','','objednávám: '+kl,'Dárkový poukaz: '+(wv?(p?'ano – poštou na adresu: '+addr:'ano – e-mailem'):'ne'),'','E-mail: '+v('qoMail'),'Telefon: '+v('qoTel'),'','Prosím o zaslání faktury. Děkuji'];
     const viaMail=()=>{location.href='mailto:'+'info@black-box-luxury.cz'+'?subject='+encodeURIComponent('Objednávka – '+kl)+'&body='+encodeURIComponent(lines.join('\n'));};
     const esc=t=>t.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-    const done=(h,p)=>{$('qoDoneH').textContent=h;$('qoDoneP').innerHTML=p;$('qoStep').hidden=true;$('qoDone').hidden=false;D.scrollTop=0;$('qoOk').focus({preventScroll:true});};
+    const done=(h,p2)=>{$('qoDoneH').textContent=h;$('qoDoneP').innerHTML=p2;$('qoStep').hidden=true;$('qoDone').hidden=false;D.scrollTop=0;$('qoOk').focus({preventScroll:true});};
     const send=$('qoSend');if(send.disabled)return;send.disabled=true;const lbl=send.textContent;send.textContent='Odesílám…';
-    const payload={way:'objednavka',kind:k,phone:v('qoTel'),email:v('qoMail'),voucher:wv?'1':'0',for:wv?v('qoName'):'',msg:wv?v('qoMsg'):'',name:wv?v('qoName'):'',web:$('qoWeb').value};
+    const payload={way:'objednavka',kind:k,phone:v('qoTel'),email:v('qoMail'),voucher:wv?'1':'0',delivery:wv?qway():'',name:p?v('qoName'):'',street:p?v('qoStreet'):'',zip:p?v('qoZip'):'',city:p?v('qoCity'):'',web:$('qoWeb').value};
     const ctl=new AbortController(),tm=setTimeout(()=>ctl.abort(),30000);
+    const after=!wv?'Po připsání platby vám přijde potvrzení.':p?'Po připsání platby vám poukaz pošleme poštou.':'Po připsání platby vám poukaz přijde e-mailem.';
     fetch('objednavka.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:ctl.signal})
       .then(r=>r.json().catch(()=>({ok:false})).then(j=>({r,j})))
       .then(({r,j})=>{if(j.ok){const m=esc(v('qoMail'));
-          if(j.mode==='invoice')done('Faktura je na cestě','Poslali jsme ji na <b>'+m+'</b>. Po připsání platby vám přijde potvrzení'+(wv?' a dárkový poukaz':'')+'.');
-          else done('Objednávka přijata','Fakturu vám brzy pošleme na <b>'+m+'</b>.');return;}
+          if(j.mode==='invoice')done('Faktura je na cestě','Poslali jsme ji na <b>'+m+'</b>. '+after);
+          else done('Objednávka přijata','Fakturu vám brzy pošleme na <b>'+m+'</b>. '+after);return;}
         if(r.status===422||r.status===429){err.textContent=j.error||'Zkontrolujte prosím údaje.';return;}throw new Error('server');})
       .catch(()=>{viaMail();done('Skoro hotovo','Otevřeli jsme vám e-mail s objednávkou. Stačí ho odeslat a fakturu vám pošleme.');})
       .finally(()=>{clearTimeout(tm);send.disabled=false;send.textContent=lbl;});});

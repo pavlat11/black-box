@@ -33,3 +33,11 @@ Ceny Standard / Gold Time se mění ve **správě**: `sprava.php` → záložka 
 Ukládají se do databáze (tabulka `bb_nastaveni`, vytvoří se sama). Web si je načítá z `ceny.php`,
 platí i pro objednávky poukazů a nové faktury. V HTML jsou jen výchozí ceny (1 990 / 2 490 Kč)
 pro případ, že `ceny.php` není dostupný (např. GitHub Pages).
+
+### Dárkové poukazy (od 15. 10. 2026)
+
+- Poukaz je **univerzální (na doručitele)** – bez jména a věnování, na kartě „Black Box Luxury / relaxační zóna“.
+- Platí se vždy **fakturou**. Osobní odběr zrušen. Doručení: **e-mailem** (PDF s kódem = číslo faktury, odejde automaticky po potvrzení platby) nebo **poštou** (zákazník vyplní adresu).
+- Správa → Objednávky: nahoře **Ověřit / uplatnit poukaz** (zadáte číslo → platný / použitý / nezaplacený). Záložky K vyřízení · Platné poukazy · Použité · Vše.
+- U poukazu poštou se po zaplacení přidělí **číslo poukazu** (musí být jedinečné) a zaškrtne **Poukaz odeslán poštou** (volitelně e-mail zákazníkovi).
+- **Uplatnit – poukaz použit** označí poukaz jako použitý (s datem a poznámkou); stejný poukaz pak znovu uplatnit nejde.

@@ -39,36 +39,45 @@ $g = function (string $k, int $max = 200) use ($in): string {
 };
 
 if ($g('web') !== '') {                       // past na roboty (skryté pole)
-    out(['ok' => true, 'mode' => 'pickup']);
+    out(['ok' => true, 'mode' => 'invoice']);
 }
 
-$quick = $g('way') === 'objednavka';            // rychlá objednávka z patičky webu (vždy faktura)
-$way = ($quick || $g('way') === 'faktura') ? 'faktura' : 'odber';
+/*
+ * Platí se vždy fakturou (převodem). Osobní odběr už není.
+ * Poukaz je univerzální (na doručitele) – bez jména a věnování.
+ * Doručení poukazu: 'email' (PDF po zaplacení) nebo 'posta' (tištěný poukaz, číslo přidělí správa).
+ */
+$quick = $g('way') === 'objednavka';            // rychlá objednávka (Rezervace → Objednávka)
 $sendV = $quick ? in_array($g('voucher'), ['1', 'true', 'ano'], true) : true;
+$delivery = $g('delivery') === 'posta' ? 'posta' : 'email';
+if (!$sendV) {
+    $delivery = '';
+}
 $kind = $g('kind') === 'gold' ? 'gold' : 'standard';
 $name = $g('name', 120);
 $phone = $g('phone', 40);
 $email = $g('email', 160);
-$addr = $g('addr', 250);
+$street = $g('street', 160);
+$zip = preg_replace('/\s+/', '', $g('zip', 10)) ?? '';
+$city = $g('city', 80);
 $compRaw = $g('company', 160);
-$for = $g('for', 80);
-$msg = $g('msg', 120);
-
-if ($quick && $for === '' && $name !== '') {
-    $for = $name;                               // jméno zadané k poukazu
+if ($street === '' && $g('addr', 250) !== '') {   // starší formulář posílal adresu v jednom poli
+    $street = $g('addr', 250);
 }
+$addr = trim($street . ($zip !== '' || $city !== '' ? ', ' . trim(($zip !== '' ? substr($zip, 0, 3) . ' ' . substr($zip, 3) : '') . ' ' . $city) : ''), ' ,');
+
 $bad = [];
 if (!$quick && mb_strlen($name) < 2) $bad[] = 'name';
 if (!preg_match('/^[+0-9 ()\-\/]{6,}$/', $phone)) $bad[] = 'phone';
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) $bad[] = 'email';
-if (!$quick && $way === 'faktura' && mb_strlen($addr) < 5) $bad[] = 'addr';
-if ($sendV && mb_strlen($for) < 2) $bad[] = 'for';
-if (!$sendV) {
-    $for = '';
-    $msg = '';
+if ($delivery === 'posta') {
+    if (mb_strlen($name) < 2) $bad[] = 'name';
+    if (mb_strlen($street) < 3) $bad[] = 'street';
+    if (!preg_match('/^\d{5}$/', $zip)) $bad[] = 'zip';
+    if (mb_strlen($city) < 2) $bad[] = 'city';
 }
 if ($bad) {
-    out(['ok' => false, 'error' => 'Zkontrolujte prosím vyplněné údaje.', 'fields' => $bad], 422);
+    out(['ok' => false, 'error' => in_array('zip', $bad, true) && count($bad) === 1 ? 'PSČ má 5 číslic.' : 'Zkontrolujte prosím vyplněné údaje.', 'fields' => array_values(array_unique($bad))], 422);
 }
 
 /* ---- objednávka ---- */
@@ -87,11 +96,14 @@ $o = [
     'product' => $product,
     'quick' => $quick,
     'send_voucher' => $sendV,
-    'for' => $for,
-    'msg' => $msg,
+    'delivery' => $delivery,
+    'for' => '',
+    'msg' => '',
     'customer' => ['name' => $name, 'phone' => $phone, 'email' => $email, 'addr' => $addr, 'company' => $company, 'ico' => $ico],
 ];
-$logo = $BASE . '/lib/assets/logo-email.png';
+if ($delivery === 'posta') {
+    $o['ship'] = ['name' => $name, 'street' => $street, 'zip' => $zip, 'city' => $city];
+}
 
 function log_order(string $dir, array $row): void
 {
@@ -101,46 +113,13 @@ function log_order(string $dir, array $row): void
     if (!$fh) return;
     if ($new) {
         fwrite($fh, "\xEF\xBB\xBF");
-        fputcsv($fh, ['Datum', 'Způsob', 'Faktura/VS', 'Poukaz', 'Cena', 'Pro koho', 'Věnování', 'Jméno', 'Telefon', 'E-mail', 'Adresa', 'Firma', 'IČO', 'Stav'], ';');
+        fputcsv($fh, ['Datum', 'Způsob', 'Faktura/VS', 'Poukaz', 'Cena', 'Doručení poukazu', '', 'Jméno', 'Telefon', 'E-mail', 'Adresa', 'Firma', 'IČO', 'Stav'], ';');
     }
     fputcsv($fh, $row, ';');
     fclose($fh);
 }
 
 try {
-    if ($way === 'odber') {
-        // majiteli
-        $m = bb_mailer($cfg);
-        $m->addAddress($cfg['pickup_to']);
-        $m->clearReplyTos();
-        $m->addReplyTo($email, $name);
-        $m->Subject = 'Objednávka poukazu – ' . $o['product']['name'] . ' – osobní odběr – ' . $name;
-        $m->isHTML(true);
-        $m->Body = bb_email_internal($o, 'odber');
-        $m->AltBody = strip_tags(str_replace(['</tr>', '</td>'], ["\n", ' '], $m->Body));
-        $m->send();
-        // zákazníkovi
-        try {
-            $m = bb_mailer($cfg);
-            $m->addAddress($email, $name);
-            $m->Subject = 'Objednávka dárkového poukazu Black Box';
-            $m->isHTML(true);
-            $m->addEmbeddedImage($logo, 'bblogo', 'black-box.png');
-            $m->Body = bb_email_pickup($cfg, $o);
-            $m->AltBody = "Děkujeme za objednávku dárkového poukazu ({$o['product']['name']}, " . bb_money($o['product']['price']) . ").\nBrzy se ozveme a domluvíme vyzvednutí v Táboře.\nTermín návštěvy: {$cfg['phone']}\n\nBlack Box Luxury";
-            $m->send();
-        } catch (Throwable $e) {
-            // potvrzení zákazníkovi není kritické – objednávka už dorazila
-        }
-        try {
-            bb_save_order($DATA, $o + ['id' => 'OD-' . date('ymd-His') . '-' . random_int(10, 99), 'way' => 'odber', 'status' => 'nova', 'created' => time()]);
-        } catch (Throwable $e) {   // e-maily už odešly – chybu jen zapíšeme
-            @file_put_contents($DATA . '/chyby.log', date('c') . ' ulozeni ' . $e->getMessage() . "\n", FILE_APPEND);
-        }
-        log_order($DATA, [date('Y-m-d H:i'), 'osobní odběr', '', $o['product']['name'], $o['product']['price'], $for, $msg, $name, $phone, $email, '', $company, $ico, 'přijato']);
-        out(['ok' => true, 'mode' => 'pickup']);
-    }
-
     /* ---- faktura ---- */
     $iban = bb_iban((string) $cfg['bank_account']);
     if (!$iban) {
@@ -159,7 +138,7 @@ try {
         } catch (Throwable $e) {   // e-maily už odešly – chybu jen zapíšeme
             @file_put_contents($DATA . '/chyby.log', date('c') . ' ulozeni ' . $e->getMessage() . "\n", FILE_APPEND);
         }
-        log_order($DATA, [date('Y-m-d H:i'), $quick ? 'objednávka (faktura)' : 'faktura', '', $o['product']['name'], $o['product']['price'], $for, $msg, $name, $phone, $email, $addr, $company, $ico, 'čeká na ruční fakturu']);
+        log_order($DATA, [date('Y-m-d H:i'), $quick ? 'objednávka (faktura)' : 'faktura', '', $o['product']['name'], $o['product']['price'], bb_delivery_label($o), '', $name, $phone, $email, $addr, $company, $ico, 'čeká na ruční fakturu']);
         out(['ok' => true, 'mode' => 'manual']);
     }
 
@@ -173,7 +152,7 @@ try {
     $o['sent_at'] = time();
     bb_save_order($DATA, $o);
 
-    log_order($DATA, [date('Y-m-d H:i'), $quick ? 'objednávka (faktura)' : 'faktura', $no, $o['product']['name'], $o['product']['price'], $for, $msg, $name, $phone, $email, $addr, $company, $ico, 'faktura odeslána']);
+    log_order($DATA, [date('Y-m-d H:i'), $quick ? 'objednávka (faktura)' : 'faktura', $no, $o['product']['name'], $o['product']['price'], bb_delivery_label($o), '', $name, $phone, $email, $addr, $company, $ico, 'faktura odeslána']);
     out(['ok' => true, 'mode' => 'invoice', 'invoice' => $no]);
 } catch (Throwable $e) {
     @file_put_contents($DATA . '/chyby.log', date('c') . ' ' . $e->getMessage() . "\n", FILE_APPEND);
