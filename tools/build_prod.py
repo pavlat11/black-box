@@ -33,5 +33,13 @@ s = s.replace('<title>[DEV] ', '<title>')
 s, n = re.subn(r'<meta name="robots" content="[^"]*">', '<meta name="robots" content="index, follow">\n<link rel="canonical" href="' + DOMAIN + '">', s, count=1)
 assert n == 1, 'robots meta nenalezen'
 assert '[DEV]' not in s and 'noindex' not in s
+import hashlib
+def _ver(m):
+    path = m.group(2).split('?')[0]
+    f = out / path
+    v = hashlib.md5(f.read_bytes()).hexdigest()[:8] if f.is_file() else '1'
+    return m.group(1) + path + '?v=' + v + m.group(3)
+# verze u CSS/JS → prohlížeč po nahrání vždy stáhne nové soubory (ne starou kopii z mezipaměti)
+s = re.sub(r'((?:href|src)=")((?:css|js)/[^"?]+(?:\?v=[^"]*)?)(")', _ver, s)
 idx.write_text(s, encoding='utf-8')
 print('OK', out)

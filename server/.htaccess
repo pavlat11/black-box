@@ -4,3 +4,10 @@
   RewriteEngine On
   RewriteRule ^sprava/?$ sprava.php [L,QSA]
 </IfModule>
+
+# Mezipaměť: HTML vždy čerstvé, CSS/JS/obrázky mají v odkazu ?v=… (mění se s obsahem)
+<IfModule mod_headers.c>
+  <FilesMatch "\.(html|php)$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+</IfModule>
