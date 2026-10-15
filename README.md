@@ -19,7 +19,7 @@ Kód už není v jednom souboru:
 
 Při nahrání na live je potřeba zkopírovat celou složku (index.html + css/ js/ img/ fonts/).
 
-## Správa (sprava.php): Objednávky · Ceník · Oznámení · Statistiky
+## Správa (sprava.php, také adresa /sprava): Objednávky · Ceník · Oznámení · Statistiky
 
 - **Oznámení** – text, který se ukáže nahoře na webu (lze zavřít, volitelné datum „zobrazovat do“).
 - **Statistiky** – prodané poukazy a tržby (měsíc, rok, celkem, po měsících).

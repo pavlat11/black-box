@@ -1,0 +1,6 @@
+# Black Box – hezké adresy
+# blackboxx.cz/sprava  →  sprava.php
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteRule ^sprava/?$ sprava.php [L,QSA]
+</IfModule>
