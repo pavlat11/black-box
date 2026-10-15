@@ -1157,7 +1157,7 @@ try{
   function close(){if(D.close)D.close();else{D.removeAttribute('open');D.dispatchEvent(new Event('close'));}}
   D.addEventListener('close',()=>{document.documentElement.classList.remove('vo-lock');document.body.style.top='';window.scrollTo(0,y);});
   D.addEventListener('click',e=>{if(e.target===D)close();});
-  $('qoOpen').addEventListener('click',open);$('qoX').addEventListener('click',close);$('qoOk').addEventListener('click',close);
+  document.querySelectorAll('#qoOpen,.js-qo').forEach(b=>b.addEventListener('click',open));$('qoX').addEventListener('click',close);$('qoOk').addEventListener('click',close);
   F.addEventListener('submit',e=>{e.preventDefault();const err=$('qoErr');let bad=null;const v=id=>$(id).value.trim();
     const need=['qoMail','qoTel'].concat(wantV()?['qoName']:[]);
     need.forEach(id=>{const i=$(id),val=i.value.trim(),ok=id==='qoMail'?/^\S+@\S+\.\S+$/.test(val):id==='qoTel'?/^[+0-9 ()\-\/]{6,}$/.test(val):val.length>=2;i.closest('.field').classList.toggle('vo-field-bad',!ok);if(!ok&&!bad)bad=i;});
