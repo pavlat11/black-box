@@ -1138,7 +1138,7 @@ try{
 ;
 try{
 /* mobil: popisky v úvodní fotce až po ~1,5 s čisté fotky */
-(function(){const b=document.body;(function w(){if(!window.bbGo)return setTimeout(w,100);setTimeout(()=>b.classList.add('hs-show'),3600);})();setTimeout(()=>b.classList.add('hs-show'),9000);})();
+(function(){const b=document.body;(function w(){if(!window.bbGo)return setTimeout(w,100);setTimeout(()=>b.classList.add('hs-show'),4600);})();setTimeout(()=>b.classList.add('hs-show'),10000);})();
 }catch(e){console.error(e)}
 ;
 try{
