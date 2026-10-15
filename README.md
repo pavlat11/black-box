@@ -3,7 +3,10 @@
 - **LIVE:** `index.html` → https://pavlat11.github.io/black-box/
 - **DEV (testovací verze):** `dev/index.html` → https://pavlat11.github.io/black-box/dev/
 
-Postup: všechny úpravy se dělají nejdřív v `dev/index.html`. Až je schválené, zkopíruje se do `index.html` (live).
+Postup: všechny úpravy se dělají nejdřív v `dev/`. Až je schválené, live/produkční verze se sestaví skriptem:
+
+- `python3 tools/build_prod.py <složka>` – produkční web pro Endoru (web + PHP, bez `config.php` a `test-souboru.php`, zapnutá indexace, canonical na www.black-box-luxury.cz)
+- `python3 tools/build_prod.py <složka> --bez-serveru` – jen web (tak je nahraný v kořeni repa pro GitHub Pages)
 Dev verze má `noindex`, takže ji vyhledávače neindexují.
 
 ## Struktura DEV verze (od 14. 10. 2026)
@@ -17,7 +20,7 @@ Kód už není v jednom souboru:
 - `dev/js/main.js` – veškerý vlastní JavaScript webu
 - `dev/img/`, `dev/fonts/` – obrázky a písma
 
-Při nahrání na live je potřeba zkopírovat celou složku (index.html + css/ js/ img/ fonts/).
+Při nahrání na live je potřeba zkopírovat celou složku (index.html + css/ js/ img/ fonts/ + og-image.jpg, atmosfera-f.mp3). V `server/` jsou navíc `robots.txt`, `sitemap.xml` a `.htaccess` pro kořen webu.
 
 ## Správa (sprava.php, také adresa /sprava): Objednávky · Ceník · Oznámení · Statistiky
 

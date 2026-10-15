@@ -1,0 +1,8 @@
+User-agent: *
+Disallow: /sprava
+Disallow: /sprava.php
+Disallow: /objednavky/
+Disallow: /objednavka.php
+Disallow: /ceny.php
+
+Sitemap: https://www.black-box-luxury.cz/sitemap.xml
