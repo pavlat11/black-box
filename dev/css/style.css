@@ -1756,3 +1756,6 @@ html.gold .gt-aura{opacity:1}
 .qo-card input:focus-visible+.qo-c{outline:2px solid var(--ice);outline-offset:3px}
 @media (max-width:420px){.qo-pick{gap:10px}.qo-c{padding:14px 12px 12px}.qo-n{font-size:14px}.qo-d{font-size:11.5px}}
 @media (prefers-reduced-motion:reduce){.qo-c,.qo-tick,.qo-tick::after{transition:none}}
+
+/* ceník: na tabletu stejná výška nadpisů → ceny v jedné řadě */
+@media (min-width:761px) and (max-width:1000px){#cenik .pr h3{min-height:2.3em}}
