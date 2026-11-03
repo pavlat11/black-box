@@ -1,0 +1,67 @@
+name: Nasazení na hosting (FTP)
+
+# Spouští se RUČNĚ: záložka Actions → "Nasazení na hosting (FTP)" → Run workflow → vyberte dev nebo live.
+# Na live se nic nenahraje samo.
+on:
+  workflow_dispatch:
+    inputs:
+      cil:
+        description: "Kam nahrát"
+        type: choice
+        options:
+          - dev
+          - live
+        default: dev
+
+concurrency:
+  group: nasazeni-ftp
+  cancel-in-progress: false
+
+jobs:
+  nasadit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Zkontrolovat nastavení (tajné klíče)
+        env:
+          S: ${{ inputs.cil == 'live' && secrets.FTP_LIVE_SERVER || secrets.FTP_DEV_SERVER }}
+          U: ${{ inputs.cil == 'live' && secrets.FTP_LIVE_USER || secrets.FTP_DEV_USER }}
+          P: ${{ inputs.cil == 'live' && secrets.FTP_LIVE_PASSWORD || secrets.FTP_DEV_PASSWORD }}
+        run: |
+          for v in S U P; do
+            if [ -z "${!v}" ]; then
+              echo "::error::Chybí FTP údaje pro '${{ inputs.cil }}' (Settings → Secrets and variables → Actions)."
+              exit 1
+            fi
+          done
+
+      - name: Sestavit DEV verzi
+        if: inputs.cil == 'dev'
+        run: python3 tools/build_prod.py build --dev
+
+      - name: Sestavit LIVE verzi
+        if: inputs.cil == 'live'
+        run: python3 tools/build_prod.py build
+
+      - name: Nahrát na DEV
+        if: inputs.cil == 'dev'
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_DEV_SERVER }}
+          username: ${{ secrets.FTP_DEV_USER }}
+          password: ${{ secrets.FTP_DEV_PASSWORD }}
+          server-dir: ${{ secrets.FTP_DEV_DIR || '/' }}
+          local-dir: build/
+          protocol: ftp
+
+      - name: Nahrát na LIVE
+        if: inputs.cil == 'live'
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_LIVE_SERVER }}
+          username: ${{ secrets.FTP_LIVE_USER }}
+          password: ${{ secrets.FTP_LIVE_PASSWORD }}
+          server-dir: ${{ secrets.FTP_LIVE_DIR || '/' }}
+          local-dir: build/
+          protocol: ftp

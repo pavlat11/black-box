@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Sestaví produkční verzi webu: dev/ + server/ -> výstupní složka.
-Použití: python3 tools/build_prod.py <vystup> [--bez-serveru]
+Použití: python3 tools/build_prod.py <vystup> [--bez-serveru] [--dev]
+- --dev: testovací verze na hosting (ponechá [DEV] a noindex, jen přidá server/ a verze souborů)
 - odstraní [DEV] z titulku, zapne indexaci, přidá canonical
 - nekopíruje config.php (hesla jsou jen na serveru) ani test-souboru.php
 """
@@ -8,6 +9,7 @@ import shutil, sys, re, pathlib
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 out = pathlib.Path(sys.argv[1]).resolve()
 web_only = '--bez-serveru' in sys.argv
+dev_mode = '--dev' in sys.argv
 DOMAIN = 'https://www.black-box-luxury.cz/'
 
 if out.exists():
@@ -29,10 +31,11 @@ if not web_only:
 
 idx = out / 'index.html'
 s = idx.read_text(encoding='utf-8')
-s = s.replace('<title>[DEV] ', '<title>')
-s, n = re.subn(r'<meta name="robots" content="[^"]*">', '<meta name="robots" content="index, follow">\n<link rel="canonical" href="' + DOMAIN + '">', s, count=1)
-assert n == 1, 'robots meta nenalezen'
-assert '[DEV]' not in s and 'noindex' not in s
+if not dev_mode:
+    s = s.replace('<title>[DEV] ', '<title>')
+    s, n = re.subn(r'<meta name="robots" content="[^"]*">', '<meta name="robots" content="index, follow">\n<link rel="canonical" href="' + DOMAIN + '">', s, count=1)
+    assert n == 1, 'robots meta nenalezen'
+    assert '[DEV]' not in s and 'noindex' not in s
 import hashlib
 def _ver(m):
     path = m.group(2).split('?')[0]
