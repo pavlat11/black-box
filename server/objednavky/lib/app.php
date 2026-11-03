@@ -1148,7 +1148,9 @@ function bb_voucher_draw(BBInvoicePdf $pdf, array $cfg, array $o, float $ox, flo
     // střed: „Dárkový poukaz“ + produkt + popis
     $titleS = 10 * $k;
     $detail = $gold ? 'Celá budova jen pro Vás. Pátek a sobota 22:00 – 24:00.' : 'Dvě hodiny jen Vaše. Libovolný volný blok.';   // stejně jako ceník na webu
-    $blockH = 0.72 * $titleS + 2.6 * $k + 3 * $k + ($big ? 2.2 * $k + 3.4 * $k : 0);
+    $feat = ['Masážní vířivá vana · Královská postel King Size · Hvězdné nebe nad hlavou', 'Velkoplošná projekce · Špičkový audiosystém'];   // jako sekce Prostor na webu
+    $fs = 2.45 * $k;                                    // písmo výčtu (mm)
+    $blockH = 0.72 * $titleS + 2.6 * $k + 3 * $k + ($big ? 2.2 * $k + 3.4 * $k + 1.6 * $k + count($feat) * $fs * 1.45 : 0);
     $topEnd = $y0 + $lg;
     $botStart = $y1 - 7.3 * $k;
     $ty = $topEnd + ($botStart - $topEnd - $blockH) / 2 + 0.72 * $titleS;   // účaří nadpisu
@@ -1167,7 +1169,21 @@ function bb_voucher_draw(BBInvoicePdf $pdf, array $cfg, array $o, float $ox, flo
     if ($big) {
         $pdf->SetFont('Manrope', '', $mmpt(3 * $k));
         $pdf->SetTextColor(207, 202, 230);
-        $pdf->Text($x0, $py + 2.2 * $k + 3.2 * $k, $detail);
+        $dy = $py + 2.2 * $k + 3.2 * $k;
+        $pdf->Text($x0, $dy, $detail);
+        // výčet vybavení – menší písmo, musí se vejít před dělicí čáru
+        $f2 = $fs;
+        $pdf->SetFont('Manrope', '', $mmpt($f2));
+        while ($f2 > 1.6 && max(array_map(fn($t) => $pdf->GetStringWidth($t), $feat)) > $mainR - $x0) {
+            $f2 -= 0.05;
+            $pdf->SetFont('Manrope', '', $mmpt($f2));
+        }
+        $pdf->SetTextColor(...$GR);
+        $dy += 1.6 * $k;
+        foreach ($feat as $t) {
+            $dy += $fs * 1.45;
+            $pdf->Text($x0, $dy, $t);
+        }
     }
 
     // čárkovaná dělicí čára
