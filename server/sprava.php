@@ -906,7 +906,7 @@ list();draw();
 if (isset($_GET['generovat'])) {
     $h2 = fn($x) => bb_h((string) $x);
     $err = '';
-    $vals = ['prefix' => '', 'od' => '1', 'do' => '10', 'cifer' => '4', 'typ' => 'standard', 'lay' => '3'];
+    $vals = ['prefix' => '', 'od' => '1', 'do' => '10', 'cifer' => '4', 'typ' => 'standard', 'lay' => '3', 'okraje' => ''];
     if ($isPost) {
         foreach ($vals as $k => $v) $vals[$k] = trim((string) ($_POST[$k] ?? $v));
         $from = (int) $vals['od'];
@@ -939,8 +939,9 @@ if (isset($_GET['generovat'])) {
                     $list[] = ['id' => 'tisk-' . $code, 'kind' => $vals['typ'] === 'gold' ? 'gold' : 'standard', 'voucher' => $code,
                         'customer' => ['name' => '', 'email' => '', 'phone' => '', 'addr' => '', 'company' => '', 'ico' => '']];
                 }
-                $bytes = bb_vouchers_sheet_pdf($cfg, $list, $per);
-                $base = 'poukazy-' . $codes[0] . (count($codes) > 1 ? '-' . end($codes) : '') . '-' . $per . '-na-A4';
+                $okraje = !empty($_POST['okraje']);
+                $bytes = bb_vouchers_sheet_pdf($cfg, $list, $per, $okraje ? 6.0 : 0.0);
+                $base = 'poukazy-' . $codes[0] . (count($codes) > 1 ? '-' . end($codes) : '') . '-' . $per . '-na-A4' . ($okraje ? '-s-okraji' : '');
                 if (!empty($_POST['json'])) {
                     header('Content-Type: application/json; charset=utf-8');
                     echo json_encode(['name' => $base, 'count' => count($codes), 'pages' => (int) ceil(count($codes) / $per), 'pdf' => base64_encode($bytes)]);
@@ -975,6 +976,7 @@ if (isset($_GET['generovat'])) {
         . '<fieldset class="glay"><legend>Jak to vytisknout</legend>'
         . implode('', array_map(fn($n, $t) => '<label class="gopt"><input type="radio" name="lay" value="' . $n . '"' . ((int) $vals['lay'] === $n ? ' checked' : '') . '><span><b>' . $n . ' poukazy na A4</b><small>' . $t . '</small></span></label>',
             [2, 3, 4], ['přes celou šířku · 210 × 148,5 mm · velký formát', 'přes celou šířku · 210 × 99 mm · klasický poukaz', 'přes celou šířku · 210 × 74 mm · úzký pruh (bez popisu a podpisu)']))
+        . '<label class="gopt gok"><input type="checkbox" name="okraje" value="1"' . ($vals['okraje'] !== '' ? ' checked' : '') . '><span><b>Tisknout s okraji</b><small>pro běžnou tiskárnu, která netiskne až ke kraji papíru · okraj 6 mm, poukazy se zmenší na 94 %, mezi nimi mezera a značky pro stříhání</small></span></label>'
         . '</fieldset>'
         . '<button class="btn" type="submit" id="gbtn">Vygenerovat</button><div class="gmsg" id="gmsg" role="status"></div></form></div></div>'
         . '<script>(function(){var f=document.getElementById("gform");function u(){var p=f.prefix.value.trim().toUpperCase().replace(/[^A-Z0-9-]/g,""),c=+f.cifer.value,a=+f.od.value||0,b=+f.do.value||0,z=function(n){n=String(n);while(n.length<c)n="0"+n;return p+n};'
@@ -998,7 +1000,7 @@ f.addEventListener("submit",async function(e){
     var blob=new Blob([b64(d.pdf)],{type:"application/pdf"}),url=URL.createObjectURL(blob);
     var a=document.createElement("a");a.href=url;a.download=d.name+".pdf";document.body.appendChild(a);a.click();a.remove();
     window.open(url,"_blank");
-    say("Hotovo ✓ "+d.count+" "+(d.count===1?"poukaz":d.count<5?"poukazy":"poukazů")+" na "+d.pages+" "+(d.pages===1?"stránce":"stránkách")+" A4. Tiskněte ve skutečné velikosti (100 %), okraje: žádné.");
+    say("Hotovo ✓ "+d.count+" "+(d.count===1?"poukaz":d.count<5?"poukazy":"poukazů")+" na "+d.pages+" "+(d.pages===1?"stránce":"stránkách")+" A4. Tiskněte ve skutečné velikosti (100 %).");
   }catch(err){say(err.message,true);}
   finally{btn.disabled=false;}
 });

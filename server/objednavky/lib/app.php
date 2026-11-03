@@ -360,6 +360,17 @@ class BBInvoicePdf extends tFPDF
         $this->_out($s . 'h B');
     }
 
+    /** Zmenšení obsahu: vše kreslené na (0,0) se vykreslí v měřítku $s s levým horním rohem v ($x, $y) */
+    function ScaleStart(float $s, float $x, float $y): void
+    {
+        $this->_out(sprintf('q %.5F 0 0 %.5F %.3F %.3F cm', $s, $s, $x * $this->k, ($this->h - $y) * $this->k - $s * $this->h * $this->k));
+    }
+
+    function ScaleEnd(): void
+    {
+        $this->_out('Q');
+    }
+
     function PtToMm(float $pt): float
     {
         return $pt / $this->k;
@@ -1109,17 +1120,29 @@ function bb_voucher_draw(BBInvoicePdf $pdf, array $cfg, array $o, float $ox, flo
     $web = preg_replace('~^https?://(www\.)?~', '', rtrim((string) ($cfg['web'] ?? ''), '/'));
     $cols = [['Rezervace termínu', (string) $cfg['phone']], ['Adresa', 'Purkyňova 2961, Tábor']];
     if ($big && $web !== '') $cols[] = ['Web', $web];
-    $bx = $x0;
     $vy = $y1 - 0.6 * $k;
+    $fit = 1.0;                                         // spodní řádek se musí vejít před dělicí čáru
+    for ($try = 0; $try < 12; $try++) {
+        $tot = 0.0;
+        foreach ($cols as [$lab, $val]) {
+            $pdf->SetFont('Manrope', 'B', $mmpt(3.1 * $k * $fit));
+            $a = $pdf->GetStringWidth($val);
+            $pdf->SetFont('Manrope', '', $mmpt(2.5 * $k * $fit));
+            $tot += max($a, $pdf->GetStringWidth($lab)) + 8 * $k * $fit;
+        }
+        if ($tot - 8 * $k * $fit <= $mainR - $x0) break;
+        $fit *= 0.95;
+    }
+    $bx = $x0;
     foreach ($cols as [$lab, $val]) {
-        $pdf->SetFont('Manrope', 'B', $mmpt(3.1 * $k));
+        $pdf->SetFont('Manrope', 'B', $mmpt(3.1 * $k * $fit));
         $vw = $pdf->GetStringWidth($val);
         $pdf->SetTextColor(255, 255, 255);
         $pdf->Text($bx, $vy, $val);
-        $pdf->SetFont('Manrope', '', $mmpt(2.5 * $k));
+        $pdf->SetFont('Manrope', '', $mmpt(2.5 * $k * $fit));
         $pdf->SetTextColor(...$GR);
-        $pdf->Text($bx, $vy - 4.4 * $k, $lab);
-        $bx += max($vw, $pdf->GetStringWidth($lab)) + 8 * $k;
+        $pdf->Text($bx, $vy - 4.4 * $k * $fit, $lab);
+        $bx += max($vw, $pdf->GetStringWidth($lab)) + 8 * $k * $fit;
     }
 
     // střed: „Dárkový poukaz“ + produkt + popis
@@ -1197,18 +1220,49 @@ function bb_voucher_pdf(array $cfg, array $o, int $per = 3): string
     return $pdf->Output('S');
 }
 
-/** Více poukazů na A4 pod sebou (2 / 3 / 4 na stránku), přes celou šířku, se značkami pro stříhání */
-function bb_vouchers_sheet_pdf(array $cfg, array $orders, int $per = 3): string
+/** Více poukazů na A4 pod sebou (2 / 3 / 4 na stránku).
+ *  $margin = 0 → přes celou šířku A4 bez okrajů (tisk bez okrajů / tiskárna).
+ *  $margin > 0 → okraj v mm kolem stránky pro běžnou tiskárnu: poukazy se úměrně zmenší,
+ *               mezi nimi je mezera a v okrajích značky pro stříhání. */
+function bb_vouchers_sheet_pdf(array $cfg, array $orders, int $per = 3, float $margin = 0.0): string
 {
     $per = in_array($per, [2, 3, 4], true) ? $per : 3;
     $H = 297 / $per;
     $first = reset($orders) ?: [];
     $last = end($orders) ?: [];
     $pdf = bb_voucher_new_pdf($cfg, 'Dárkové poukazy Black Box ' . ($first['voucher'] ?? '') . (count($orders) > 1 ? '–' . ($last['voucher'] ?? '') : ''), 210, 297);
+    $m = max(0.0, min(15.0, $margin));
+    $sc = $m > 0 ? (210 - 2 * $m) / 210 : 1.0;          // měřítko poukazu
+    $vh = $H * $sc;                                     // výška poukazu po zmenšení
+    $gap = $m > 0 && $per > 1 ? (297 - 2 * $m - $per * $vh) / ($per - 1) : 0.0;
     foreach (array_values($orders) as $i => $o) {
         $slot = $i % $per;
         if ($slot === 0) $pdf->AddPage();
-        bb_voucher_draw($pdf, $cfg, $o, 0, $slot * $H, $per);
+        if ($m <= 0) {
+            bb_voucher_draw($pdf, $cfg, $o, 0, $slot * $H, $per);
+            continue;
+        }
+        $x = $m;
+        $y = $m + $slot * ($vh + $gap);
+        $pdf->ScaleStart($sc, $x, $y);
+        bb_voucher_draw($pdf, $cfg, $o, 0, 0, $per);
+        $pdf->ScaleEnd();
+        /* značky pro stříhání v okraji (šedé, mimo poukaz) */
+        $pdf->SetDrawColor(150, 150, 150);
+        $pdf->SetLineWidth(0.15);
+        $len = min(4.0, $m - 1.5);
+        foreach ([$y, $y + $vh] as $yy) {               // vodorovné u levého a pravého okraje
+            $pdf->Line($x - 1 - $len, $yy, $x - 1, $yy);
+            $pdf->Line(210 - $x + 1, $yy, 210 - $x + 1 + $len, $yy);
+        }
+        if ($slot === 0) {                              // svislé nahoře
+            $pdf->Line($x, $y - 1 - $len, $x, $y - 1);
+            $pdf->Line(210 - $x, $y - 1 - $len, 210 - $x, $y - 1);
+        }
+        if ($slot === $per - 1 || $i === count($orders) - 1) {   // svislé dole
+            $pdf->Line($x, $y + $vh + 1, $x, $y + $vh + 1 + $len);
+            $pdf->Line(210 - $x, $y + $vh + 1, 210 - $x, $y + $vh + 1 + $len);
+        }
     }
     return $pdf->Output('S');
 }
