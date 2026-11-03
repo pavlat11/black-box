@@ -1147,7 +1147,7 @@ function bb_voucher_draw(BBInvoicePdf $pdf, array $cfg, array $o, float $ox, flo
 
     // střed: „Dárkový poukaz“ + produkt + popis
     $titleS = 10 * $k;
-    $detail = $gold ? 'Pátek nebo sobota 22–24 h, celá budova jen pro vás.' : 'Privátní blok 2 hodiny pro pár. Vířivka, hvězdné nebe, kino.';
+    $detail = $gold ? 'Celá budova jen pro Vás. Pátek a sobota 22:00 – 24:00.' : 'Dvě hodiny jen Vaše. Libovolný volný blok.';   // stejně jako ceník na webu
     $blockH = 0.72 * $titleS + 2.6 * $k + 3 * $k + ($big ? 2.2 * $k + 3.4 * $k : 0);
     $topEnd = $y0 + $lg;
     $botStart = $y1 - 7.3 * $k;
