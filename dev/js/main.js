@@ -5,11 +5,11 @@ function bbKc(k){return bbFmt(window.BB_PRICES[k])+'\u00a0Kč';}
 (function(){
   const apply=()=>{document.querySelectorAll('[data-price]').forEach(el=>{const v=window.BB_PRICES[el.dataset.price];if(v)el.textContent=bbFmt(v);});
     const vp=document.getElementById('voPrice'),on=document.querySelector('.vopt[aria-pressed="true"] span');if(vp&&on)vp.textContent=(on.textContent.split('·').pop()||'').trim();};
-  const notice=n=>{if(!n||!n.text)return;const key='bbNotice';let seen='';try{seen=localStorage.getItem(key)||'';}catch(e){}if(seen===n.id)return;
+  const notice=n=>{if(!n||!n.text)return;const key='bbNotice';const DAY=864e5;let seen=null;try{seen=JSON.parse(localStorage.getItem(key)||'null');}catch(e){}if(seen&&seen.id===n.id&&Date.now()-seen.t<DAY)return;
     const el=document.createElement('div');el.className='bbnote';el.setAttribute('role','status');
     el.innerHTML='<i class="bbn-dot" aria-hidden="true"></i><p></p><button type="button" aria-label="Zavřít oznámení"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>';
     el.querySelector('p').textContent=n.text;
-    el.querySelector('button').addEventListener('click',()=>{el.classList.remove('in');try{localStorage.setItem(key,n.id);}catch(e){}setTimeout(()=>el.remove(),500);});
+    el.querySelector('button').addEventListener('click',()=>{el.classList.remove('in');try{localStorage.setItem(key,JSON.stringify({id:n.id,t:Date.now()}));}catch(e){}setTimeout(()=>el.remove(),500);});
     document.body.appendChild(el);setTimeout(()=>el.classList.add('in'),1200);};
   if(!window.fetch)return;
   fetch('ceny.php',{cache:'no-cache'}).then(r=>r.ok?r.json():null).then(p=>{if(!p)return;['standard','gold'].forEach(k=>{const n=parseInt(p[k],10);if(n>0)window.BB_PRICES[k]=n;});
@@ -281,7 +281,7 @@ if(matchMedia('(pointer:fine)').matches&&!reduce){hero.addEventListener('mousemo
 /* 20s story */
 (function(){
   const B=[0,5.2,10.6,16,21.4,26.8,32],D=32;
-  const CAP=[['Zavoláte si o termín','Jeden telefonát a blok je váš.'],['Osobně vás přivítáme','Uvedeme vás dovnitř. Diskrétně a bez spěchu.'],['Rozsvítí se hvězdy','Tma, luxus a vesmír nad hlavou.'],['Vířivka pro dva','Hřejivá voda a miliony bublinek.'],['Hudba a obraz','Pusťte si cokoliv. Basy ucítíte v těle.'],['Čas se zastaví','Dvě hodiny jen pro vás.']];
+  const CAP=[['Zavoláte si o termín','Jeden telefonát a blok je Váš.'],['Osobně Vás přivítáme','Uvedeme Vás dovnitř. Diskrétně a bez spěchu.'],['Rozsvítí se hvězdy','Tma, luxus a vesmír nad hlavou.'],['Vířivka pro dva','Hřejivá voda a miliony bublinek.'],['Hudba a obraz','Pusťte si cokoliv. Basy ucítíte v těle.'],['Čas se zastaví','Dvě hodiny jen pro Vás.']];
   const LBL=['Rezervace','Uvítání','Hvězdy','Vířivka','Zvuk a obraz','Váš čas'];
   const SRC={pano:getComputedStyle(heroImg).backgroundImage.slice(5,-2),bath:document.querySelector('.g2 img').src,proj:document.querySelector('.g5 img').src,bed:(document.querySelector('img[alt^="King Size postel"]')||document.querySelector('.concept-img img')).src};
   document.querySelectorAll('#stStage .ph').forEach(el=>el.style.backgroundImage=`url(${SRC[el.dataset.ph]})`);
@@ -355,7 +355,7 @@ function tLoop(t){if(!tOn)return;requestAnimationFrame(tLoop);
   tg.globalAlpha=1;const c=tmC.getContext('2d');c.globalCompositeOperation='source-over';c.clearRect(0,0,tW,tH);c.drawImage(brC,0,0);c.globalCompositeOperation='destination-in';c.drawImage(mkC,0,0);tg.drawImage(tmC,0,0);
   tg.globalCompositeOperation='lighter';const gl=tg.createRadialGradient(px,py,0,px,py,R*.7);gl.addColorStop(0,'rgba(176,102,255,.16)');gl.addColorStop(1,'rgba(176,102,255,0)');tg.fillStyle=gl;tg.fillRect(px-R,py-R,2*R,2*R);tg.globalCompositeOperation='source-over';drawHot(t);drawStory(t);}
 /* lights out: hidden hotspots + hot tub glow */
-const HS=[{u:.865,v:.665,t:'Vířivka pro dva'},{u:.70,v:.80,t:'King Size'},{u:.45,v:.47,t:'Kino jen pro vás'},{u:.38,v:.70,t:'Prostorový zvuk'},{u:.62,v:.12,t:'Hvězdné nebe'}];
+const HS=[{u:.865,v:.665,t:'Vířivka pro dva'},{u:.70,v:.80,t:'King Size'},{u:.45,v:.47,t:'Kino jen pro Vás'},{u:.38,v:.70,t:'Prostorový zvuk'},{u:.62,v:.12,t:'Hvězdné nebe'}];
 const TUB={x:0,y:0,rx:1,ry:1,a:0};
 HS.forEach(h=>{const el=document.createElement('span');el.className='dk-hs';el.textContent=h.t;el.setAttribute('aria-hidden','true');dark.appendChild(el);h.el=el;h.a=0;h.shown=-1;});
 function drawHot(t){
@@ -469,8 +469,8 @@ if('IntersectionObserver' in window&&!reduce){const io=new IntersectionObserver(
   if(matchMedia('(pointer:fine)').matches&&!reduce){vc.addEventListener('mousemove',e=>{const r=vc.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;vc.style.transform=`perspective(1000px) rotateY(${x*10}deg) rotateX(${-y*10}deg)`;});vc.addEventListener('mouseleave',()=>vc.style.transform='');}
   /* objednávka poukazu → modal (doručení e-mailem nebo poštou, platba fakturou) */
   const D=document.getElementById('voDlg'),F=document.getElementById('voForm'),$=id=>document.getElementById(id);
-  const FLOW={email:['Odešlete objednávku.','Fakturu vám hned pošleme e-mailem.','Po připsání platby přijde poukaz e-mailem (PDF k tisku).'],
-              posta:['Odešlete objednávku.','Fakturu vám hned pošleme e-mailem.','Po připsání platby pošleme tištěný poukaz poštou.']};
+  const FLOW={email:['Odešlete objednávku.','Fakturu Vám hned pošleme e-mailem.','Po připsání platby přijde poukaz e-mailem (PDF k tisku).'],
+              posta:['Odešlete objednávku.','Fakturu Vám hned pošleme e-mailem.','Po připsání platby pošleme tištěný poukaz poštou.']};
   const LAST='Termín návštěvy si obdarovaný domluví telefonem na <a href="tel:+420737222266">+420 737 22 22 66</a>.';
   const way=()=>F.querySelector('input[name="voWay"]:checked').value;
   function paint(){const w=way(),p=w==='posta';$('voInv').hidden=!p;['voStreet','voZip','voCity'].forEach(id=>$(id).required=p);
@@ -491,31 +491,31 @@ if('IntersectionObserver' in window&&!reduce){const io=new IntersectionObserver(
   document.getElementById('vform').addEventListener('submit',e=>{e.preventDefault();$('vnote').textContent='';openDlg();});
   F.addEventListener('submit',e=>{e.preventDefault();const w=way(),err=$('voErr');let bad=null;
     const need=['voName','voTel','voMail'].concat(w==='posta'?['voStreet','voZip','voCity']:[]);
-    need.forEach(id=>{const i=$(id),val=i.value.trim(),ok=id==='voMail'?/^\S+@\S+\.\S+$/.test(val):id==='voTel'?/^[+0-9 ()\-\/]{6,}$/.test(val):id==='voZip'?/^\d{3}\s?\d{2}$/.test(val):val.length>=2;i.closest('.field').classList.toggle('vo-field-bad',!ok);if(!ok&&!bad)bad=i;});
-    if(bad){err.textContent=bad.id==='voZip'?'PSČ má 5 číslic.':'Doplňte prosím zvýrazněné údaje.';bad.scrollIntoView({block:'center',behavior:'smooth'});bad.focus({preventScroll:true});return;}err.textContent='';
+    need.forEach(id=>{const i=$(id),val=i.value.trim(),ok=(id==='voName'||id==='qoName')?/^\S{2,}(\s+\S{2,})+$/.test(val):id==='voMail'?/^\S+@\S+\.\S+$/.test(val):id==='voTel'?/^[+0-9 ()\-\/]{6,}$/.test(val):id==='voZip'?/^\d{3}\s?\d{2}$/.test(val):val.length>=2;i.closest('.field').classList.toggle('vo-field-bad',!ok);if(!ok&&!bad)bad=i;});
+    if(bad){err.textContent=bad.id==='voZip'?'PSČ má 5 číslic.':bad.id==='voName'?'Doplňte prosím jméno i příjmení.':'Doplňte prosím zvýrazněné údaje.';bad.scrollIntoView({block:'center',behavior:'smooth'});bad.focus({preventScroll:true});return;}err.textContent='';
     const v=id=>$(id).value.trim(),k=$('vKind').textContent;
     const addr=w==='posta'?v('voStreet')+', '+v('voZip')+' '+v('voCity'):'';
     const lines=['Dobrý den,','','objednávám dárkový poukaz.','','Typ: '+k+' ('+$('voPrice').textContent+')','Doručení: '+(w==='posta'?'poštou – '+addr:'e-mailem'),'',
       'Jméno: '+v('voName'),'Telefon: '+v('voTel'),'E-mail: '+v('voMail')];
     if(v('voIco'))lines.push('Firma / IČO: '+v('voIco'));
     lines.push('','Prosím o zaslání faktury. Děkuji');
-    const viaMail=()=>{location.href='mailto:'+'info@black-box-luxury.cz'+'?subject='+encodeURIComponent('Objednávka poukazu – '+k+' – '+(w==='posta'?'poštou':'e-mailem'))+'&body='+encodeURIComponent(lines.join('\n'));};
-    const done=(h,p)=>{$('voDoneH').textContent=h;$('voDoneP').innerHTML=p;$('voStep').hidden=true;$('voDone').hidden=false;D.scrollTop=0;$('voOk').focus({preventScroll:true});};
+    const viaMail=()=>{location.href='mailto:'+'info@blackboxx.cz'+'?subject='+encodeURIComponent('Objednávka poukazu – '+k+' – '+(w==='posta'?'poštou':'e-mailem'))+'&body='+encodeURIComponent(lines.join('\n'));};
+    const done=(h,p)=>{F.reset();F.querySelectorAll('.vo-field-bad').forEach(x=>x.classList.remove('vo-field-bad'));paint();$('voDoneH').textContent=h;$('voDoneP').innerHTML=p;$('voStep').hidden=true;$('voDone').hidden=false;D.scrollTop=0;$('voOk').focus({preventScroll:true});};
     const esc=t=>t.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
     const send=$('voSend');if(send.disabled)return;send.disabled=true;const lbl=send.textContent;send.textContent='Odesílám…';
     const payload={way:'faktura',delivery:w,kind:$('vo2').getAttribute('aria-pressed')==='true'?'gold':'standard',name:v('voName'),phone:v('voTel'),email:v('voMail'),street:v('voStreet'),zip:v('voZip'),city:v('voCity'),company:v('voIco'),web:$('voWeb').value};
     const ctl=new AbortController(),tm=setTimeout(()=>ctl.abort(),30000);
-    const after=w==='posta'?'Po připsání platby vám poukaz pošleme poštou.':'Po připsání platby vám poukaz přijde e-mailem.';
+    const after=w==='posta'?'Po připsání platby Vám poukaz pošleme poštou.':'Po připsání platby Vám poukaz přijde e-mailem.';
     fetch('objednavka.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:ctl.signal})
       .then(r=>r.json().catch(()=>({ok:false,_fallback:true})).then(j=>({r,j})))
       .then(({r,j})=>{
         if(j.ok){const m=esc(v('voMail'));
           if(j.mode==='invoice')done('Faktura je na cestě','Poslali jsme ji na <b>'+m+'</b>. '+after);
-          else done('Objednávka přijata','Fakturu vám brzy pošleme na <b>'+m+'</b>. '+after);
+          else done('Objednávka přijata','Fakturu Vám brzy pošleme na <b>'+m+'</b>. '+after);
           return;}
         if(r.status===422||r.status===429){err.textContent=j.error||'Zkontrolujte prosím údaje.';return;}
         throw new Error('server');})
-      .catch(()=>{viaMail();done('Skoro hotovo','Otevřeli jsme vám e-mail s objednávkou. Stačí ho odeslat a my se vám obratem ozveme.');})
+      .catch(()=>{viaMail();done('Skoro hotovo','Otevřeli jsme Vám e-mail s objednávkou. Stačí ho odeslat a my se Vám obratem ozveme.');})
       .finally(()=>{clearTimeout(tm);send.disabled=false;send.textContent=lbl;});});
 })();
 /* faq: one open at a time */
@@ -607,7 +607,7 @@ let ok=false;try{const c=document.createElement('canvas');ok=!!(c.getContext('we
 if(!ok)return;
 const T=THREE,RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const film=document.createElement('div');film.className='gt-film';
-film.innerHTML='<canvas></canvas><div class="vig"></div><div class="lb t"></div><div class="lb b"></div><div class="sub" aria-hidden="true"></div><div class="gclk" aria-hidden="true"><b>21:59</b><i>:40</i><span>PÁ</span></div><div class="gend"><small>Gold Time · Pá–So 22:00 – 24:00</small><b>Celá budova.<br><em>Jen pro vás dva.</em></b><div class="gbtns"><a class="gu-btn gcall" href="tel:+420737222266">Zamluvit Gold Time <span aria-hidden="true">→</span></a><button type="button" class="grep" aria-label="Přehrát znovu">↻<span class="gr-t"> Přehrát znovu</span></button></div></div><div class="fade"></div>';
+film.innerHTML='<canvas></canvas><div class="vig"></div><div class="lb t"></div><div class="lb b"></div><div class="sub" aria-hidden="true"></div><div class="gclk" aria-hidden="true"><b>21:59</b><i>:40</i><span>PÁ</span></div><div class="gend"><small>Gold Time · Pá–So 22:00 – 24:00</small><b>Celá budova.<br><em>Jen pro Vás dva.</em></b><div class="gbtns"><a class="gu-btn gcall" href="tel:+420737222266">Zamluvit Gold Time <span aria-hidden="true">→</span></a><button type="button" class="grep" aria-label="Přehrát znovu">↻<span class="gr-t"> Přehrát znovu</span></button></div></div><div class="fade"></div>';
 const camWrap=box.querySelector('.gt-cam');camWrap.style.display='none';box.insertBefore(film,camWrap);box.classList.add('is3d');
 const cv=film.querySelector('canvas'),sub=film.querySelector('.sub'),clk=film.querySelector('.gclk'),ckH=clk.querySelector('b'),ckS=clk.querySelector('i');let lastSec=-1;
 const MOB=matchMedia('(max-width:760px), (pointer:coarse)').matches;
@@ -920,7 +920,7 @@ const lockGlow=new T.Sprite(new T.SpriteMaterial({map:bloomTex,color:0xffcf7a,tr
 function label(txt,sub,gold){return cvTex(1024,256,(x,w,h)=>{x.font='600 64px Unbounded, Manrope, sans-serif';x.textBaseline='middle';x.shadowColor=gold?'rgba(176,102,255,.9)':'rgba(0,0,0,.8)';x.shadowBlur=gold?26:10;
   x.fillStyle=gold?'#e9d6ff':'#f4efe6';x.fillText(txt,20,92);x.font='600 40px Manrope, sans-serif';x.shadowBlur=gold?18:6;x.fillStyle=gold?'#c79bff':'rgba(244,239,230,.75)';x.fillText(sub,22,176);
   x.strokeStyle=gold?'#b066ff':'rgba(244,239,230,.6)';x.lineWidth=4;x.beginPath();x.moveTo(0,30);x.lineTo(0,226);x.stroke();});}
-[[1.6,'Přízemí','prázdné',false],[6.9,'2. patro','prázdné',false],[FL+1.5,'1. patro','Black Box · jen vy dva',true]].forEach(([y,a,b,g],i)=>{i=i;
+[[1.6,'Přízemí','prázdné',false],[6.9,'2. patro','prázdné',false],[FL+1.5,'1. patro','Black Box · jen Vy dva',true]].forEach(([y,a,b,g],i)=>{i=i;
   const sp=new T.Sprite(new T.SpriteMaterial({map:label(a,b,g),transparent:true,opacity:0,depthTest:false,toneMapped:false}));sp.scale.set(4.4,1.1,1);sp.position.set(W/2+2.9,y,1.6);sp.renderOrder=21;S.add(sp);STORY.labels.push({sp,t:6.5+i*.45});});
 /* a few more neighbouring houses whose windows go dark too */
 [[14,5,-6,7,9,10],[-14,4,7,8,8,9],[24,4.5,-14,8,9,8]].forEach(([x,y,z,w,h,d])=>{const m=new T.MeshStandardMaterial({color:0x8a8e98,map:winTex(),roughness:.9,emissive:0xffffff,emissiveMap:winTex(),emissiveIntensity:.3});
@@ -936,7 +936,7 @@ const focus=new T.Vector3(0,FL+1.0,BK+.6);
 const path=new T.CatmullRomCurve3([new T.Vector3(9.2,6.4,15.5),new T.Vector3(4,FL+2.9,7),new T.Vector3(.6,FL+1.9,RCZ+6.2),new T.Vector3(bedX,FL+1.62,FR-.25)]);
 const endT=new T.Vector3(0,4.6,-5.5),look=new T.Vector3(),orbC=new T.Vector3(0,0,-D/2);
 const DUR=13.6,TA=4.6,TC=7.6,TB=6.4,TE=19.8,TR=5.2,TA2=TC+TB,lookW=new T.Vector3(0,FL+1.35,BK),ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
-const subs=[[.6,'Pátek večer. V budově je ještě živo.'],[4.6,'22:00. Budova se zamyká.'],[6.3,'Nikdo jiný už tu není.'],[11.6,'Jen vy dva. Do půlnoci.'],[TE+.6,'Celá budova je jen vaše.']];
+const subs=[[.6,'Pátek večer. V budově je ještě živo.'],[4.6,'22:00. Budova se zamyká.'],[6.3,'Nikdo jiný už tu není.'],[11.6,'Jen Vy dva. Do půlnoci.'],[TE+.6,'Celá budova je jen Vaše.']];
 let t0=0,run=false,vis=false,raf=0,curSub=-1,RMp=false;
 const wash=document.getElementById('goldWash'),pv=new T.Vector3(),pu=new T.Vector3();
 window.bb3dGold=true;
@@ -1137,41 +1137,41 @@ try{
 (function(){const D=document.getElementById('qoDlg');if(!D)return;const F=document.getElementById('qoForm'),$=id=>document.getElementById(id);
   const TEL='<a href="tel:+420737222266">+420 737 22 22 66</a>';
   const kind=()=>F.querySelector('input[name="qoKind"]:checked').value,wantV=()=>$('qoV').checked,qway=()=>F.querySelector('input[name="qoWay"]:checked').value;
-  const post=()=>wantV()&&qway()==='posta',ADDR=['qoName','qoStreet','qoZip','qoCity'];
+  const post=()=>wantV()&&qway()==='posta',ADDR=['qoStreet','qoZip','qoCity'];
   function paint(){const g=kind()==='gold',v=wantV(),p=post();D.classList.toggle('is-gold',g);$('qoVBox').hidden=!v;$('qoAddr').hidden=!p;ADDR.forEach(id=>$(id).required=p);
-    const third=!v?'Po připsání platby přijde potvrzení o platbě.':p?'Po připsání platby pošleme tištěný poukaz poštou.':'Po připsání platby přijde poukaz e-mailem (PDF).';
-    $('qoFlow').innerHTML=['Odešlete objednávku.','Fakturu vám hned pošleme e-mailem.',third].map(t=>'<li>'+t+'</li>').join('')+'<li class="vo-last">Termín si domluvíte telefonem na '+TEL+'.</li>';}
-  F.querySelectorAll('input[name="qoKind"],input[name="qoWay"]').forEach(r=>r.addEventListener('change',()=>{paint();if(post()&&r.name==='qoWay')setTimeout(()=>$('qoName').focus({preventScroll:false}),60);}));
+    const third=!v?'Po připsání platby přijde potvrzení s číslem poukazu e-mailem (PDF).':p?'Po připsání platby pošleme tištěný poukaz poštou.':'Po připsání platby přijde poukaz e-mailem (PDF).';
+    $('qoFlow').innerHTML=['Odešlete objednávku.','Fakturu Vám hned pošleme e-mailem.',third].map(t=>'<li>'+t+'</li>').join('')+'<li class="vo-last">Termín si domluvíte telefonem na '+TEL+'.</li>';}
+  F.querySelectorAll('input[name="qoKind"],input[name="qoWay"]').forEach(r=>r.addEventListener('change',()=>{paint();if(post()&&r.name==='qoWay')setTimeout(()=>$('qoStreet').focus({preventScroll:false}),60);}));
   $('qoV').addEventListener('change',()=>{paint();if(!wantV())ADDR.forEach(id=>$(id).closest('.field').classList.remove('vo-field-bad'));});
   F.querySelectorAll('input').forEach(i=>i.addEventListener('input',()=>i.closest('.field')&&i.closest('.field').classList.remove('vo-field-bad')));
   let y=0;
   function open(){$('qoStep').hidden=false;$('qoDone').hidden=true;$('qoErr').textContent='';paint();y=window.scrollY||document.documentElement.scrollTop||0;document.body.style.top=(-y)+'px';
-    document.documentElement.classList.add('vo-lock');if(D.showModal)D.showModal();else D.setAttribute('open','');D.scrollTop=0;if(matchMedia('(min-width:601px)').matches)setTimeout(()=>$('qoMail').focus({preventScroll:true}),60);}
+    document.documentElement.classList.add('vo-lock');if(D.showModal)D.showModal();else D.setAttribute('open','');D.scrollTop=0;if(matchMedia('(min-width:601px)').matches)setTimeout(()=>$('qoName').focus({preventScroll:true}),60);}
   function close(){if(D.close)D.close();else{D.removeAttribute('open');D.dispatchEvent(new Event('close'));}}
   D.addEventListener('close',()=>{document.documentElement.classList.remove('vo-lock');document.body.style.top='';window.scrollTo(0,y);});
   D.addEventListener('click',e=>{if(e.target===D)close();});
   document.querySelectorAll('#qoOpen,.js-qo').forEach(b=>b.addEventListener('click',open));$('qoX').addEventListener('click',close);$('qoOk').addEventListener('click',close);
   F.addEventListener('submit',e=>{e.preventDefault();const err=$('qoErr');let bad=null;const v=id=>$(id).value.trim();
-    const need=['qoMail','qoTel'].concat(post()?ADDR:[]);
-    need.forEach(id=>{const i=$(id),val=i.value.trim(),ok=id==='qoMail'?/^\S+@\S+\.\S+$/.test(val):id==='qoTel'?/^[+0-9 ()\-\/]{6,}$/.test(val):id==='qoZip'?/^\d{3}\s?\d{2}$/.test(val):val.length>=2;i.closest('.field').classList.toggle('vo-field-bad',!ok);if(!ok&&!bad)bad=i;});
-    if(bad){err.textContent=bad.id==='qoZip'?'PSČ má 5 číslic.':'Doplňte prosím zvýrazněné údaje.';bad.scrollIntoView({block:'center',behavior:'smooth'});bad.focus({preventScroll:true});return;}err.textContent='';
+    const need=['qoName','qoMail','qoTel'].concat(post()?ADDR:[]);
+    need.forEach(id=>{const i=$(id),val=i.value.trim(),ok=(id==='voName'||id==='qoName')?/^\S{2,}(\s+\S{2,})+$/.test(val):id==='qoMail'?/^\S+@\S+\.\S+$/.test(val):id==='qoTel'?/^[+0-9 ()\-\/]{6,}$/.test(val):id==='qoZip'?/^\d{3}\s?\d{2}$/.test(val):val.length>=2;i.closest('.field').classList.toggle('vo-field-bad',!ok);if(!ok&&!bad)bad=i;});
+    if(bad){err.textContent=bad.id==='qoZip'?'PSČ má 5 číslic.':bad.id==='qoName'?'Doplňte prosím jméno i příjmení.':'Doplňte prosím zvýrazněné údaje.';bad.scrollIntoView({block:'center',behavior:'smooth'});bad.focus({preventScroll:true});return;}err.textContent='';
     const k=kind(),kl=k==='gold'?'Gold Time ('+bbKc('gold')+')':'Standard – 2 hodiny ('+bbKc('standard')+')',wv=wantV(),p=post();
     const addr=p?v('qoName')+', '+v('qoStreet')+', '+v('qoZip')+' '+v('qoCity'):'';
-    const lines=['Dobrý den,','','objednávám: '+kl,'Dárkový poukaz: '+(wv?(p?'ano – poštou na adresu: '+addr:'ano – e-mailem'):'ne'),'','E-mail: '+v('qoMail'),'Telefon: '+v('qoTel'),'','Prosím o zaslání faktury. Děkuji'];
-    const viaMail=()=>{location.href='mailto:'+'info@black-box-luxury.cz'+'?subject='+encodeURIComponent('Objednávka – '+kl)+'&body='+encodeURIComponent(lines.join('\n'));};
+    const lines=['Dobrý den,','','objednávám: '+kl,'Dárkový poukaz: '+(wv?(p?'ano – poštou na adresu: '+addr:'ano – e-mailem'):'ne'),'','Jméno: '+v('qoName'),'E-mail: '+v('qoMail'),'Telefon: '+v('qoTel'),'','Prosím o zaslání faktury. Děkuji'];
+    const viaMail=()=>{location.href='mailto:'+'info@blackboxx.cz'+'?subject='+encodeURIComponent('Objednávka – '+kl)+'&body='+encodeURIComponent(lines.join('\n'));};
     const esc=t=>t.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-    const done=(h,p2)=>{$('qoDoneH').textContent=h;$('qoDoneP').innerHTML=p2;$('qoStep').hidden=true;$('qoDone').hidden=false;D.scrollTop=0;$('qoOk').focus({preventScroll:true});};
+    const done=(h,p2)=>{F.reset();F.querySelectorAll('.vo-field-bad').forEach(x=>x.classList.remove('vo-field-bad'));paint();$('qoDoneH').textContent=h;$('qoDoneP').innerHTML=p2;$('qoStep').hidden=true;$('qoDone').hidden=false;D.scrollTop=0;$('qoOk').focus({preventScroll:true});};
     const send=$('qoSend');if(send.disabled)return;send.disabled=true;const lbl=send.textContent;send.textContent='Odesílám…';
-    const payload={way:'objednavka',kind:k,phone:v('qoTel'),email:v('qoMail'),voucher:wv?'1':'0',delivery:wv?qway():'',name:p?v('qoName'):'',street:p?v('qoStreet'):'',zip:p?v('qoZip'):'',city:p?v('qoCity'):'',web:$('qoWeb').value};
+    const payload={way:'objednavka',kind:k,phone:v('qoTel'),email:v('qoMail'),voucher:wv?'1':'0',delivery:wv?qway():'',name:v('qoName'),street:p?v('qoStreet'):'',zip:p?v('qoZip'):'',city:p?v('qoCity'):'',web:$('qoWeb').value};
     const ctl=new AbortController(),tm=setTimeout(()=>ctl.abort(),30000);
-    const after=!wv?'Po připsání platby vám přijde potvrzení.':p?'Po připsání platby vám poukaz pošleme poštou.':'Po připsání platby vám poukaz přijde e-mailem.';
+    const after=!wv?'Po připsání platby Vám přijde potvrzení s číslem poukazu e-mailem.':p?'Po připsání platby Vám poukaz pošleme poštou.':'Po připsání platby Vám poukaz přijde e-mailem.';
     fetch('objednavka.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:ctl.signal})
       .then(r=>r.json().catch(()=>({ok:false})).then(j=>({r,j})))
       .then(({r,j})=>{if(j.ok){const m=esc(v('qoMail'));
           if(j.mode==='invoice')done('Faktura je na cestě','Poslali jsme ji na <b>'+m+'</b>. '+after);
-          else done('Objednávka přijata','Fakturu vám brzy pošleme na <b>'+m+'</b>. '+after);return;}
+          else done('Objednávka přijata','Fakturu Vám brzy pošleme na <b>'+m+'</b>. '+after);return;}
         if(r.status===422||r.status===429){err.textContent=j.error||'Zkontrolujte prosím údaje.';return;}throw new Error('server');})
-      .catch(()=>{viaMail();done('Skoro hotovo','Otevřeli jsme vám e-mail s objednávkou. Stačí ho odeslat a fakturu vám pošleme.');})
+      .catch(()=>{viaMail();done('Skoro hotovo','Otevřeli jsme Vám e-mail s objednávkou. Stačí ho odeslat a fakturu Vám pošleme.');})
       .finally(()=>{clearTimeout(tm);send.disabled=false;send.textContent=lbl;});});
 })();
 }catch(e){console.error(e)}
@@ -1189,5 +1189,49 @@ try{
   vv.addEventListener('scroll',fit);
   document.addEventListener('focusin',e=>{if(e.target.closest&&e.target.closest('.vo-dlg')&&e.target.matches('input,textarea'))setTimeout(()=>show(e.target),350);});
   DS.forEach(D=>D.addEventListener('close',()=>{D.style.top='';D.style.height='';D.style.bottom='';document.documentElement.style.removeProperty('--vvt');}));
+})();
+}catch(e){console.error(e)}
+
+;
+try{
+addEventListener('pageshow',function(){['voForm','qoForm'].forEach(function(id){var f=document.getElementById(id);if(f){f.reset();f.querySelectorAll('.vo-field-bad').forEach(function(x){x.classList.remove('vo-field-bad');});}});});
+}catch(e){console.error(e)}
+
+;
+try{
+/* „Rezervovat“: na mobilu sjet rovnou k telefonnímu číslu (s dorovnáním, kdyby se stránka při scrollu posunula) */
+(function(){
+  var tel=document.getElementById('rezervace-tel'),left=document.querySelector('#rezervace .book-l');
+  if(!tel||!left)return;
+  // sloupce pod sebou = číslo není vedle slotů
+  var stacked=function(){var t=tel.getBoundingClientRect(),l=left.getBoundingClientRect();return t.left<l.right-10;};
+  var off=function(){var n=document.getElementById('nav');var h=n?n.getBoundingClientRect().bottom:0;return Math.max(0,h)+12;};
+  var target=function(){return tel.getBoundingClientRect().top+window.pageYOffset-off();};
+  var timer=null,tries=0,userTouched=false;
+  var settle=function(){ // po doběhnutí scrollu zkontroluje polohu a případně dorovná
+    clearTimeout(timer);
+    timer=setTimeout(function(){
+      if(userTouched)return;
+      var d=tel.getBoundingClientRect().top-off();
+      if(Math.abs(d)>6&&tries<5){tries++;window.scrollTo({top:target(),behavior:tries<2?'smooth':'auto'});settle();}
+      else window.removeEventListener('scroll',settle);
+    },180);
+  };
+  var go=function(){
+    tries=0;userTouched=false;
+    window.removeEventListener('scroll',settle);
+    window.addEventListener('scroll',settle,{passive:true});
+    window.scrollTo({top:target(),behavior:'smooth'});
+    settle();
+  };
+  ['touchstart','wheel'].forEach(function(ev){window.addEventListener(ev,function(){userTouched=true;},{passive:true});});
+  document.addEventListener('click',function(e){
+    var a=e.target.closest&&e.target.closest('a[href="#rezervace"]');
+    if(!a||!stacked())return;
+    e.preventDefault();
+    if(history.replaceState)history.replaceState(null,'','#rezervace');
+    setTimeout(go,60);
+  },true);
+  if(location.hash==='#rezervace')addEventListener('load',function(){if(stacked())setTimeout(go,150);});
 })();
 }catch(e){console.error(e)}

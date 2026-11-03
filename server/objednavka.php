@@ -48,11 +48,9 @@ if ($g('web') !== '') {                       // past na roboty (skryté pole)
  * Doručení poukazu: 'email' (PDF po zaplacení) nebo 'posta' (tištěný poukaz, číslo přidělí správa).
  */
 $quick = $g('way') === 'objednavka';            // rychlá objednávka (Rezervace → Objednávka)
-$sendV = $quick ? in_array($g('voucher'), ['1', 'true', 'ano'], true) : true;
-$delivery = $g('delivery') === 'posta' ? 'posta' : 'email';
-if (!$sendV) {
-    $delivery = '';
-}
+$wantV = $quick ? in_array($g('voucher'), ['1', 'true', 'ano'], true) : true;   // chtěl zákazník poukaz?
+$sendV = true;                                   // poukaz s číslem dostane vždy (kvůli identifikaci a uplatnění)
+$delivery = $wantV && $g('delivery') === 'posta' ? 'posta' : 'email';
 $kind = $g('kind') === 'gold' ? 'gold' : 'standard';
 $name = $g('name', 120);
 $phone = $g('phone', 40);
@@ -67,17 +65,16 @@ if ($street === '' && $g('addr', 250) !== '') {   // starší formulář posíla
 $addr = trim($street . ($zip !== '' || $city !== '' ? ', ' . trim(($zip !== '' ? substr($zip, 0, 3) . ' ' . substr($zip, 3) : '') . ' ' . $city) : ''), ' ,');
 
 $bad = [];
-if (!$quick && mb_strlen($name) < 2) $bad[] = 'name';
+if (!preg_match('/^\S{2,}(\s+\S{2,})+$/u', $name)) $bad[] = 'name';   // jméno i příjmení – povinné vždy
 if (!preg_match('/^[+0-9 ()\-\/]{6,}$/', $phone)) $bad[] = 'phone';
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) $bad[] = 'email';
 if ($delivery === 'posta') {
-    if (mb_strlen($name) < 2) $bad[] = 'name';
     if (mb_strlen($street) < 3) $bad[] = 'street';
     if (!preg_match('/^\d{5}$/', $zip)) $bad[] = 'zip';
     if (mb_strlen($city) < 2) $bad[] = 'city';
 }
 if ($bad) {
-    out(['ok' => false, 'error' => in_array('zip', $bad, true) && count($bad) === 1 ? 'PSČ má 5 číslic.' : 'Zkontrolujte prosím vyplněné údaje.', 'fields' => array_values(array_unique($bad))], 422);
+    out(['ok' => false, 'error' => count($bad) === 1 && $bad[0] === 'zip' ? 'PSČ má 5 číslic.' : (count($bad) === 1 && $bad[0] === 'name' ? 'Doplňte prosím jméno i příjmení.' : 'Zkontrolujte prosím vyplněné údaje.'), 'fields' => array_values(array_unique($bad))], 422);
 }
 
 /* ---- objednávka ---- */
@@ -88,7 +85,7 @@ if (preg_match('/\b(\d{8})\b/', $compRaw, $m)) {
     $company = trim(preg_replace('/\s*[,;\-–]?\s*(IČO?:?\s*)?' . $ico . '\s*[,;]?/iu', ' ', $compRaw));
 }
 $product = bb_products($cfg)[$kind];
-if (!$sendV) {   // bez poukazu – na faktuře se neobjeví „Dárkový poukaz“
+if (!$wantV) {   // zákazník nechtěl dárkový poukaz – název položky na faktuře bez „Dárkový poukaz“
     $product['name'] = $product['name_visit'] ?? ('Black Box – ' . ($kind === 'gold' ? 'Gold Time' : 'Standard'));
 }
 $o = [
@@ -96,6 +93,7 @@ $o = [
     'product' => $product,
     'quick' => $quick,
     'send_voucher' => $sendV,
+    'wanted_voucher' => $wantV,
     'delivery' => $delivery,
     'for' => '',
     'msg' => '',

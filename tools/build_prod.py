@@ -10,7 +10,7 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 out = pathlib.Path(sys.argv[1]).resolve()
 web_only = '--bez-serveru' in sys.argv
 dev_mode = '--dev' in sys.argv
-DOMAIN = 'https://www.black-box-luxury.cz/'
+DOMAIN = 'https://blackboxx.cz/'
 
 if out.exists():
     shutil.rmtree(out)

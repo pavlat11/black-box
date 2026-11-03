@@ -5,4 +5,4 @@ Disallow: /objednavky/
 Disallow: /objednavka.php
 Disallow: /ceny.php
 
-Sitemap: https://www.black-box-luxury.cz/sitemap.xml
+Sitemap: https://www.blackboxx.cz/sitemap.xml
