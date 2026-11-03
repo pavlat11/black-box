@@ -12,4 +12,4 @@ jobs:
           P: ${{ secrets.FTP_PASSWORD }}
         run: |
           sudo apt-get -qq update >/dev/null && sudo apt-get -qq install -y lftp >/dev/null
-          lftp -c "set sftp:auto-confirm yes; set net:max-retries 2; set net:timeout 20; open -u \"$U\",\"$P\" sftp://$S; echo '== /'; cls -1a /; echo '== do hloubky 2'; find -d 2 / | head -80" || echo "SFTP selhalo"
+          lftp -c "set sftp:auto-confirm yes; set net:max-retries 2; set net:timeout 20; open -u \"$U\",\"$P\" sftp://$S; echo '== /'; cls -1a /; echo '== do hloubky 2'; find -d 3 /blackboxx.cz/ | head -120" || echo "SFTP selhalo"
