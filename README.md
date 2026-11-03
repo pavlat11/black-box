@@ -40,6 +40,7 @@ pro případ, že `ceny.php` není dostupný (např. GitHub Pages).
 - Platí se vždy **fakturou**. Osobní odběr zrušen. Doručení: **e-mailem** (PDF s kódem = číslo faktury, odejde automaticky po potvrzení platby) nebo **poštou** (zákazník vyplní adresu).
 - Správa → Objednávky: nahoře **Ověřit / uplatnit poukaz** (zadáte číslo → platný / použitý / nezaplacený). Záložky K vyřízení · Platné poukazy · Použité · Vše.
 - U poukazu poštou se po zaplacení přidělí **číslo poukazu** (musí být jedinečné) a zaškrtne **Poukaz odeslán poštou** (volitelně e-mail zákazníkovi).
+- **Vzhled poukazu (od 3. 11. 2026):** klasický styl přes celou šířku A4 (210 mm). Generátor poukazů ve správě umí **2 / 3 / 4 poukazy na A4** (148,5 / 99 / 74 mm vysoké). Poukaz v e-mailu a „Tisk PDF“ má 210 × 99 mm. Kreslí ho `bb_voucher_draw()` v `objednavky/lib/app.php`, pozadí jsou `assets/poukaz-bg-*.jpg`.
 - **Uplatnit – poukaz použit** označí poukaz jako použitý (s datem a poznámkou); stejný poukaz pak znovu uplatnit nejde.
 
 ## Nasazení na web přes GitHub Actions (FTP)

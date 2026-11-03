@@ -906,7 +906,7 @@ list();draw();
 if (isset($_GET['generovat'])) {
     $h2 = fn($x) => bb_h((string) $x);
     $err = '';
-    $vals = ['prefix' => '', 'od' => '1', 'do' => '10', 'cifer' => '4', 'typ' => 'standard'];
+    $vals = ['prefix' => '', 'od' => '1', 'do' => '10', 'cifer' => '4', 'typ' => 'standard', 'lay' => '3'];
     if ($isPost) {
         foreach ($vals as $k => $v) $vals[$k] = trim((string) ($_POST[$k] ?? $v));
         $from = (int) $vals['od'];
@@ -933,39 +933,23 @@ if (isset($_GET['generovat'])) {
                 $err = 'Tato čísla už jsou přidělená objednávkám: ' . implode(', ', array_slice($used, 0, 10)) . (count($used) > 10 ? ' a další' : '') . '. Zvolte jiný interval, nebo zaškrtněte „vygenerovat i obsazená čísla“.';
             } else {
                 @set_time_limit(300);
-                $files = [];
+                $per = in_array((int) $vals['lay'], [2, 3, 4], true) ? (int) $vals['lay'] : 3;
+                $list = [];
                 foreach ($codes as $code) {
-                    $o = ['id' => 'tisk-' . $code, 'kind' => $vals['typ'] === 'gold' ? 'gold' : 'standard', 'voucher' => $code,
+                    $list[] = ['id' => 'tisk-' . $code, 'kind' => $vals['typ'] === 'gold' ? 'gold' : 'standard', 'voucher' => $code,
                         'customer' => ['name' => '', 'email' => '', 'phone' => '', 'addr' => '', 'company' => '', 'ico' => '']];
-                    $files['poukaz-' . $code . '.pdf'] = bb_voucher_pdf($cfg, $o);
                 }
-                $base = 'poukazy-' . $codes[0] . (count($codes) > 1 ? '-' . end($codes) : '');
+                $bytes = bb_vouchers_sheet_pdf($cfg, $list, $per);
+                $base = 'poukazy-' . $codes[0] . (count($codes) > 1 ? '-' . end($codes) : '') . '-' . $per . '-na-A4';
                 if (!empty($_POST['json'])) {
                     header('Content-Type: application/json; charset=utf-8');
-                    echo json_encode(['name' => $base, 'files' => array_map(fn($fn, $b) => ['name' => $fn, 'pdf' => base64_encode($b)], array_keys($files), array_values($files))]);
+                    echo json_encode(['name' => $base, 'count' => count($codes), 'pages' => (int) ceil(count($codes) / $per), 'pdf' => base64_encode($bytes)]);
                     exit;
                 }
-                if (count($files) === 1) {
-                    header('Content-Type: application/pdf');
-                    header('Content-Disposition: attachment; filename="' . $base . '.pdf"');
-                    echo reset($files);
-                    exit;
-                }
-                if (!class_exists('ZipArchive')) {
-                    $err = 'Na serveru chybí rozšíření PHP „zip“. V XAMPPu ho zapnete v php.ini řádkem extension=zip.';
-                } else {
-                    $tmp = tempnam(sys_get_temp_dir(), 'bbz');
-                    $z = new ZipArchive();
-                    $z->open($tmp, ZipArchive::OVERWRITE);
-                    foreach ($files as $fn => $bytes) $z->addFromString($fn, $bytes);
-                    $z->close();
-                    header('Content-Type: application/zip');
-                    header('Content-Disposition: attachment; filename="' . $base . '.zip"');
-                    header('Content-Length: ' . filesize($tmp));
-                    readfile($tmp);
-                    @unlink($tmp);
-                    exit;
-                }
+                header('Content-Type: application/pdf');
+                header('Content-Disposition: attachment; filename="' . $base . '.pdf"');
+                echo $bytes;
+                exit;
             }
         }
     }
@@ -989,13 +973,13 @@ if (isset($_GET['generovat'])) {
         . '<div class="gprev">Ukázka: <b id="gp">' . $h2($prev) . '</b> … <b id="gp2"></b><span id="gn"></span></div>'
         . '<label class="gchk"><input type="checkbox" name="i_pouzite" value="1"> vygenerovat i čísla, která už jsou přidělená (jen dotisk)</label>'
         . '<fieldset class="glay"><legend>Jak to vytisknout</legend>'
-        . '<label class="gopt"><input type="radio" name="lay" value="4" checked><span><b>4 poukazy na jednu stránku A4</b><small>jedno PDF, rovnou k tisku · se značkami pro stříhání</small></span></label>'
+        . implode('', array_map(fn($n, $t) => '<label class="gopt"><input type="radio" name="lay" value="' . $n . '"' . ((int) $vals['lay'] === $n ? ' checked' : '') . '><span><b>' . $n . ' poukazy na A4</b><small>' . $t . '</small></span></label>',
+            [2, 3, 4], ['přes celou šířku · 210 × 148,5 mm · velký formát', 'přes celou šířku · 210 × 99 mm · klasický poukaz', 'přes celou šířku · 210 × 74 mm · úzký pruh (bez popisu a podpisu)']))
         . '</fieldset>'
         . '<button class="btn" type="submit" id="gbtn">Vygenerovat</button><div class="gmsg" id="gmsg" role="status"></div></form></div></div>'
         . '<script>(function(){var f=document.getElementById("gform");function u(){var p=f.prefix.value.trim().toUpperCase().replace(/[^A-Z0-9-]/g,""),c=+f.cifer.value,a=+f.od.value||0,b=+f.do.value||0,z=function(n){n=String(n);while(n.length<c)n="0"+n;return p+n};'
         . 'document.getElementById("gp").textContent=z(a);document.getElementById("gp2").textContent=z(b);var n=b-a+1;document.getElementById("gn").textContent=n>0?" · "+n+(n===1?" poukaz":n<5?" poukazy":" poukazů"):" · neplatný interval";}'
         . 'f.addEventListener("input",u);u();})();</script>'
-        . '<script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js" defer></script>'
         . <<<'JS'
 <script>
 (function(){
@@ -1003,48 +987,18 @@ var f=document.getElementById("gform"),btn=document.getElementById("gbtn"),msg=d
 function say(t,bad){msg.textContent=t;msg.className="gmsg"+(bad?" bad":"");}
 function b64(s){var b=atob(s),u=new Uint8Array(b.length);for(var i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u;}
 f.addEventListener("submit",async function(e){
-  var lay=(f.querySelector("input[name=lay]:checked")||{}).value;
-  if(lay==="zip")return;
+  if(!window.fetch)return;
   e.preventDefault();
-  if(!window.PDFLib){say("Nepodařilo se načíst knihovnu pro skládání PDF (je potřeba internet). Zvolte „Každý poukaz zvlášť“.",true);return;}
   btn.disabled=true;say("Generuji poukazy…");
   try{
     var fd=new FormData(f);fd.set("json","1");
     var r=await fetch(location.href,{method:"POST",body:fd,credentials:"same-origin"});
     var d;try{d=await r.json();}catch(x){throw new Error("Server nevrátil poukazy (chyba "+r.status+").");}
     if(d.error)throw new Error(d.error);
-    say("Skládám "+d.files.length+" poukazů na stránky…");
-    var L=PDFLib,out=await L.PDFDocument.create(),per=+lay;
-    var MM=72/25.4,A4w=210*MM,A4h=297*MM,margin=6*MM,gap=6*MM;
-    var first=await L.PDFDocument.load(b64(d.files[0].pdf)),fp=first.getPage(0),vw=fp.getWidth(),vh=fp.getHeight();
-    var best=null;
-    [[A4w,A4h],[A4h,A4w]].forEach(function(P){
-      for(var c=1;c<=per;c++){if(per%c)continue;var r=per/c;
-        var cw0=(P[0]-2*margin-(c-1)*gap)/c,ch0=(P[1]-2*margin-(r-1)*gap)/r,s0=Math.min(cw0/vw,ch0/vh);
-        if(!best||s0>best.s+1e-6)best={s:s0,cols:c,rows:r,pw:P[0],ph:P[1],cw:cw0,ch:ch0};}
-    });
-    var cols=best.cols,rows=best.rows,pw=best.pw,ph=best.ph,cw=best.cw,ch=best.ch;
-    var page=null;
-    for(var i=0;i<d.files.length;i++){
-      var k=i%per;
-      if(k===0){
-        page=out.addPage([pw,ph]);
-        var g=L.rgb(.6,.6,.6);
-        for(var c=1;c<cols;c++){var x=margin+c*cw+(c-.5)*gap;page.drawLine({start:{x:x,y:0},end:{x:x,y:margin*.7},thickness:.5,color:g});page.drawLine({start:{x:x,y:ph},end:{x:x,y:ph-margin*.7},thickness:.5,color:g});}
-        for(var rr=1;rr<rows;rr++){var y=margin+rr*ch+(rr-.5)*gap;page.drawLine({start:{x:0,y:y},end:{x:margin*.7,y:y},thickness:.5,color:g});page.drawLine({start:{x:pw,y:y},end:{x:pw-margin*.7,y:y},thickness:.5,color:g});}
-      }
-      var emb=(await out.embedPdf(b64(d.files[i].pdf),[0]))[0];
-      var sc=Math.min(cw/emb.width,ch/emb.height),w=emb.width*sc,h=emb.height*sc;
-      var col=k%cols,row=Math.floor(k/cols);
-      var x0=margin+col*(cw+gap)+(cw-w)/2,y0=ph-margin-(row+1)*ch-row*gap+(ch-h)/2;
-      page.drawPage(emb,{x:x0,y:y0,width:w,height:h});
-      if(i%10===9)say("Skládám… "+(i+1)+" / "+d.files.length);
-    }
-    var bytes=await out.save(),blob=new Blob([bytes],{type:"application/pdf"}),url=URL.createObjectURL(blob);
-    var a=document.createElement("a");a.href=url;a.download=d.name+"-"+per+"-na-stranu.pdf";document.body.appendChild(a);a.click();a.remove();
+    var blob=new Blob([b64(d.pdf)],{type:"application/pdf"}),url=URL.createObjectURL(blob);
+    var a=document.createElement("a");a.href=url;a.download=d.name+".pdf";document.body.appendChild(a);a.click();a.remove();
     window.open(url,"_blank");
-    var pages=Math.ceil(d.files.length/per);
-    say("Hotovo ✓ "+d.files.length+" poukazů na "+pages+" "+(pages===1?"stránce":"stránkách")+". PDF se stáhlo a otevřelo k tisku – tiskněte ve skutečné velikosti (100 %).");
+    say("Hotovo ✓ "+d.count+" "+(d.count===1?"poukaz":d.count<5?"poukazy":"poukazů")+" na "+d.pages+" "+(d.pages===1?"stránce":"stránkách")+" A4. Tiskněte ve skutečné velikosti (100 %), okraje: žádné.");
   }catch(err){say(err.message,true);}
   finally{btn.disabled=false;}
 });
