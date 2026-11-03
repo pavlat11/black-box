@@ -28,6 +28,15 @@ jobs:
             fi
           done
 
+      - name: Ověřit spojení s FTP serverem
+        env:
+          S: ${{ secrets.FTP_SERVER }}
+        run: |
+          case "$S" in *://*|*/*|*:*|*" "*) echo "::error::FTP_SERVER má obsahovat jen název serveru (např. ftp.example.cz) – bez ftp://, lomítek, portu a mezer."; exit 1;; esac
+          echo "DNS:"; getent hosts "$S" | awk '{print "  IP " $1}' || { echo "::error::Název FTP serveru nejde přeložit (DNS) – zkontrolujte FTP_SERVER."; exit 1; }
+          echo "Uvítací zpráva serveru (port 21):"
+          timeout 15 bash -c "exec 3<>/dev/tcp/$S/21 && head -c 300 <&3" | sed 's/^/  /' || echo "::warning::Server na portu 21 neodpověděl nebo spojení hned ukončil (možná blokuje připojení ze zahraničí / z GitHubu)."
+
       - name: Sestavit produkční web
         run: python3 tools/build_prod.py build
 
