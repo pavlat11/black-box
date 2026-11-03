@@ -1,9 +1,10 @@
 name: Nasazení na web (FTP)
 
-# Spouští se RUČNĚ: záložka Actions → "Nasazení na web (FTP)" → Run workflow.
-# Samo se nic nenahrává.
-# Websupport: u FTP účtu musí Geo ochrana povolovat USA (GitHub Actions běží v USA), jinak server
-# po zadání jména spojení ukončí („Server sent FIN packet unexpectedly“).
+# Spouští se RUČNĚ: záložka Actions → "Nasazení na web (FTP)" → Run workflow. Samo se nic nenahrává.
+# Nahrává přes SFTP do /blackboxx.cz/web/ (lze změnit tajným klíčem FTP_DIR). Na serveru nic nemaže;
+# config.php a data objednávek se nenahrávají (build je neobsahuje).
+# Websupport/Active24: u FTP účtu musí Geo ochrana povolovat USA (GitHub Actions běží v USA).
+
 on:
   workflow_dispatch:
 
@@ -29,26 +30,21 @@ jobs:
               exit 1
             fi
           done
-
-      - name: Ověřit spojení s FTP serverem
-        env:
-          S: ${{ secrets.FTP_SERVER }}
-        run: |
-          case "$S" in *://*|*/*|*:*|*" "*) echo "::error::FTP_SERVER má obsahovat jen název serveru (např. ftp.example.cz) – bez ftp://, lomítek, portu a mezer."; exit 1;; esac
-          echo "DNS:"; getent hosts "$S" | awk '{print "  IP " $1}' || { echo "::error::Název FTP serveru nejde přeložit (DNS) – zkontrolujte FTP_SERVER."; exit 1; }
-          echo "Uvítací zpráva serveru (port 21):"
-          timeout 15 bash -c "exec 3<>/dev/tcp/$S/21 && head -c 300 <&3" | sed 's/^/  /' || echo "::warning::Server na portu 21 neodpověděl nebo spojení hned ukončil (možná blokuje připojení ze zahraničí / z GitHubu)."
+          case "$S" in *://*|*/*|*:*|*" "*) echo "::error::FTP_SERVER má obsahovat jen název serveru – bez ftp://, lomítek a portu."; exit 1;; esac
 
       - name: Sestavit produkční web
         run: python3 tools/build_prod.py build
 
-      - name: Nahrát na FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USER }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          server-dir: ${{ secrets.FTP_DIR || '/' }}
-          local-dir: build/
-          protocol: ${{ secrets.FTP_PROTOCOL || 'ftps' }}   # ftps (šifrované) / ftp
-          security: loose                                  # sdílený hosting: certifikát nemusí sedět na název serveru
+      - name: Nahrát na server (SFTP)
+        env:
+          S: ${{ secrets.FTP_SERVER }}
+          U: ${{ secrets.FTP_USER }}
+          P: ${{ secrets.FTP_PASSWORD }}
+          D: ${{ secrets.FTP_DIR || '/blackboxx.cz/web/' }}
+        run: |
+          sudo apt-get -qq update >/dev/null && sudo apt-get -qq install -y lftp >/dev/null
+          lftp -c "set sftp:auto-confirm yes; set net:max-retries 3; set net:timeout 30; set net:reconnect-interval-base 5;
+                   open -u \"$U\",\"$P\" sftp://$S;
+                   cd \"$D\" || exit 1;
+                   mirror --reverse --verbose --parallel=3 --no-perms build/ \"$D\""
+          echo "Hotovo – web nahrán do $D"
