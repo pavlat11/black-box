@@ -39,4 +39,5 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           server-dir: ${{ secrets.FTP_DIR || '/' }}
           local-dir: build/
-          protocol: ftp
+          protocol: ${{ secrets.FTP_PROTOCOL || 'ftps' }}   # ftps (šifrované) / ftp
+          security: loose                                  # sdílený hosting: certifikát nemusí sedět na název serveru
