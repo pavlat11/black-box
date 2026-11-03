@@ -37,6 +37,16 @@ jobs:
           echo "Uvítací zpráva serveru (port 21):"
           timeout 15 bash -c "exec 3<>/dev/tcp/$S/21 && head -c 300 <&3" | sed 's/^/  /' || echo "::warning::Server na portu 21 neodpověděl nebo spojení hned ukončil (možná blokuje připojení ze zahraničí / z GitHubu)."
 
+      - name: Diagnostika přihlášení (dočasné)
+        continue-on-error: true
+        env:
+          S: ${{ secrets.FTP_SERVER }}
+          U: ${{ secrets.FTP_USER }}
+          P: ${{ secrets.FTP_PASSWORD }}
+        run: |
+          echo "=== FTP bez šifrování ==="; curl -sS -v --max-time 20 --user "$U:$P" "ftp://$S/" 2>&1 | grep -E '^[<>*]' | grep -v PASS | head -30 || true
+          echo "=== FTPS (AUTH TLS) ==="; curl -sS -v --max-time 20 --ssl-reqd -k --user "$U:$P" "ftp://$S/" 2>&1 | grep -E '^[<>*]' | grep -v PASS | head -40 || true
+
       - name: Sestavit produkční web
         run: python3 tools/build_prod.py build
 
