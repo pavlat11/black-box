@@ -42,11 +42,11 @@ pro případ, že `ceny.php` není dostupný (např. GitHub Pages).
 - U poukazu poštou se po zaplacení přidělí **číslo poukazu** (musí být jedinečné) a zaškrtne **Poukaz odeslán poštou** (volitelně e-mail zákazníkovi).
 - **Uplatnit – poukaz použit** označí poukaz jako použitý (s datem a poznámkou); stejný poukaz pak znovu uplatnit nejde.
 
-## Nasazení na hosting přes GitHub Actions (FTP)
+## Nasazení na web přes GitHub Actions (FTP)
 
-Záložka **Actions → Nasazení na hosting (FTP) → Run workflow**, vyberte `dev` nebo `live`. Spouští se jen ručně.
-Skript `tools/build_prod.py` web sestaví (DEV: `--dev`, LIVE: bez příznaku) a nahraje ho FTP.
+Záložka **Actions → Nasazení na web (FTP) → Run workflow**. Spouští se jen ručně.
+Skript `tools/build_prod.py` sestaví produkční web (včetně PHP) a nahraje ho přes FTP.
 `config.php` a data objednávek se nikdy nenahrávají, zůstávají jen na serveru.
 
 Potřebná nastavení v **Settings → Secrets and variables → Actions → Secrets**:
-`FTP_DEV_SERVER`, `FTP_DEV_USER`, `FTP_DEV_PASSWORD`, `FTP_DEV_DIR` a stejně `FTP_LIVE_*` (DIR je cesta na serveru, např. `/www/` – nepovinné).
+`FTP_SERVER`, `FTP_USER`, `FTP_PASSWORD` a nepovinně `FTP_DIR` (cesta na serveru, např. `/www/`).
