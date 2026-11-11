@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   nasadit:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
 
@@ -42,7 +42,7 @@ jobs:
           P: ${{ secrets.FTP_PASSWORD }}
           D: ${{ secrets.FTP_DIR || '/blackboxx.cz/web/' }}
         run: |
-          sudo apt-get -qq update >/dev/null && sudo apt-get -qq install -y lftp >/dev/null
+          command -v lftp >/dev/null || { sudo apt-get -qq update >/dev/null; sudo apt-get -qq install -y lftp >/dev/null; }
           lftp -c "set sftp:auto-confirm yes; set net:max-retries 3; set net:timeout 30; set net:reconnect-interval-base 5;
                    open -u \"$U\",\"$P\" sftp://$S;
                    cd \"$D\" || exit 1;
