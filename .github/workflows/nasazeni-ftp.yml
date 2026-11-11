@@ -42,9 +42,6 @@ jobs:
           P: ${{ secrets.FTP_PASSWORD }}
           D: ${{ secrets.FTP_DIR || '/blackboxx.cz/web/' }}
         run: |
-          command -v lftp >/dev/null || { sudo apt-get -qq update >/dev/null; sudo apt-get -qq install -y lftp >/dev/null; }
-          lftp -c "set sftp:auto-confirm yes; set net:max-retries 3; set net:timeout 30; set net:reconnect-interval-base 5;
-                   open -u \"$U\",\"$P\" sftp://$S;
-                   cd \"$D\" || exit 1;
-                   mirror --reverse --verbose --parallel=3 --no-perms build/ \"$D\""
+          pip install -q paramiko
+          python3 tools/sftp_upload.py build
           echo "Hotovo – web nahrán do $D"
