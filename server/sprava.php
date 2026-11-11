@@ -906,7 +906,7 @@ list();draw();
 if (isset($_GET['generovat'])) {
     $h2 = fn($x) => bb_h((string) $x);
     $err = '';
-    $vals = ['prefix' => '', 'od' => '1', 'do' => '10', 'cifer' => '4', 'typ' => 'standard', 'lay' => '3', 'okraje' => ''];
+    $vals = ['prefix' => '', 'od' => '1', 'do' => '10', 'cifer' => '4', 'typ' => 'standard', 'lay' => '3', 'okraje' => '', 'bez' => '', 'pocet' => '3'];
     if ($isPost) {
         foreach ($vals as $k => $v) $vals[$k] = trim((string) ($_POST[$k] ?? $v));
         $from = (int) $vals['od'];
@@ -915,6 +915,30 @@ if (isset($_GET['generovat'])) {
         $prefix = bb_norm_code($vals['prefix']);
         if (!hash_equals($_SESSION['csrf'] ?? '', (string) ($_POST['csrf'] ?? ''))) {
             $err = 'Platnost stránky vypršela, načtěte ji znovu.';
+        } elseif ($vals['bez'] !== '') {
+            /* poukazy bez čísla – číslo se dopíše rukou */
+            $cnt = (int) $vals['pocet'];
+            if ($cnt < 1 || $cnt > 200) {
+                $err = 'Počet poukazů musí být 1 až 200.';
+            } else {
+                @set_time_limit(300);
+                $per = in_array((int) $vals['lay'], [2, 3, 4], true) ? (int) $vals['lay'] : 3;
+                $gold = $vals['typ'] === 'gold';
+                $list = array_fill(0, $cnt, ['id' => 'tisk-bez-cisla', 'kind' => $gold ? 'gold' : 'standard', 'voucher' => '',
+                    'customer' => ['name' => '', 'email' => '', 'phone' => '', 'addr' => '', 'company' => '', 'ico' => '']]);
+                $okraje = !empty($_POST['okraje']);
+                $bytes = $cnt === 1 && !$okraje ? bb_voucher_pdf($cfg, $list[0], $per) : bb_vouchers_sheet_pdf($cfg, $list, $per, $okraje ? 6.0 : 0.0);
+                $base = 'poukaz-' . ($gold ? 'gold' : 'standard') . '-bez-cisla-' . $cnt . 'x-' . $per . '-na-A4' . ($okraje ? '-s-okraji' : '');
+                if (!empty($_POST['json'])) {
+                    header('Content-Type: application/json; charset=utf-8');
+                    echo json_encode(['name' => $base, 'count' => $cnt, 'pages' => $cnt === 1 && !$okraje ? 1 : (int) ceil($cnt / $per), 'single' => $cnt === 1 && !$okraje, 'pdf' => base64_encode($bytes)]);
+                    exit;
+                }
+                header('Content-Type: application/pdf');
+                header('Content-Disposition: attachment; filename="' . $base . '.pdf"');
+                echo $bytes;
+                exit;
+            }
         } elseif ($from < 0 || $to < $from) {
             $err = 'Číslo „do“ musí být stejné nebo větší než „od“.';
         } elseif ($to - $from + 1 > 200) {
@@ -963,25 +987,28 @@ if (isset($_GET['generovat'])) {
     $body = menu('objednavky') . '<div class="wrap"><div class="gen">'
         . '<a class="gback" href="?f=odeslat">← zpět do správy</a>'
         . '<h2>Vygenerovat poukazy k tisku</h2>'
-        . '<p class="gsub">Zadejte interval čísel a vyberte, jak je vytisknout. Poukazy se nikomu nepřiřadí – číslo pak zadáte u objednávky v kroku „Odeslat poukaz“.</p>'
+        . '<p class="gsub">Zadejte interval čísel (nebo zaškrtněte „Bez čísel“) a vyberte, jak je vytisknout. Poukazy se nikomu nepřiřadí – číslo pak zadáte u objednávky v kroku „Odeslat poukaz“.</p>'
         . ($err ? '<div class="warn">' . $h2($err) . '</div>' : '')
         . '<form method="post" class="gform" id="gform"><input type="hidden" name="csrf" value="' . $h2($_SESSION['csrf'] ?? '') . '">'
         . '<label>Typ poukazu<select name="typ"><option value="standard"' . ($vals['typ'] !== 'gold' ? ' selected' : '') . '>Standard Time</option><option value="gold"' . ($vals['typ'] === 'gold' ? ' selected' : '') . '>Gold Time</option></select></label>'
-        . '<label>Předpona (nepovinná)<input type="text" name="prefix" value="' . $h2($vals['prefix']) . '" maxlength="10" placeholder="např. BB"></label>'
-        . '<label>Od čísla<input type="number" name="od" value="' . $h2($vals['od']) . '" min="0" required></label>'
-        . '<label>Do čísla<input type="number" name="do" value="' . $h2($vals['do']) . '" min="0" required></label>'
-        . '<label>Počet cifer<select name="cifer">' . implode('', array_map(fn($n) => '<option' . ((int) $vals['cifer'] === $n ? ' selected' : '') . '>' . $n . '</option>', [1, 2, 3, 4, 5, 6, 7, 8])) . '</select></label>'
-        . '<div class="gprev">Ukázka: <b id="gp">' . $h2($prev) . '</b> … <b id="gp2"></b><span id="gn"></span></div>'
-        . '<label class="gchk"><input type="checkbox" name="i_pouzite" value="1"> vygenerovat i čísla, která už jsou přidělená (jen dotisk)</label>'
+        . '<label class="gchk gbez"><input type="checkbox" name="bez" id="gbez" value="1"' . ($vals['bez'] !== '' ? ' checked' : '') . '> <b>Bez čísel</b>&nbsp;– číslo poukazu dopíšete rukou</label>'
+        . '<label class="gcnt">Počet poukazů<input type="number" name="pocet" value="' . $h2($vals['pocet']) . '" min="1" max="200"></label>'
+        . '<label class="gnum">Předpona (nepovinná)<input type="text" name="prefix" value="' . $h2($vals['prefix']) . '" maxlength="10" placeholder="např. BB"></label>'
+        . '<label class="gnum">Od čísla<input type="number" name="od" value="' . $h2($vals['od']) . '" min="0" required></label>'
+        . '<label class="gnum">Do čísla<input type="number" name="do" value="' . $h2($vals['do']) . '" min="0" required></label>'
+        . '<label class="gnum">Počet cifer<select name="cifer">' . implode('', array_map(fn($n) => '<option' . ((int) $vals['cifer'] === $n ? ' selected' : '') . '>' . $n . '</option>', [1, 2, 3, 4, 5, 6, 7, 8])) . '</select></label>'
+        . '<div class="gprev gnum">Ukázka: <b id="gp">' . $h2($prev) . '</b> … <b id="gp2"></b><span id="gn"></span></div>'
+        . '<label class="gchk gnum"><input type="checkbox" name="i_pouzite" value="1"> vygenerovat i čísla, která už jsou přidělená (jen dotisk)</label>'
         . '<fieldset class="glay"><legend>Jak to vytisknout</legend>'
         . implode('', array_map(fn($n, $t) => '<label class="gopt"><input type="radio" name="lay" value="' . $n . '"' . ((int) $vals['lay'] === $n ? ' checked' : '') . '><span><b>' . $n . ' poukazy na A4</b><small>' . $t . '</small></span></label>',
-            [2, 3, 4], ['přes celou šířku · 210 × 148,5 mm · velký formát', 'přes celou šířku · 210 × 99 mm · klasický poukaz', 'přes celou šířku · 210 × 74 mm · úzký pruh (bez popisu a podpisu)']))
+            [2, 3, 4], ['přes celou šířku · 210 × 148,5 mm · velký formát', 'přes celou šířku · 210 × 99 mm · klasický poukaz', 'přes celou šířku · 210 × 74 mm · úzký pruh (bez výčtu vybavení)']))
         . '<label class="gopt gok"><input type="checkbox" name="okraje" value="1"' . ($vals['okraje'] !== '' ? ' checked' : '') . '><span><b>Tisknout s okraji</b><small>pro běžnou tiskárnu, která netiskne až ke kraji papíru · okraj 6 mm, poukazy se zmenší na 94 %, mezi nimi mezera a značky pro stříhání</small></span></label>'
         . '</fieldset>'
         . '<button class="btn" type="submit" id="gbtn">Vygenerovat</button><div class="gmsg" id="gmsg" role="status"></div></form></div></div>'
         . '<script>(function(){var f=document.getElementById("gform");function u(){var p=f.prefix.value.trim().toUpperCase().replace(/[^A-Z0-9-]/g,""),c=+f.cifer.value,a=+f.od.value||0,b=+f.do.value||0,z=function(n){n=String(n);while(n.length<c)n="0"+n;return p+n};'
         . 'document.getElementById("gp").textContent=z(a);document.getElementById("gp2").textContent=z(b);var n=b-a+1;document.getElementById("gn").textContent=n>0?" · "+n+(n===1?" poukaz":n<5?" poukazy":" poukazů"):" · neplatný interval";}'
-        . 'f.addEventListener("input",u);u();})();</script>'
+        . 'f.addEventListener("input",u);u();'
+        . 'var bz=document.getElementById("gbez");function t(){var on=bz.checked;f.querySelectorAll(".gnum").forEach(function(e){e.style.display=on?"none":""});f.querySelector(".gcnt").style.display=on?"":"none";f.od.required=f.do.required=!on;}bz.addEventListener("change",t);t();})();</script>'
         . <<<'JS'
 <script>
 (function(){
@@ -1000,6 +1027,7 @@ f.addEventListener("submit",async function(e){
     var blob=new Blob([b64(d.pdf)],{type:"application/pdf"}),url=URL.createObjectURL(blob);
     var a=document.createElement("a");a.href=url;a.download=d.name+".pdf";document.body.appendChild(a);a.click();a.remove();
     window.open(url,"_blank");
+    if(d.single){say("Hotovo ✓ 1 poukaz (210 × "+(f.lay.value==="2"?"148,5":f.lay.value==="4"?"74":"99")+" mm) bez čísla.");return;}
     say("Hotovo ✓ "+d.count+" "+(d.count===1?"poukaz":d.count<5?"poukazy":"poukazů")+" na "+d.pages+" "+(d.pages===1?"stránce":"stránkách")+" A4. Tiskněte ve skutečné velikosti (100 %).");
   }catch(err){say(err.message,true);}
   finally{btn.disabled=false;}
