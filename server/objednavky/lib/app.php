@@ -1057,173 +1057,175 @@ function bb_voucher_new_pdf(array $cfg, string $title, float $w, float $h): BBIn
     $pdf->AddFont('Manrope', '', 'Manrope-Regular.ttf', true);
     $pdf->AddFont('Manrope', 'B', 'Manrope-Bold.ttf', true);
     $pdf->AddFont('Unbounded', '', 'Unbounded-Regular.ttf', true);
+    $pdf->AddFont('UnboundedSB', '', 'Unbounded-SemiBold.ttf', true);
     $pdf->SetAutoPageBreak(false);
     $pdf->SetMargins(0, 0, 0);
     return $pdf;
 }
 
-/** Nakreslí jeden poukaz na pozici ($ox, $oy), šířka 210 mm, výška podle $per */
+/** Nakreslí jeden poukaz na pozici ($ox, $oy), šířka 210 mm, výška podle $per.
+ *  Vzhled: vycentrovaná hlavička (logo + BLACK BOX LUXURY / RELAXAČNÍ ZÓNA), velký nadpis,
+ *  typ poukazu, výčet vybavení, dole rezervace / adresa (Od Slunce) / web, vpravo číslo poukazu. */
 function bb_voucher_draw(BBInvoicePdf $pdf, array $cfg, array $o, float $ox, float $oy, int $per): void
 {
     $per = in_array($per, [2, 3, 4], true) ? $per : 3;
     $gold = ($o['kind'] ?? '') === 'gold';
     $W = 210.0;
     $H = 297.0 / $per;
-    $k = [2 => 1.25, 3 => 1.0, 4 => 0.78][$per];
-    $big = $per < 4;                                    // u 4 na A4 vynecháme popis, web a podpis
-    $A  = $gold ? [240, 207, 133] : [199, 168, 255];    // hlavní akcent
-    $A2 = $gold ? [184, 149, 90] : [143, 107, 255];     // rámeček
-    $A3 = $gold ? [131, 107, 69] : [103, 78, 186];      // vnitřní tenký rámeček (A2 ztlumená)
+    $yk = $H / 99.0;                                    // svislé měřítko (rozvržení je pro 3 na A4)
+    $k = [2 => 1.15, 3 => 1.0, 4 => 0.8][$per];        // měřítko písma
+    $big = $per < 4;                                    // u 4 na A4 vynecháme výčet vybavení
+    $A  = $gold ? [240, 207, 133] : [190, 120, 255];    // akcent
+    $A2 = $gold ? [200, 160, 95] : [160, 90, 240];      // rámeček, čárkovaná čára
     $BG = [7, 6, 26];
-    $GR = [169, 163, 198];
-    $mmpt = fn(float $mm) => $mm / 0.352778;           // velikost písma v mm → pt
+    $GR = [190, 185, 215];
+    $mmpt = fn(float $mm) => $mm / 0.352778;
+    $Y = fn(float $y) => $oy + $y * $yk;               // y v souřadnicích 99 mm vysokého poukazu
+    $fit = function (string $fam, string $st, float $mm, string $text, float $maxW) use ($pdf, $mmpt): float {
+        do {
+            $pdf->SetFont($fam, $st, $mmpt($mm));
+            if ($pdf->GetStringWidth($text) <= $maxW) break;
+            $mm -= 0.05;
+        } while ($mm > 1.5);
+        return $mm;
+    };
 
     /* pozadí (záře + hvězdy) */
     $pdf->SetFillColor(...$BG);
     $pdf->Rect($ox, $oy, $W, $H, 'F');
     $bg = __DIR__ . '/assets/poukaz-bg-' . ($gold ? 'gold' : 'standard') . '-' . $per . '.jpg';
+    if (!is_file($bg)) $bg = __DIR__ . '/assets/poukaz-bg-' . ($gold ? 'gold' : 'standard') . '-3.jpg';
     if (is_file($bg)) $pdf->Image($bg, $ox, $oy, $W, $H);
 
-    /* dvojitý rámeček + kosočtverce v rozích */
-    $f = 4.5 * $k;
+    /* rámeček + kosočtverce v rozích */
+    $f = 4.8 * $k;
     $pdf->SetDrawColor(...$A2);
-    $pdf->SetLineWidth(0.35);
+    $pdf->SetLineWidth(0.7 * $k);
     $pdf->Rect($ox + $f, $oy + $f, $W - 2 * $f, $H - 2 * $f);
-    $pdf->SetDrawColor(...$A3);
-    $pdf->SetLineWidth(0.15);
-    $pdf->Rect($ox + $f + 1.3, $oy + $f + 1.3, $W - 2 * $f - 2.6, $H - 2 * $f - 2.6);
     $pdf->SetDrawColor(...$A);
     $pdf->SetFillColor(...$BG);
-    $pdf->SetLineWidth(0.35);
+    $pdf->SetLineWidth(0.6 * $k);
     foreach ([[$f, $f], [$W - $f, $f], [$f, $H - $f], [$W - $f, $H - $f]] as [$cx, $cy]) {
-        $pdf->Diamond($ox + $cx, $oy + $cy, 2.26);
+        $pdf->Diamond($ox + $cx, $oy + $cy, 2.8 * $k);
     }
 
-    /* obsah */
-    $c = $f + 1.3 + 3 * $k;
-    $x0 = $ox + $c; $y0 = $oy + $c; $x1 = $ox + $W - $c; $y1 = $oy + $H - $c;
-    $stubW = 46 * $k;
-    $sx = $x1 - $stubW;                                 // čárkovaná dělicí čára
-    $mainR = $sx - 6 * $k;
+    $x0 = $ox + 12;
+    $sx = $ox + 153.5;                                  // čárkovaná dělicí čára
+    $mR = $sx - 5;
+    $cm = ($x0 + $mR) / 2;                              // osa hlavní části
+    $mw = $mR - $x0;
 
-    // logo + značka
-    $lg = 10 * $k;
-    $pdf->Image(__DIR__ . '/assets/logo-pdf.jpg', $x0, $y0, $lg, $lg);
-    $pdf->SetFont('Manrope', 'B', $mmpt(2.6 * $k));
+    /* hlavička: logo + BLACK BOX LUXURY, pod tím RELAXAČNÍ ZÓNA s linkami */
+    $lg = 16 * $k;
+    $brand = 'BLACK BOX LUXURY';
+    $fit('UnboundedSB', '', 6.6 * $k, $brand, 92);
+    $bw = $pdf->GetStringWidth($brand);
+    $gx = $cm - ($lg + 4 + $bw) / 2;
+    $hy = $Y(9.5) - ($per === 4 ? 1 : 0);
+    $logo = __DIR__ . '/assets/logo-pdf.png';
+    $pdf->Image(is_file($logo) ? $logo : __DIR__ . '/assets/logo-pdf.jpg', $gx, $hy, $lg, $lg);
+    $tx = $gx + $lg + 4;
     $pdf->SetTextColor(255, 255, 255);
-    $pdf->SpacedText($x0 + $lg + 3 * $k, $y0 + $lg / 2 - 0.4 * $k, 'BLACK BOX LUXURY', 0.83 * $k);
-    $pdf->SetFont('Manrope', 'B', $mmpt(2.13 * $k));
+    $pdf->Text($tx, $hy + 7.6 * $k, $brand);
+    $pdf->SetFont('Manrope', 'B', $mmpt(3.7 * $k));
     $pdf->SetTextColor(...$A);
-    $pdf->SpacedText($x0 + $lg + 3 * $k, $y0 + $lg / 2 + 3 * $k, 'RELAXAČNÍ ZÓNA', 0.8 * $k);
-
-    // spodní řádek: rezervace / adresa / web
-    $web = preg_replace('~^https?://(www\.)?~', '', rtrim((string) ($cfg['web'] ?? ''), '/'));
-    $cols = [['Rezervace termínu', (string) $cfg['phone']], ['Adresa', 'Purkyňova 2961, Tábor']];
-    if ($big && $web !== '') $cols[] = ['Web', $web];
-    $vy = $y1 - 0.6 * $k;
-    $fit = 1.0;                                         // spodní řádek se musí vejít před dělicí čáru
-    for ($try = 0; $try < 12; $try++) {
-        $tot = 0.0;
-        foreach ($cols as [$lab, $val]) {
-            $pdf->SetFont('Manrope', 'B', $mmpt(3.1 * $k * $fit));
-            $a = $pdf->GetStringWidth($val);
-            $pdf->SetFont('Manrope', '', $mmpt(2.5 * $k * $fit));
-            $tot += max($a, $pdf->GetStringWidth($lab)) + 8 * $k * $fit;
-        }
-        if ($tot - 8 * $k * $fit <= $mainR - $x0) break;
-        $fit *= 0.95;
-    }
-    $bx = $x0;
-    foreach ($cols as [$lab, $val]) {
-        $pdf->SetFont('Manrope', 'B', $mmpt(3.1 * $k * $fit));
-        $vw = $pdf->GetStringWidth($val);
-        $pdf->SetTextColor(255, 255, 255);
-        $pdf->Text($bx, $vy, $val);
-        $pdf->SetFont('Manrope', '', $mmpt(2.5 * $k * $fit));
-        $pdf->SetTextColor(...$GR);
-        $pdf->Text($bx, $vy - 4.4 * $k * $fit, $lab);
-        $bx += max($vw, $pdf->GetStringWidth($lab)) + 8 * $k * $fit;
-    }
-
-    // střed: „Dárkový poukaz“ + produkt + popis
-    $titleS = 10 * $k;
-    $detail = $gold ? 'Celá budova jen pro Vás. Pátek a sobota 22:00 – 24:00.' : 'Dvě hodiny jen Vaše. Libovolný volný blok.';   // stejně jako ceník na webu
-    $feat = ['Masážní vířivá vana · Královská postel King Size · Hvězdné nebe nad hlavou', 'Velkoplošná projekce · Špičkový audiosystém'];   // jako sekce Prostor na webu
-    $fs = 2.45 * $k;                                    // písmo výčtu (mm)
-    $blockH = 0.72 * $titleS + 2.6 * $k + 3 * $k + ($big ? 2.2 * $k + 3.4 * $k + 1.6 * $k + count($feat) * $fs * 1.45 : 0);
-    $topEnd = $y0 + $lg;
-    $botStart = $y1 - 7.3 * $k;
-    $ty = $topEnd + ($botStart - $topEnd - $blockH) / 2 + 0.72 * $titleS;   // účaří nadpisu
-    $pdf->SetFont('Unbounded', '', $mmpt($titleS));
-    $pdf->SetTextColor(255, 255, 255);
-    $w1 = $pdf->SpacedText($x0, $ty, 'Dárkový ', -0.01 * $titleS);
-    $pdf->SetTextColor(...$A);
-    $pdf->SpacedText($x0 + $w1, $ty, 'poukaz', -0.01 * $titleS);
-    $py = $ty + 2.6 * $k + 3 * $k * 0.8;
+    $sub = 'RELAXAČNÍ ZÓNA';
+    $sp = 1.35 * $k;
+    $sw = $pdf->GetStringWidth($sub) + $sp * (mb_strlen($sub) - 1);
+    $scx = $tx + $bw / 2;
+    $pdf->SpacedText($scx, $hy + 14.2 * $k, $sub, $sp, 'C');
     $pdf->SetDrawColor(...$A);
-    $pdf->SetLineWidth(0.3);
-    $pdf->Line($x0, $py - 1 * $k, $x0 + 9 * $k, $py - 1 * $k);
-    $pdf->SetFont('Manrope', 'B', $mmpt(3 * $k));
-    $pdf->SetTextColor(...$A);
-    $pdf->SpacedText($x0 + 12 * $k, $py, $gold ? 'GOLD TIME · 2 HODINY' : 'STANDARD · 2 HODINY', 0.84 * $k);
-    if ($big) {
-        $pdf->SetFont('Manrope', '', $mmpt(3 * $k));
-        $pdf->SetTextColor(207, 202, 230);
-        $dy = $py + 2.2 * $k + 3.2 * $k;
-        $pdf->Text($x0, $dy, $detail);
-        // výčet vybavení – menší písmo, musí se vejít před dělicí čáru
-        $f2 = $fs;
-        $pdf->SetFont('Manrope', '', $mmpt($f2));
-        while ($f2 > 1.6 && max(array_map(fn($t) => $pdf->GetStringWidth($t), $feat)) > $mainR - $x0) {
-            $f2 -= 0.05;
-            $pdf->SetFont('Manrope', '', $mmpt($f2));
-        }
-        $pdf->SetTextColor(...$GR);
-        $dy += 1.6 * $k;
-        foreach ($feat as $t) {
-            $dy += $fs * 1.45;
-            $pdf->Text($x0, $dy, $t);
-        }
-    }
+    $pdf->SetLineWidth(0.45 * $k);
+    $pdf->Line($tx, $hy + 12.9 * $k, $scx - $sw / 2 - 3, $hy + 12.9 * $k);
+    $pdf->Line($scx + $sw / 2 + 3, $hy + 12.9 * $k, $tx + $bw, $hy + 12.9 * $k);
 
-    // čárkovaná dělicí čára
-    $pdf->SetDrawColor(...$A2);
-    $pdf->SetLineWidth(0.35);
-    for ($yy = $y0; $yy < $y1; $yy += 2.2) $pdf->Line($sx, $yy, $sx, min($yy + 1.1, $y1));
-
-    // pravý panel: číslo poukazu
-    $cx = ($sx + 6 * $k + $x1) / 2;
-    $code = (string) ($o['voucher'] ?? '');
-    $pdf->SetFont('Unbounded', '', $mmpt(6.2 * $k));
-    $cs = 6.2 * $k;
-    while ($cs > 3 && $pdf->GetStringWidth($code) + 0.04 * $cs * mb_strlen($code) > $stubW - 8 * $k) {   // dlouhé číslo zmenšit
-        $cs -= 0.2;
-        $pdf->SetFont('Unbounded', '', $mmpt($cs));
-    }
-    $panelH = 2.3 * $k + 2.2 * $k + $cs * 0.75 + 2.6 * $k + 2 * 2.3 * $k * 1.4 + ($big ? 3 * $k + 3.5 * $k : 0);
-    $yy = ($y0 + $y1) / 2 - $panelH / 2;
-    $pdf->SetFont('Manrope', 'B', $mmpt(2.3 * $k));
-    $pdf->SetTextColor(...$A);
-    $pdf->SpacedText($cx, $yy + 1.7 * $k, 'ČÍSLO POUKAZU', 0.69 * $k, 'C');
-    $yy += 2.3 * $k + 2.2 * $k + $cs * 0.75;
-    $pdf->SetFont('Unbounded', '', $mmpt($cs));
+    /* nadpis „Dárkový poukaz“ */
+    $t1 = 'Dárkový ';
+    $t2 = 'poukaz';
+    $fit('UnboundedSB', '', 15 * $k, $t1 . $t2, $mw - 2);
+    $w1 = $pdf->GetStringWidth($t1);
+    $wt = $pdf->GetStringWidth($t1 . $t2);
+    $ty = $big ? $Y(45.5) : $Y(50);
     $pdf->SetTextColor(255, 255, 255);
-    $pdf->SpacedText($cx, $yy, $code, 0.04 * $cs, 'C');
-    $pdf->SetFont('Manrope', '', $mmpt(2.3 * $k));
-    $pdf->SetTextColor(...$GR);
-    $yy += 2.6 * $k + 2.3 * $k;
-    $pdf->SpacedText($cx, $yy, 'Poukaz je na doručitele.', 0, 'C');
-    $yy += 2.3 * $k * 1.4;
-    $pdf->SpacedText($cx, $yy, 'Předložte ho při návštěvě.', 0, 'C');
+    $pdf->Text($cm - $wt / 2, $ty, $t1);
+    $pdf->SetTextColor(...$A);
+    $pdf->Text($cm - $wt / 2 + $w1, $ty, $t2);
+
+    /* typ poukazu s linkami */
+    $kind = $gold ? 'GOLD TIME · 2 HODINY' : 'STANDARD · 2 HODINY';
+    $pdf->SetFont('Manrope', 'B', $mmpt(4.4 * $k));
+    $ksp = 1.5 * $k;
+    $kw = $pdf->GetStringWidth($kind) + $ksp * (mb_strlen($kind) - 1);
+    $ky = $ty + 8.5 * $k;
+    $pdf->SetTextColor(255, 255, 255);
+    $pdf->SpacedText($cm, $ky, $kind, $ksp, 'C');
+    $pdf->SetDrawColor(...$A);
+    $pdf->SetLineWidth(0.45 * $k);
+    $pdf->Line($cm - $wt / 2, $ky - 1.6 * $k, $cm - $kw / 2 - 4, $ky - 1.6 * $k);
+    $pdf->Line($cm + $kw / 2 + 4, $ky - 1.6 * $k, $cm + $wt / 2, $ky - 1.6 * $k);
+
+    /* výčet vybavení */
     if ($big) {
-        $yy += 3 * $k + 1.2 * $k;
-        $pdf->SetDrawColor(111, 104, 144);
-        $pdf->SetLineWidth(0.2);
-        $pdf->Line($sx + 6 * $k + 1, $yy, $x1 - 1, $yy);
-        $pdf->SetFont('Manrope', '', $mmpt(2 * $k));
-        $pdf->SetTextColor(139, 132, 170);
-        $pdf->SpacedText($cx, $yy + 1 + 2 * $k, 'RAZÍTKO · PODPIS', 0.24 * $k, 'C');
+        $feat = $gold
+            ? ['Celá budova jen pro Vás · Pátek a sobota 22:00 – 24:00', 'Masážní vířivá vana • Královská postel • Hvězdné nebe']
+            : ['Masážní vířivá vana • Královská postel • Hvězdné nebe', '• Špičkový audio systém'];
+        $fs = 4.0 * $k;
+        foreach ($feat as $t) $fs = min($fs, $fit('Manrope', '', 4.0 * $k, $t, $mw));
+        $pdf->SetFont('Manrope', '', $mmpt($fs));
+        $pdf->SetTextColor(235, 233, 245);
+        $fy = $ky + 7.5 * $k + ($yk - 1) * 6;
+        foreach ($feat as $t) {
+            $pdf->Text($cm - $pdf->GetStringWidth($t) / 2, $fy, $t);
+            $fy += $fs * 1.35;
+        }
     }
+
+    /* spodní řádek: rezervace / adresa (Od Slunce) / web */
+    $cols = [['Rezervace termínu', (string) $cfg['phone']], ['Adresa', 'Purkyňova 2961, Tábor'], ['Web', 'blackboxx.cz']];
+    $vs = 4.3 * $k;
+    $lsz = 3.3 * $k;
+    $vy = $oy + $H - 10 * $k - 1.6 * $k;
+    $widths = [];
+    $pdf->SetFont('Manrope', 'B', $mmpt($vs));
+    foreach ($cols as [, $v]) $widths[] = $pdf->GetStringWidth($v);
+    $gap = ($mw - array_sum($widths)) / 2;
+    $bx = $x0;
+    foreach ($cols as $i => [$l, $v]) {
+        $pdf->SetFont('Manrope', 'B', $mmpt($vs));
+        $pdf->SetTextColor(255, 255, 255);
+        $pdf->Text($bx, $vy, $v);
+        $pdf->SetFont('Manrope', '', $mmpt($lsz));
+        $pdf->SetTextColor(...$GR);
+        $pdf->Text($bx, $vy - 5.3 * $k, $l);
+        if ($l === 'Adresa') {
+            $lw = $pdf->GetStringWidth('Adresa ');
+            $pdf->SetFont('Manrope', 'B', $mmpt($lsz));
+            $pdf->SetTextColor(...$A);
+            $pdf->Text($bx + $lw, $vy - 5.3 * $k, '· OD SLUNCE');
+        }
+        $bx += $widths[$i] + $gap;
+    }
+
+    /* čárkovaná dělicí čára */
+    $pdf->SetDrawColor(...$A2);
+    $pdf->SetLineWidth(0.6 * $k);
+    for ($yy = $oy + $f; $yy < $oy + $H - $f; $yy += 2.6) $pdf->Line($sx, $yy, $sx, min($yy + 1.4, $oy + $H - $f));
+
+    /* pravý panel: číslo poukazu (bez razítka a podpisu) */
+    $cx = ($sx + $ox + $W - $f) / 2;
+    $sy = $oy + $H / 2;
+    $pdf->SetFont('Manrope', 'B', $mmpt(3.6 * $k));
+    $pdf->SetTextColor(...$A);
+    $pdf->SpacedText($cx, $sy - 12.5 * $k, 'ČÍSLO POUKAZU', 0.55 * $k, 'C');
+    $code = (string) ($o['voucher'] ?? '');
+    if ($code !== '') {
+        $fit('Manrope', 'B', 7.5 * $k, $code, $ox + $W - $f - $sx - 10);
+        $pdf->SetTextColor(255, 255, 255);
+        $pdf->Text($cx - $pdf->GetStringWidth($code) / 2, $sy - 1.5 * $k, $code);
+    }
+    $pdf->SetDrawColor(...$A);
+    $pdf->SetLineWidth(0.45 * $k);
+    $pdf->Line($sx + 5, $sy + 3.5 * $k, $ox + $W - $f - 5, $sy + 3.5 * $k);
 }
 
 /** Jeden poukaz jako samostatné PDF (příloha e-mailu, „Tisk PDF“ ve správě) */
