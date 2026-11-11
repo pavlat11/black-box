@@ -24,6 +24,7 @@ def mkdirs(rd):
     made.add(rd)
 
 n = skip = 0
+last = []                         # HTML až nakonec – aby nová stránka nenačetla staré CSS/JS
 for root, _, files in os.walk(src):
     rel = os.path.relpath(root, src)
     rd = dst if rel == '.' else dst + '/' + rel.replace(os.sep, '/')
@@ -38,8 +39,15 @@ for root, _, files in os.walk(src):
                 continue
         except IOError:
             pass
+        if fn.endswith('.html'):
+            last.append((lp, rp))
+            continue
         sf.put(lp, rp)
         n += 1
         print('put', rp)
+for lp, rp in last:
+    sf.put(lp, rp)
+    n += 1
+    print('put', rp)
 sf.close(); t.close()
 print(f'Nahráno {n} souborů, beze změny {skip}.')

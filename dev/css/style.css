@@ -1989,7 +1989,7 @@ body.menu .bbmenu nav a:nth-child(7){transition-delay:.38s}body.menu .bbmenu nav
 @media (max-width:420px){.kx-mini{gap:12px;padding:16px 14px}.kx-ic{width:40px;height:40px}.kx-mini em{font-size:17px}}
 @media (max-width:340px){.kx-mini{gap:10px;padding:14px 12px}.kx-ic{width:34px;height:34px}.kx-mini b{font-size:12.5px}}
 
-/* ===== Dárkový poukaz – náhled podle tištěného poukazu (210 × 99 mm), 1mm = var(--m) ===== */
+/* ===== Dárkový poukaz (v2) – náhled podle tištěného poukazu (210 × 99 mm), 1mm = var(--m) ===== */
 .vcard.vt{container-type:inline-size;width:100%!important;max-width:none!important;justify-self:stretch;aspect-ratio:210/99!important;padding:0!important;gap:0!important;min-height:0!important;display:block!important;border:0!important;border-radius:6px!important;overflow:hidden;background:radial-gradient(ellipse at 88% 0%,rgba(176,102,255,.45),transparent 55%),radial-gradient(ellipse at 0% 100%,rgba(143,227,255,.14),transparent 50%),linear-gradient(135deg,#120d34,#07061a 62%)!important;box-shadow:0 30px 70px -30px rgba(0,0,0,.9)}
 .vcard.vt.gold{background:radial-gradient(ellipse at 88% 0%,rgba(240,207,133,.35),transparent 55%),radial-gradient(ellipse at 0% 100%,rgba(176,102,255,.2),transparent 50%),linear-gradient(135deg,#1d160b,#07061a 62%)!important}
 .vt-in{line-height:1;font-size:calc(4*var(--m));--m:calc(100cqw/210);--a:#be78ff;--a2:#a05af0;position:absolute;inset:0;color:#fff;font-family:Manrope,sans-serif}
