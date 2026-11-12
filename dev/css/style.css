@@ -2100,3 +2100,21 @@ body.menu .bbmenu nav a:nth-child(7){transition-delay:.38s}body.menu .bbmenu nav
 @media (max-width:760px){.cl-head{grid-template-columns:1fr}.cl-seal{position:absolute;right:var(--gutter);width:96px;opacity:.9}.cl-head{position:relative}.cl-head>div:first-child{padding-right:90px}.cl-card{padding:20px;grid-template-columns:1fr}.cl-ic{grid-row:auto;margin-bottom:10px}.cl-card .cl-steps{grid-column:auto}.cl-card h3{font-size:18px;margin-top:8px}.cl-card p{font-size:14px}.cl-fresh{grid-template-columns:1fr;text-align:center;justify-items:center}}
 @media (prefers-reduced-motion:reduce){.cl *,.cl *::before{animation:none!important}}
 
+
+/* ===== Menu „Více“ (PC) ===== */
+.more{position:relative;display:flex;align-items:center}
+.more-b{all:unset;cursor:pointer;display:flex;align-items:center;gap:6px;padding:6px 12px;margin:-6px 0;border-radius:999px;border:1px solid var(--line);color:var(--muted);font:inherit;transition:color .3s,border-color .3s,background .3s,box-shadow .3s}
+.more-b svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:transform .4s cubic-bezier(.2,.8,.2,1)}
+.more-b:hover,.more.open .more-b{color:#fff;border-color:rgba(176,102,255,.6);background:rgba(176,102,255,.12);box-shadow:0 0 18px -4px rgba(176,102,255,.8)}
+.more.open .more-b svg{transform:rotate(180deg)}
+.more-m{position:absolute;top:calc(100% + 18px);right:-8px;min-width:250px;padding:10px;border-radius:20px;background:rgba(10,8,32,.92);backdrop-filter:blur(18px) saturate(1.3);-webkit-backdrop-filter:blur(18px) saturate(1.3);border:1px solid var(--line);box-shadow:0 30px 70px -20px rgba(0,0,0,.9),0 0 50px -20px rgba(109,40,255,.9);opacity:0;visibility:hidden;transform:translateY(-8px) scale(.98);transform-origin:top right;transition:opacity .3s,transform .4s cubic-bezier(.2,.8,.2,1),visibility 0s .4s;z-index:60}
+.more-m::before{content:"";position:absolute;left:0;right:0;top:-20px;height:20px}
+.more-m::after{content:"";position:absolute;top:-6px;right:30px;width:12px;height:12px;background:rgba(10,8,32,.95);border-left:1px solid var(--line);border-top:1px solid var(--line);transform:rotate(45deg)}
+.more.open .more-m{opacity:1;visibility:visible;transform:none;transition:opacity .3s,transform .4s cubic-bezier(.2,.8,.2,1)}
+.links .more-m a{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:12px;color:var(--chrome);white-space:nowrap;opacity:0;transform:translateX(8px);transition:background .25s,color .25s,opacity .35s,transform .45s cubic-bezier(.2,.8,.2,1)}
+.links .more-m a::after,.links .more-m a::before{display:none}
+.links .more-m a small{font:400 10px var(--display);letter-spacing:.1em;color:var(--violet);width:18px}
+.links .more-m a:hover{background:rgba(176,102,255,.14);color:#fff;text-shadow:none}
+.more.open .more-m a{opacity:1;transform:none}
+.more.open .more-m a:nth-child(2){transition-delay:.03s}.more.open .more-m a:nth-child(3){transition-delay:.06s}.more.open .more-m a:nth-child(4){transition-delay:.09s}.more.open .more-m a:nth-child(5){transition-delay:.12s}.more.open .more-m a:nth-child(6){transition-delay:.15s}
+.links>a{white-space:nowrap}

@@ -1240,3 +1240,13 @@ try{
 (function(){const c=document.getElementById('cistota');if(!c)return;if(!('IntersectionObserver' in window)){c.classList.add('on');return;}
 new IntersectionObserver(es=>es.forEach(e=>c.classList.toggle('on',e.isIntersecting)),{threshold:.15}).observe(c);})();
 
+
+/* Menu „Více“ na PC – otevře se najetím i kliknutím */
+(function(){const m=document.getElementById('more');if(!m)return;const b=document.getElementById('moreB');let t=0;
+const set=o=>{clearTimeout(t);m.classList.toggle('open',o);b.setAttribute('aria-expanded',o)};
+b.addEventListener('click',e=>{e.stopPropagation();set(!m.classList.contains('open'))});
+m.addEventListener('mouseenter',()=>{if(matchMedia('(hover:hover)').matches)set(true)});
+m.addEventListener('mouseleave',()=>{t=setTimeout(()=>set(false),250)});
+m.querySelectorAll('.more-m a').forEach(a=>a.addEventListener('click',()=>set(false)));
+document.addEventListener('click',e=>{if(!m.contains(e.target))set(false)});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')set(false)});})();
