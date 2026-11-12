@@ -1240,16 +1240,6 @@ try{
 (function(){const c=document.getElementById('cistota');if(!c)return;if(!('IntersectionObserver' in window)){c.classList.add('on');return;}
 new IntersectionObserver(es=>es.forEach(e=>c.classList.toggle('on',e.isIntersecting)),{threshold:.15}).observe(c);})();
 
-/* Varianta B – cyklus čistoty */
-(function(){const R=document.getElementById('cyRing');if(!R)return;const S=document.getElementById('cistota2'),nodes=[...R.querySelectorAll('.cy-node')],ps=[...S.querySelectorAll('.cy-p')],pg=document.getElementById('cyPg'),mid=R.querySelector('.cy-mid'),num=document.getElementById('cyNum'),nm=document.getElementById('cyName'),panel=S.querySelector('.cy-panel');
-const names=['Nová voda','Čisté povlečení','Úklid a vůně','Osvěžení'],L=1068,DUR=6500;let i=0,t0=0,vis=false,raf=0,paused=false;
-function set(n){i=n;t0=performance.now();nodes.forEach((e,k)=>{e.classList.toggle('on',k===i);e.classList.toggle('done',k<i);});ps.forEach((e,k)=>e.classList.toggle('on',k===i));num.textContent='0'+(i+1);nm.textContent=names[i];mid.classList.remove('sw');void mid.offsetWidth;mid.classList.add('sw');}
-function tick(now){const f=Math.min(1,(now-t0)/DUR);pg.style.strokeDashoffset=L-L*((i+f)/4);panel.style.setProperty('--t',(f*100)+'%');if(f>=1&&!paused)set((i+1)%4);if(vis)raf=requestAnimationFrame(tick);}
-nodes.forEach((e,k)=>e.addEventListener('click',()=>set(k)));
-S.addEventListener('mouseenter',()=>{paused=true});S.addEventListener('mouseleave',()=>{paused=false;if(performance.now()-t0>DUR)set((i+1)%4);});
-if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){pg.style.strokeDashoffset=0;return;}
-set(0);new IntersectionObserver(es=>{vis=es[0].isIntersecting;cancelAnimationFrame(raf);if(vis){t0=performance.now()-(t0?0:0);raf=requestAnimationFrame(tick);}},{threshold:.3}).observe(S);})();
-
 /* Varianta C – fotka s body */
 (function(){const S=document.getElementById('cistota3');if(!S)return;const dots=[...S.querySelectorAll('.hs-dot')],tabs=[...S.querySelectorAll('.hs-tabs button')],cs=[...S.querySelectorAll('.hs-c')],box=S.querySelector('.hs-cards'),img=S.querySelector('.hs-ph img');
 const O=['62% 56%','80% 71%','56% 30%','32% 60%'],DUR=7000;let i=0,t0=performance.now(),vis=false,paused=false,raf=0;
