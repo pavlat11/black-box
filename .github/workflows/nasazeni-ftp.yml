@@ -5,8 +5,19 @@ name: Nasazení na web (FTP)
 # config.php a data objednávek se nenahrávají (build je neobsahuje).
 # Websupport/Active24: u FTP účtu musí Geo ochrana povolovat USA (GitHub Actions běží v USA).
 
+# Cíl „test“ = testovací verze (dev/) na https://blackboxx.cz/test/ (neindexuje se, objednávky tam nefungují).
+# Cíl „live“ = ostrý web https://blackboxx.cz/.
+
 on:
   workflow_dispatch:
+    inputs:
+      cil:
+        description: 'Kam nahrát'
+        type: choice
+        options: [test, live]
+        default: test
+
+run-name: Nasazení – ${{ inputs.cil }}
 
 concurrency:
   group: nasazeni-ftp
@@ -32,8 +43,13 @@ jobs:
           done
           case "$S" in *://*|*/*|*:*|*" "*) echo "::error::FTP_SERVER má obsahovat jen název serveru – bez ftp://, lomítek a portu."; exit 1;; esac
 
-      - name: Sestavit produkční web
-        run: python3 tools/build_prod.py build
+      - name: Sestavit web
+        run: |
+          if [ "${{ inputs.cil }}" = "live" ]; then
+            python3 tools/build_prod.py build
+          else
+            python3 tools/build_prod.py build --dev --bez-serveru
+          fi
 
       - name: Nahrát na server (SFTP)
         env:
@@ -43,5 +59,10 @@ jobs:
           D: ${{ secrets.FTP_DIR || '/blackboxx.cz/web/' }}
         run: |
           pip install -q paramiko
-          python3 tools/sftp_upload.py build
-          echo "Hotovo – web nahrán do $D"
+          if [ "${{ inputs.cil }}" = "live" ]; then
+            python3 tools/sftp_upload.py build
+            echo "Hotovo – ostrý web nahrán do $D (https://blackboxx.cz/)"
+          else
+            python3 tools/sftp_upload.py build test
+            echo "Hotovo – testovací verze nahrána do ${D%/}/test/ (https://blackboxx.cz/test/)"
+          fi

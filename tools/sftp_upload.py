@@ -1,6 +1,6 @@
 """Nahraje složku na server přes SFTP (bez lftp/apt). Na serveru nic nemaže.
 Nahrává jen soubory, které na serveru chybí nebo mají jinou velikost / jsou starší.
-Použití: python3 tools/sftp_upload.py <lokalni_slozka>   (údaje z proměnných S, U, P, D)"""
+Použití: python3 tools/sftp_upload.py <lokalni_slozka> [podslozka]   (údaje z proměnných S, U, P, D)"""
 import os, sys, stat, paramiko
 
 src = sys.argv[1]
@@ -11,6 +11,13 @@ t.connect(username=user, password=pw)
 sf = paramiko.SFTPClient.from_transport(t)
 sf.stat(dst)                      # cílová složka musí existovat
 made = set()
+if len(sys.argv) > 2:             # např. „test“ -> /…/web/test (vytvoří se)
+    sub = dst + '/' + sys.argv[2].strip('/')
+    try:
+        sf.stat(sub)
+    except IOError:
+        sf.mkdir(sub)
+    dst = sub
 
 def mkdirs(rd):
     if rd in made or rd == dst:
