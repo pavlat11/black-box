@@ -1235,3 +1235,8 @@ try{
   if(location.hash==='#rezervace')addEventListener('load',function(){if(stacked())setTimeout(go,150);});
 })();
 }catch(e){console.error(e)}
+
+/* Čistota – spustit animace, když je sekce vidět */
+(function(){const c=document.getElementById('cistota');if(!c)return;if(!('IntersectionObserver' in window)){c.classList.add('on');return;}
+new IntersectionObserver(es=>es.forEach(e=>c.classList.toggle('on',e.isIntersecting)),{threshold:.15}).observe(c);})();
+

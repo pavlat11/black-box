@@ -7,6 +7,7 @@ name: Nasazení na web (FTP)
 
 # Cíl „test“ = testovací verze (dev/) na https://blackboxx.cz/test/ (neindexuje se, objednávky tam nefungují).
 # Cíl „live“ = ostrý web https://blackboxx.cz/.
+# „smazat-test“ = smaže složku /test/ na serveru (při dalším nahrání na test se vytvoří znovu).
 
 on:
   workflow_dispatch:
@@ -14,7 +15,7 @@ on:
       cil:
         description: 'Kam nahrát'
         type: choice
-        options: [test, live]
+        options: [test, live, smazat-test]
         default: test
 
 run-name: Nasazení – ${{ inputs.cil }}
@@ -47,6 +48,8 @@ jobs:
         run: |
           if [ "${{ inputs.cil }}" = "live" ]; then
             python3 tools/build_prod.py build
+          elif [ "${{ inputs.cil }}" = "smazat-test" ]; then
+            mkdir -p build
           else
             python3 tools/build_prod.py build --dev --bez-serveru
           fi
@@ -59,7 +62,9 @@ jobs:
           D: ${{ secrets.FTP_DIR || '/blackboxx.cz/web/' }}
         run: |
           pip install -q paramiko
-          if [ "${{ inputs.cil }}" = "live" ]; then
+          if [ "${{ inputs.cil }}" = "smazat-test" ]; then
+            python3 tools/sftp_smazat.py test
+          elif [ "${{ inputs.cil }}" = "live" ]; then
             python3 tools/sftp_upload.py build
             echo "Hotovo – ostrý web nahrán do $D (https://blackboxx.cz/)"
           else
