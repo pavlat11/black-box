@@ -27,7 +27,7 @@
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "LocalBusiness", "name": "Black Box Luxury", "telephone": "+420737222266", "description": "Privátní relaxační prostor pro páry: vířivka, královská postel, hvězdné nebe, špičkový zvuk a velkoplošná projekce. Bloky po 2 hodinách.", "url": "https://blackboxx.cz/", "image": ["https://www.blackboxx.cz/og-image.jpg", "https://www.blackboxx.cz/og-image.jpg"], "logo": "https://www.blackboxx.cz/og-image.jpg", "email": "info@blackboxx.cz", "address": {"@type": "PostalAddress", "streetAddress": "Purkyňova 2961", "postalCode": "390 02", "addressLocality": "Tábor", "addressCountry": "CZ"}, "openingHoursSpecification": [{"@type": "OpeningHoursSpecification", "dayOfWeek": ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday"], "opens": "11:00", "closes": "19:00"}, {"@type": "OpeningHoursSpecification", "dayOfWeek": ["Friday", "Saturday"], "opens": "10:00", "closes": "23:59"}], "amenityFeature": [{"@type": "LocationFeatureSpecification", "name": "Vířivka", "value": true}, {"@type": "LocationFeatureSpecification", "name": "Hvězdné nebe", "value": true}, {"@type": "LocationFeatureSpecification", "name": "Velkoplošná projekce", "value": true}, {"@type": "LocationFeatureSpecification", "name": "Prostorový zvuk", "value": true}, {"@type": "LocationFeatureSpecification", "name": "King Size postel", "value": true}]}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Pro koho je Black Box určený?", "acceptedAnswer": {"@type": "Answer", "text": "Pro páry. Prostor je privátní a během Vašeho bloku v něm nikdo jiný není."}}, {"@type": "Question", "name": "Jak dlouho návštěva trvá?", "acceptedAnswer": {"@type": "Answer", "text": "Jeden blok trvá 2 hodiny. Od neděle do čtvrtka jsou bloky 11–13, 14–16 a 17–19. V pátek a sobotu 10–12, 13–15, 16–18, 19–21 a 22–24."}}, {"@type": "Question", "name": "Co je Gold Time?", "acceptedAnswer": {"@type": "Answer", "text": "Poslední večerní blok v pátek a sobotu od 22 do 24 hodin. Nejhlubší tma, nejvíc klidu a noc začíná tady."}}, {"@type": "Question", "name": "Jak probíhá příchod?", "acceptedAnswer": {"@type": "Answer", "text": "Vždy Vás osobně přivítáme a uvedeme dovnitř. Díky tomu držíme maximální čistotu, bezpečí a klid. Diskrétnost je pro nás samozřejmost."}}, {"@type": "Question", "name": "Můžu si pustit vlastní hudbu?", "acceptedAnswer": {"@type": "Answer", "text": "Ano. V prostoru je připravené zařízení s přístupem na YouTube Music, pustíte si cokoliv chcete."}}, {"@type": "Question", "name": "Můžu si na plátno pustit film?", "acceptedAnswer": {"@type": "Answer", "text": "Ne, projekce běží výhradně přes designovou AI aplikaci. Na plátně se promítají živé vizuální světy, které dotvářejí atmosféru prostoru."}}, {"@type": "Question", "name": "Dá se návštěva darovat?", "acceptedAnswer": {"@type": "Answer", "text": "Ano. Dárkový poukaz na klasický blok i na Gold Time je na doručitele – pošleme ho e-mailem nebo poštou."}}]}</script>
 
-<link rel="stylesheet" href="css/style.css?v=df8377cc">
+<link rel="stylesheet" href="css/style.css?v=5ad4b7a3">
 </head>
 <body>
 
@@ -54,6 +54,17 @@
       <a href="#poukazy">Poukazy</a>
       <a href="#rezervace">Rezervace</a>
       <a href="#kontakt">Kontakt</a>
+      <div class="more" id="more">
+        <button class="more-b" id="moreB" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="moreM">Více<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5"/></svg></button>
+        <div class="more-m" id="moreM">
+          <a href="#koncept"><small>01</small>O co jde</a>
+          <a href="#pribeh"><small>02</small>Vaše návštěva</a>
+          <a href="#projekce"><small>03</small>Projekce a zvuk</a>
+          <a href="#cistota"><small>04</small>Čistota a soukromí</a>
+          <a href="#navsteva"><small>05</small>Jak probíhá návštěva</a>
+          <a href="#faq"><small>06</small>Časté dotazy</a>
+        </div>
+      </div>
     </nav>
     <div class="nav-r">
       <button class="snd" id="snd" type="button" aria-pressed="false" aria-label="Atmosféra – ambientní hudba"><span class="bars"><span></span><span></span><span></span><span></span></span><span class="t">Atmosféra</span></button>
@@ -719,6 +730,6 @@
 
 <div class="gold-wash" id="goldWash" aria-hidden="true"></div>
 <script src="js/three.min.js?v=eb854986"></script>
-<script src="js/main.js?v=52e63e73"></script>
+<script src="js/main.js?v=91114820"></script>
 </body>
 </html>
