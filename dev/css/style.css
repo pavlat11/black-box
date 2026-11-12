@@ -2099,3 +2099,35 @@ body.menu .bbmenu nav a:nth-child(7){transition-delay:.38s}body.menu .bbmenu nav
 @media (max-width:960px){.cl-grid{grid-template-columns:1fr}.cl-card{display:grid;grid-template-columns:auto 1fr;column-gap:20px}.cl-ic{grid-row:1/span 4;width:76px;height:58px}.cl-card .cl-steps{grid-column:2}}
 @media (max-width:760px){.cl-head{grid-template-columns:1fr}.cl-seal{position:absolute;right:var(--gutter);width:96px;opacity:.9}.cl-head{position:relative}.cl-head>div:first-child{padding-right:90px}.cl-card{padding:20px;grid-template-columns:1fr}.cl-ic{grid-row:auto;margin-bottom:10px}.cl-card .cl-steps{grid-column:auto}.cl-card h3{font-size:18px;margin-top:8px}.cl-card p{font-size:14px}.cl-fresh{grid-template-columns:1fr;text-align:center;justify-items:center}}
 @media (prefers-reduced-motion:reduce){.cl *,.cl *::before{animation:none!important}}
+
+/* ===== Varianta B: cyklus po každém hostovi ===== */
+.cy-tag{display:inline-block;margin-bottom:22px;padding:6px 12px;border-radius:999px;border:1px dashed var(--gold);color:var(--gold);font:700 11px var(--body);letter-spacing:.18em;text-transform:uppercase}
+.cy-in{display:grid;grid-template-columns:1fr minmax(300px,460px);gap:clamp(32px,6vw,90px);align-items:center}
+.cy h2 em{font-style:normal;background:linear-gradient(90deg,var(--ice),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
+.cy-lead{color:var(--muted);margin-top:18px;max-width:560px;line-height:1.6;font-size:clamp(15px,1.4vw,18px)}
+.cy-panel{position:relative;margin-top:32px;min-height:150px;padding:26px 28px;border-radius:22px;border:1px solid var(--line);background:linear-gradient(180deg,rgba(176,102,255,.10),rgba(176,102,255,.02));overflow:hidden}
+.cy-panel::before{content:"";position:absolute;left:0;top:0;height:2px;width:var(--t,0%);background:linear-gradient(90deg,var(--ice),var(--violet));transition:width .2s linear}
+.cy-p{position:absolute;inset:26px 28px;opacity:0;transform:translateY(12px);transition:opacity .6s,transform .6s cubic-bezier(.2,.8,.2,1);pointer-events:none}
+.cy-p.on{position:relative;inset:auto;opacity:1;transform:none}
+.cy-k{font:400 12px var(--display);letter-spacing:.18em;text-transform:uppercase;color:var(--violet)}
+.cy-p p{margin-top:12px;color:var(--chrome);font-size:clamp(15px,1.3vw,17px);line-height:1.6}
+.cy-ring{position:relative;aspect-ratio:1;width:100%}
+.cy-ring>svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
+.cy-ring .tr{fill:none;stroke:var(--line);stroke-width:2;stroke-dasharray:2 8}
+.cy-ring .pg{fill:none;stroke:url(#cyG);stroke-width:3;stroke-linecap:round;stroke-dasharray:1068;stroke-dashoffset:1068;filter:drop-shadow(0 0 8px rgba(143,227,255,.7));transition:stroke-dashoffset .3s linear}
+.cy-ring::before{content:"";position:absolute;inset:18%;border-radius:50%;background:radial-gradient(circle at 40% 30%,rgba(143,227,255,.18),rgba(109,40,255,.18) 55%,transparent 72%);box-shadow:0 0 90px -20px rgba(176,102,255,.8);animation:clpulse 4s ease-in-out infinite}
+.cy-mid{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;pointer-events:none}
+.cy-mid small{font:700 11px var(--body);letter-spacing:.3em;text-transform:uppercase;color:var(--muted)}
+.cy-mid b{font:400 clamp(56px,8vw,96px)/1 var(--display);background:linear-gradient(180deg,#fff,rgba(176,102,255,.8));-webkit-background-clip:text;background-clip:text;color:transparent;margin:6px 0}
+.cy-mid span{font:400 clamp(14px,1.5vw,18px) var(--display);color:#fff}
+.cy-mid.sw b,.cy-mid.sw span{animation:cysw .6s cubic-bezier(.2,.8,.2,1)}
+@keyframes cysw{from{opacity:0;transform:translateY(10px)}}
+.cy-node{all:unset;cursor:pointer;position:absolute;left:50%;top:50%;width:clamp(48px,6vw,62px);aspect-ratio:1;margin:calc(clamp(48px,6vw,62px)/-2);border-radius:50%;display:grid;place-items:center;background:var(--ink);border:1px solid var(--line);transform:rotate(var(--a)) translateY(-42.5cqw) rotate(calc(-1*var(--a)));transition:border-color .4s,box-shadow .4s,background .4s}
+.cy-ring{container-type:inline-size}
+.cy-node svg{width:46%;height:46%;fill:none;stroke:var(--muted);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:stroke .4s}
+.cy-node i{position:absolute;top:calc(100% + 8px);font:700 10px var(--body);letter-spacing:.2em;text-transform:uppercase;color:var(--muted);font-style:normal;white-space:nowrap;transition:color .4s}
+.cy-node.on,.cy-node:hover{border-color:var(--ice);box-shadow:0 0 0 6px rgba(143,227,255,.08),0 0 30px rgba(143,227,255,.45);background:#120e34}
+.cy-node.on svg,.cy-node:hover svg{stroke:#fff}.cy-node.on i{color:#fff}
+.cy-node.done svg{stroke:var(--violet)}
+@media (max-width:860px){.cy-in{grid-template-columns:1fr}.cy-ring{max-width:340px;margin-inline:auto;order:-1}.cy-panel{margin-top:22px}}
+@media (prefers-reduced-motion:reduce){.cy *{animation:none!important}}
