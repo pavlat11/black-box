@@ -1242,7 +1242,7 @@ new IntersectionObserver(es=>es.forEach(e=>c.classList.toggle('on',e.isIntersect
 
 /* Varianta C – fotka s body */
 (function(){const S=document.getElementById('cistota3');if(!S)return;const dots=[...S.querySelectorAll('.hs-dot')],tabs=[...S.querySelectorAll('.hs-tabs button')],cs=[...S.querySelectorAll('.hs-c')],box=S.querySelector('.hs-cards'),img=S.querySelector('.hs-ph img');
-const O=['62% 56%','80% 71%','56% 30%','32% 60%'],DUR=7000;let i=0,t0=performance.now(),vis=false,paused=false,raf=0;
+const O=['62% 56%','80% 71%','56% 30%','32% 60%'],DUR=4000;let i=0,t0=performance.now(),vis=false,paused=false,raf=0;
 function set(n){i=n;t0=performance.now();[dots,tabs,cs].forEach(a=>a.forEach((e,k)=>e.classList.toggle('on',k===i)));img.style.transformOrigin=O[i];img.style.transform='scale(1.12)';}
 function tick(now){const f=Math.min(1,(now-t0)/DUR);box.style.setProperty('--t',(f*100)+'%');if(f>=1&&!paused)set((i+1)%4);if(vis)raf=requestAnimationFrame(tick);}
 [...dots,...tabs].forEach(e=>e.addEventListener('click',()=>set(+e.dataset.i)));
