@@ -2118,3 +2118,8 @@ body.menu .bbmenu nav a:nth-child(7){transition-delay:.38s}body.menu .bbmenu nav
 .more.open .more-m a{opacity:1;transform:none}
 .more.open .more-m a:nth-child(2){transition-delay:.03s}.more.open .more-m a:nth-child(3){transition-delay:.06s}.more.open .more-m a:nth-child(4){transition-delay:.09s}.more.open .more-m a:nth-child(5){transition-delay:.12s}.more.open .more-m a:nth-child(6){transition-delay:.15s}
 .links>a{white-space:nowrap}
+
+/* poukaz na webu = SVG (souřadnice z generátoru PDF); SVG text Android/FB nezvětšuje */
+.vcard.vt .vt-svg{position:absolute;inset:0;width:100%;height:100%;display:block;overflow:visible}
+.vcard.vt .vs-g,.vcard.vt.gold .vs-s{display:none}.vcard.vt.gold .vs-g{display:inline}
+.vcard.vt .vt-svg text{white-space:pre;-webkit-text-size-adjust:none;text-size-adjust:none}
