@@ -1250,3 +1250,8 @@ m.addEventListener('mouseleave',()=>{t=setTimeout(()=>set(false),250)});
 m.querySelectorAll('.more-m a').forEach(a=>a.addEventListener('click',()=>set(false)));
 document.addEventListener('click',e=>{if(!m.contains(e.target))set(false)});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')set(false)});})();
+
+/* Poukaz: vyrovnat zvětšené písmo (FB/Instagram prohlížeč, velké písmo v Androidu) */
+(function(){const c=document.getElementById('vcard');if(!c)return;
+function fix(){const t=document.createElement('span');t.style.cssText='position:absolute;visibility:hidden;font-size:100px;line-height:1;height:1em;width:1em;display:block;padding:0;border:0';c.appendChild(t);const f=t.offsetHeight/100;t.remove();c.style.setProperty('--tz',f>0.5&&f<4?f:1);}
+fix();addEventListener('resize',fix);if(document.fonts)document.fonts.ready.then(fix);})();
