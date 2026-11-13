@@ -2118,7 +2118,3 @@ body.menu .bbmenu nav a:nth-child(7){transition-delay:.38s}body.menu .bbmenu nav
 .more.open .more-m a{opacity:1;transform:none}
 .more.open .more-m a:nth-child(2){transition-delay:.03s}.more.open .more-m a:nth-child(3){transition-delay:.06s}.more.open .more-m a:nth-child(4){transition-delay:.09s}.more.open .more-m a:nth-child(5){transition-delay:.12s}.more.open .more-m a:nth-child(6){transition-delay:.15s}
 .links>a{white-space:nowrap}
-
-/* poukaz na webu = obrázek vygenerovaný z PDF (nerozbije ho zvětšené písmo v telefonu / FB prohlížeči) */
-.vcard.vt .vt-im{position:absolute;inset:0;width:100%;height:100%;display:block;object-fit:cover;transition:opacity .6s}
-.vcard.vt .vt-go,.vcard.vt.gold .vt-st{opacity:0}.vcard.vt.gold .vt-go{opacity:1}
