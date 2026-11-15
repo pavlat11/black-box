@@ -509,7 +509,7 @@ if('IntersectionObserver' in window&&!reduce){const io=new IntersectionObserver(
     fetch('objednavka.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:ctl.signal})
       .then(r=>r.json().catch(()=>({ok:false,_fallback:true})).then(j=>({r,j})))
       .then(({r,j})=>{
-        if(j.ok){const m=esc(v('voMail'));
+        if(j.ok){window.bbStat&&bbStat('poukaz');const m=esc(v('voMail'));
           if(j.mode==='invoice')done('Faktura je na cestě','Poslali jsme ji na <b>'+m+'</b>. '+after);
           else done('Objednávka přijata','Fakturu Vám brzy pošleme na <b>'+m+'</b>. '+after);
           return;}
@@ -1167,7 +1167,7 @@ try{
     const after=!wv?'Po připsání platby Vám přijde potvrzení s číslem poukazu e-mailem.':p?'Po připsání platby Vám poukaz pošleme poštou.':'Po připsání platby Vám poukaz přijde e-mailem.';
     fetch('objednavka.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:ctl.signal})
       .then(r=>r.json().catch(()=>({ok:false})).then(j=>({r,j})))
-      .then(({r,j})=>{if(j.ok){const m=esc(v('qoMail'));
+      .then(({r,j})=>{if(j.ok){window.bbStat&&bbStat('poukaz');const m=esc(v('qoMail'));
           if(j.mode==='invoice')done('Faktura je na cestě','Poslali jsme ji na <b>'+m+'</b>. '+after);
           else done('Objednávka přijata','Fakturu Vám brzy pošleme na <b>'+m+'</b>. '+after);return;}
         if(r.status===422||r.status===429){err.textContent=j.error||'Zkontrolujte prosím údaje.';return;}throw new Error('server');})
@@ -1255,3 +1255,15 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')set(false)});})();
 (function(){const c=document.getElementById('vcard');if(!c)return;
 function fix(){const t=document.createElement('span');t.style.cssText='position:absolute;visibility:hidden;font-size:100px;line-height:1;height:1em;width:1em;display:block;padding:0;border:0';c.appendChild(t);const f=t.offsetHeight/100;t.remove();c.style.setProperty('--tz',f>0.5&&f<4?f:1);}
 fix();addEventListener('resize',fix);if(document.fonts)document.fonts.ready.then(fix);})();
+
+/* Návštěvnost – vlastní statistika (bez cookies, IP se neukládá). Zobrazení + kliky na telefon/e-mail. */
+(function(){try{
+  if(location.protocol!=='https:'&&location.protocol!=='http:')return;
+  if(/github\.io$|localhost|127\.0\.0\.1/.test(location.hostname))return;
+  const qs=new URLSearchParams(location.search);
+  const send=d=>{const b=JSON.stringify(d);if(navigator.sendBeacon&&navigator.sendBeacon('nv.php',new Blob([b],{type:'application/json'})))return;fetch('nv.php',{method:'POST',body:b,keepalive:true,headers:{'Content-Type':'application/json'}}).catch(()=>{});};
+  window.bbStat=e=>send({e:e});
+  send({e:'view',r:document.referrer||'',u:qs.get('utm_source')||'',c:qs.get('utm_campaign')||'',q:location.search.slice(0,300)});
+  document.addEventListener('click',ev=>{const a=ev.target.closest&&ev.target.closest('a[href]');if(!a)return;const h=a.getAttribute('href')||'';
+    if(h.startsWith('tel:'))send({e:'tel'});else if(h.startsWith('mailto:'))send({e:'mail'});},{capture:true,passive:true});
+}catch(e){}})();

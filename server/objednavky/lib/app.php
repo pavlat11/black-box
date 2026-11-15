@@ -901,6 +901,19 @@ function bb_db_install(PDO $db): void
         hodnota  TEXT        NOT NULL,
         upraveno DATETIME    NOT NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Black Box – nastavení ze správy (ceník)'");
+    $db->exec("CREATE TABLE IF NOT EXISTS bb_navstevy (
+        id         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        cas        DATETIME     NOT NULL,
+        den        DATE         NOT NULL,
+        navstevnik CHAR(16)     NOT NULL COMMENT 'anonymní otisk – mění se každý den, IP se neukládá',
+        udalost    VARCHAR(20)  NOT NULL DEFAULT 'view' COMMENT 'view / tel / poukaz / mail',
+        zdroj      VARCHAR(40)  NOT NULL DEFAULT '',
+        odkaz      VARCHAR(120) NOT NULL DEFAULT '' COMMENT 'doména, ze které návštěvník přišel',
+        kampan     VARCHAR(80)  NOT NULL DEFAULT '',
+        zarizeni   VARCHAR(10)  NOT NULL DEFAULT '',
+        KEY k_den (den),
+        KEY k_den_udalost (den, udalost)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Black Box – návštěvnost webu (bez cookies, anonymně)'");
     $db->exec("CREATE TABLE IF NOT EXISTS bb_cislovani (
         rok      INT NOT NULL PRIMARY KEY,
         posledni INT NOT NULL
@@ -1469,4 +1482,89 @@ function bb_send_posted(array $cfg, array $o): void
     $m->AltBody = "Tištěný dárkový poukaz č. {$o['voucher']} jsme odeslali poštou na adresu {$o['customer']['name']}, {$o['customer']['addr']}.\n"
         . "Termín si obdarovaný domluví na {$cfg['phone']}.\n\nBlack Box Luxury";
     $m->send();
+}
+
+
+/* ---------- návštěvnost webu (vlastní, bez cookies; IP adresa se neukládá) ---------- */
+
+/** Odkud návštěvník přišel – podle utm_source, fbclid/gclid, aplikace (FB/IG prohlížeč) nebo odkazující domény. */
+function bb_stat_source(string $ref, string $utm, string $q, string $ua): array
+{
+    $host = strtolower((string) parse_url($ref, PHP_URL_HOST));
+    $host = preg_replace('/^www\./', '', $host);
+    $self = strtolower(preg_replace('/^www\./', '', (string) ($_SERVER['HTTP_HOST'] ?? '')));
+    if ($host !== '' && $self !== '' && ($host === $self || str_ends_with($host, '.' . $self))) {
+        $host = '';                                   // proklik v rámci webu
+    }
+    $u = strtolower(trim($utm));
+    $map = [
+        'Facebook'  => '/(^|\.)(facebook\.com|fb\.com|fb\.me)$|^facebook|^fb$/',
+        'Instagram' => '/(^|\.)instagram\.com$|^instagram|^ig$/',
+        'Google'    => '/(^|\.)google\.[a-z.]+$|^google/',
+        'Seznam'    => '/(^|\.)seznam\.cz$|(^|\.)search\.seznam\.cz$|^seznam|(^|\.)firmy\.cz$|(^|\.)mapy\.(cz|com)$/',
+        'Bing'      => '/(^|\.)bing\.com$|^bing/',
+        'TikTok'    => '/(^|\.)tiktok\.com$|^tiktok/',
+        'WhatsApp'  => '/(^|\.)whatsapp\.(com|net)$|^whatsapp/',
+        'Messenger' => '/(^|\.)messenger\.com$|^messenger/',
+    ];
+    $src = '';
+    foreach ([$u, $host] as $v) {
+        if ($v === '') continue;
+        foreach ($map as $name => $re) {
+            if (preg_match($re, $v)) { $src = $name; break 2; }
+        }
+    }
+    if ($src === '') {
+        if (str_contains($q, 'fbclid=')) $src = 'Facebook';
+        elseif (str_contains($q, 'gclid=')) $src = 'Google';
+        elseif (preg_match('/Instagram/i', $ua)) $src = 'Instagram';
+        elseif (preg_match('/FBAN|FBAV|FB_IAB|FBIOS/i', $ua)) $src = 'Facebook';
+        elseif ($u !== '') $src = mb_substr($u, 0, 40);
+        elseif ($host !== '') $src = 'Jiný web';
+        else $src = 'Přímo';
+    }
+    return [$src, mb_substr($host, 0, 120)];
+}
+
+function bb_stat_device(string $ua): string
+{
+    if (preg_match('/iPad|Tablet|Nexus (7|9|10)|SM-T|Kindle|Silk/i', $ua) || (preg_match('/Android/i', $ua) && !preg_match('/Mobile/i', $ua))) return 'tablet';
+    if (preg_match('/Mobi|iPhone|iPod|Android|IEMobile|Opera Mini/i', $ua)) return 'mobil';
+    return 'pc';
+}
+
+/** Uloží jednu událost (zobrazení stránky / klik). Roboty a správce (cookie bb_nostat) přeskočí. */
+function bb_stat_record(PDO $db, array $in): void
+{
+    $ua = (string) ($_SERVER['HTTP_USER_AGENT'] ?? '');
+    if ($ua === '' || preg_match('/bot|crawl|spider|slurp|facebookexternalhit|preview|headless|lighthouse|pingdom|uptime|monitor|curl|wget|python|axios|java\//i', $ua)) return;
+    if (!empty($_COOKIE['bb_nostat'])) return;
+    $ev = (string) ($in['e'] ?? 'view');
+    if (!in_array($ev, ['view', 'tel', 'poukaz', 'mail'], true)) return;
+
+    $salt = $db->query("SELECT hodnota FROM bb_nastaveni WHERE klic = 'stat_salt'")->fetchColumn();
+    if (!$salt) {
+        $salt = bin2hex(random_bytes(16));
+        $db->prepare("INSERT IGNORE INTO bb_nastaveni (klic, hodnota, upraveno) VALUES ('stat_salt', ?, NOW())")->execute([$salt]);
+    }
+    $ip = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
+    $vis = substr(hash('sha256', $salt . date('Y-m-d') . $ip . $ua), 0, 16);   // jen na dnešek, zpětně nedohledatelné
+    $q = (string) ($in['q'] ?? '');
+    [$src, $host] = bb_stat_source((string) ($in['r'] ?? ''), (string) ($in['u'] ?? ''), $q, $ua);
+    $camp = mb_substr(trim((string) ($in['c'] ?? '')), 0, 80);
+
+    if ($ev === 'view') {   // stejný návštěvník během 30 minut = jedna návštěva
+        $st = $db->prepare("SELECT 1 FROM bb_navstevy WHERE navstevnik = ? AND udalost = 'view' AND cas > (NOW() - INTERVAL 30 MINUTE) LIMIT 1");
+        $st->execute([$vis]);
+        if ($st->fetchColumn()) return;
+    } else {                // klik přiřadit ke zdroji dnešní návštěvy
+        $st = $db->prepare("SELECT zdroj, odkaz, kampan FROM bb_navstevy WHERE navstevnik = ? AND udalost = 'view' ORDER BY id DESC LIMIT 1");
+        $st->execute([$vis]);
+        if ($r = $st->fetch()) { $src = $r['zdroj']; $host = $r['odkaz']; $camp = $r['kampan']; }
+    }
+    $db->prepare('INSERT INTO bb_navstevy (cas, den, navstevnik, udalost, zdroj, odkaz, kampan, zarizeni) VALUES (NOW(), CURDATE(), ?, ?, ?, ?, ?, ?)')
+       ->execute([$vis, $ev, $src, $host, $camp, bb_stat_device($ua)]);
+    if (random_int(1, 500) === 1) {
+        $db->exec('DELETE FROM bb_navstevy WHERE den < (CURDATE() - INTERVAL 400 DAY)');
+    }
 }
