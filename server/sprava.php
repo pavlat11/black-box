@@ -657,7 +657,6 @@ if (isset($_GET['navstevnost'])) {
     $people = $one("SELECT COUNT(DISTINCT DATE_FORMAT(den,'%Y-%m'), navstevnik) FROM `$T` WHERE udalost='view' AND den >= ?", [$from]);
     $back   = $one("SELECT COUNT(*) FROM (SELECT 1 FROM `$T` WHERE udalost='view' AND den >= ? GROUP BY DATE_FORMAT(den,'%Y-%m'), navstevnik HAVING COUNT(*) > 1) x", [$from]);
     $today  = $one("SELECT COUNT(DISTINCT navstevnik) FROM `$T` WHERE udalost='view' AND den = CURDATE()");
-    $ev = []; foreach ($q("SELECT udalost, COUNT(*) n FROM `$T` WHERE udalost<>'view' AND den >= ? GROUP BY udalost", [$from]) as $r) $ev[$r['udalost']] = (int) $r['n'];
     $card = fn($t, $v, $sub = '', $cls = '') => '<div class="sc ' . $cls . '"><span>' . $t . '</span><b>' . $v . '</b><small>' . $sub . '</small></div>';
     $PER = [1 => 'Dnes', 7 => '7 dní', 30 => '30 dní', 90 => '90 dní', 365 => 'Rok'];
     $tabs = '<div class="tabs" style="margin:0 0 16px">';
@@ -668,7 +667,6 @@ if (isset($_GET['navstevnost'])) {
         . $card('Dnes', $nf($today), 'návštěvníků', 'hi')
         . $card($D === 1 ? 'Návštěvy dnes' : 'Návštěvy za ' . $PER[$D], $nf($visits), $nf($people) . ' různých lidí*')
         . $card('Vracející se', $nf($back), $people ? round($back / $people * 100) . ' % lidí přišlo víckrát' : '—')
-        . $card('Kliknutí na telefon', $nf($ev['tel'] ?? 0), $visits ? round(($ev['tel'] ?? 0) / $visits * 100, 1) . ' % návštěv' : '—')
         . '</div>';
 
     /* graf po dnech / měsících */
@@ -694,15 +692,14 @@ if (isset($_GET['navstevnost'])) {
 
     /* zdroje */
     $src = $q("SELECT zdroj, COUNT(*) n FROM `$T` WHERE udalost='view' AND den >= ? GROUP BY zdroj ORDER BY n DESC", [$from]);
-    $tel = []; foreach ($q("SELECT zdroj, COUNT(*) n FROM `$T` WHERE udalost='tel' AND den >= ? GROUP BY zdroj", [$from]) as $r) $tel[$r['zdroj']] = (int) $r['n'];
     $out .= '<div class="o"><div class="ttl" style="margin-bottom:10px">Odkud lidé přišli</div>';
     if (!$src) {
         $out .= '<p class="meta" style="margin:0">Zatím žádná data – návštěvy se začnou počítat od nahrání této verze webu.</p>';
     } else {
-        $out .= '<table class="st"><thead><tr><th>Zdroj</th><th class="r">Návštěvy</th><th class="r">Podíl</th><th class="r">Telefon</th><th class="barc"></th></tr></thead><tbody>';
+        $out .= '<table class="st"><thead><tr><th>Zdroj</th><th class="r">Návštěvy</th><th class="r">Podíl</th><th class="barc"></th></tr></thead><tbody>';
         $top = (int) $src[0]['n'];
         foreach ($src as $r) {
-            $out .= '<tr><td><b>' . $h($r['zdroj']) . '</b></td><td class="r">' . $nf($r['n']) . '</td><td class="r">' . round($r['n'] / max(1, $visits) * 100) . ' %</td><td class="r">' . ($tel[$r['zdroj']] ?? 0) . '</td><td class="barc"><i style="width:' . round($r['n'] / $top * 100) . '%"></i></td></tr>';
+            $out .= '<tr><td><b>' . $h($r['zdroj']) . '</b></td><td class="r">' . $nf($r['n']) . '</td><td class="r">' . round($r['n'] / max(1, $visits) * 100) . ' %</td><td class="barc"><i style="width:' . round($r['n'] / $top * 100) . '%"></i></td></tr>';
         }
         $out .= '</tbody></table>';
     }
