@@ -905,7 +905,7 @@ function bb_db_install(PDO $db): void
         id         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
         cas        DATETIME     NOT NULL,
         den        DATE         NOT NULL,
-        navstevnik CHAR(16)     NOT NULL COMMENT 'anonymní otisk – mění se každý den, IP se neukládá',
+        navstevnik CHAR(16)     NOT NULL COMMENT 'anonymní otisk – platí jeden kalendářní měsíc, IP se neukládá',
         udalost    VARCHAR(20)  NOT NULL DEFAULT 'view' COMMENT 'view / tel / poukaz / mail',
         zdroj      VARCHAR(40)  NOT NULL DEFAULT '',
         odkaz      VARCHAR(120) NOT NULL DEFAULT '' COMMENT 'doména, ze které návštěvník přišel',
@@ -1533,9 +1533,20 @@ function bb_stat_device(string $ua): string
     return 'pc';
 }
 
+/** Tabulka návštěvnosti – testovací web (/test/) zapisuje do vlastní tabulky, aby se data nemíchala. */
+function bb_stat_table(PDO $db): string
+{
+    static $t = null;
+    if ($t !== null) return $t;
+    $t = preg_replace('/[^a-z0-9_]/', '', (string) ($GLOBALS['cfg']['stat_table'] ?? '')) ?: 'bb_navstevy';
+    if ($t !== 'bb_navstevy') $db->exec("CREATE TABLE IF NOT EXISTS `$t` LIKE bb_navstevy");
+    return $t;
+}
+
 /** Uloží jednu událost (zobrazení stránky / klik). Roboty a správce (cookie bb_nostat) přeskočí. */
 function bb_stat_record(PDO $db, array $in): void
 {
+    $T = bb_stat_table($db);
     $ua = (string) ($_SERVER['HTTP_USER_AGENT'] ?? '');
     if ($ua === '' || preg_match('/bot|crawl|spider|slurp|facebookexternalhit|preview|headless|lighthouse|pingdom|uptime|monitor|curl|wget|python|axios|java\//i', $ua)) return;
     if (!empty($_COOKIE['bb_nostat'])) return;
@@ -1548,23 +1559,23 @@ function bb_stat_record(PDO $db, array $in): void
         $db->prepare("INSERT IGNORE INTO bb_nastaveni (klic, hodnota, upraveno) VALUES ('stat_salt', ?, NOW())")->execute([$salt]);
     }
     $ip = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
-    $vis = substr(hash('sha256', $salt . date('Y-m-d') . $ip . $ua), 0, 16);   // jen na dnešek, zpětně nedohledatelné
+    $vis = substr(hash('sha256', $salt . date('Y-m') . $ip . $ua), 0, 16);   // platí jen tento měsíc, IP z něj nejde zjistit
     $q = (string) ($in['q'] ?? '');
     [$src, $host] = bb_stat_source((string) ($in['r'] ?? ''), (string) ($in['u'] ?? ''), $q, $ua);
     $camp = mb_substr(trim((string) ($in['c'] ?? '')), 0, 80);
 
     if ($ev === 'view') {   // stejný návštěvník během 30 minut = jedna návštěva
-        $st = $db->prepare("SELECT 1 FROM bb_navstevy WHERE navstevnik = ? AND udalost = 'view' AND cas > (NOW() - INTERVAL 30 MINUTE) LIMIT 1");
+        $st = $db->prepare("SELECT 1 FROM `$T` WHERE navstevnik = ? AND udalost = 'view' AND cas > (NOW() - INTERVAL 30 MINUTE) LIMIT 1");
         $st->execute([$vis]);
         if ($st->fetchColumn()) return;
     } else {                // klik přiřadit ke zdroji dnešní návštěvy
-        $st = $db->prepare("SELECT zdroj, odkaz, kampan FROM bb_navstevy WHERE navstevnik = ? AND udalost = 'view' ORDER BY id DESC LIMIT 1");
+        $st = $db->prepare("SELECT zdroj, odkaz, kampan FROM `$T` WHERE navstevnik = ? AND udalost = 'view' ORDER BY id DESC LIMIT 1");
         $st->execute([$vis]);
         if ($r = $st->fetch()) { $src = $r['zdroj']; $host = $r['odkaz']; $camp = $r['kampan']; }
     }
-    $db->prepare('INSERT INTO bb_navstevy (cas, den, navstevnik, udalost, zdroj, odkaz, kampan, zarizeni) VALUES (NOW(), CURDATE(), ?, ?, ?, ?, ?, ?)')
+    $db->prepare("INSERT INTO `$T` (cas, den, navstevnik, udalost, zdroj, odkaz, kampan, zarizeni) VALUES (NOW(), CURDATE(), ?, ?, ?, ?, ?, ?)")
        ->execute([$vis, $ev, $src, $host, $camp, bb_stat_device($ua)]);
     if (random_int(1, 500) === 1) {
-        $db->exec('DELETE FROM bb_navstevy WHERE den < (CURDATE() - INTERVAL 400 DAY)');
+        $db->exec("DELETE FROM `$T` WHERE den < (CURDATE() - INTERVAL 400 DAY)");
     }
 }

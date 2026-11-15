@@ -645,6 +645,7 @@ if (isset($_GET['navstevnost'])) {
     if (!$db) {
         page('Návštěvnost', menu('navstevnost') . '<div class="wrap"><h1 class="ph">Návštěvnost webu</h1><div class="warn">Návštěvnost potřebuje databázi (údaje <code>db</code> v config.php).</div></div>');
     }
+    $T = bb_stat_table($db);
     $D = (int) ($_GET['d'] ?? 30);
     if (!in_array($D, [1, 7, 30, 90, 365], true)) $D = 30;
     $from = date('Y-m-d', strtotime('-' . ($D - 1) . ' days'));
@@ -652,19 +653,21 @@ if (isset($_GET['navstevnost'])) {
     $one = function (string $sql, array $a = []) use ($db) { $st = $db->prepare($sql); $st->execute($a); return (int) $st->fetchColumn(); };
     $nf = fn($n) => number_format((int) $n, 0, ',', ' ');
 
-    $visits = $one("SELECT COUNT(*) FROM bb_navstevy WHERE udalost='view' AND den >= ?", [$from]);
-    $people = $one("SELECT COUNT(DISTINCT den, navstevnik) FROM bb_navstevy WHERE udalost='view' AND den >= ?", [$from]);
-    $today  = $one("SELECT COUNT(DISTINCT navstevnik) FROM bb_navstevy WHERE udalost='view' AND den = CURDATE()");
-    $ev = []; foreach ($q("SELECT udalost, COUNT(*) n FROM bb_navstevy WHERE udalost<>'view' AND den >= ? GROUP BY udalost", [$from]) as $r) $ev[$r['udalost']] = (int) $r['n'];
+    $visits = $one("SELECT COUNT(*) FROM `$T` WHERE udalost='view' AND den >= ?", [$from]);
+    $people = $one("SELECT COUNT(DISTINCT DATE_FORMAT(den,'%Y-%m'), navstevnik) FROM `$T` WHERE udalost='view' AND den >= ?", [$from]);
+    $back   = $one("SELECT COUNT(*) FROM (SELECT 1 FROM `$T` WHERE udalost='view' AND den >= ? GROUP BY DATE_FORMAT(den,'%Y-%m'), navstevnik HAVING COUNT(*) > 1) x", [$from]);
+    $today  = $one("SELECT COUNT(DISTINCT navstevnik) FROM `$T` WHERE udalost='view' AND den = CURDATE()");
+    $ev = []; foreach ($q("SELECT udalost, COUNT(*) n FROM `$T` WHERE udalost<>'view' AND den >= ? GROUP BY udalost", [$from]) as $r) $ev[$r['udalost']] = (int) $r['n'];
     $card = fn($t, $v, $sub = '', $cls = '') => '<div class="sc ' . $cls . '"><span>' . $t . '</span><b>' . $v . '</b><small>' . $sub . '</small></div>';
     $PER = [1 => 'Dnes', 7 => '7 dní', 30 => '30 dní', 90 => '90 dní', 365 => 'Rok'];
     $tabs = '<div class="tabs" style="margin:0 0 16px">';
     foreach ($PER as $k => $t) $tabs .= '<a' . ($k === $D ? ' class="on"' : '') . ' href="?navstevnost=1&amp;d=' . $k . '">' . $t . '</a>';
     $tabs .= '</div>';
 
-    $out = menu('navstevnost') . '<div class="wrap"><h1 class="ph">Návštěvnost webu</h1>' . $tabs . '<div class="scards">'
+    $out = menu('navstevnost') . '<div class="wrap"><h1 class="ph">Návštěvnost webu' . ($T !== 'bb_navstevy' ? ' <span style="font-size:13px;color:var(--warn)">· TESTOVACÍ WEB</span>' : '') . '</h1>' . $tabs . '<div class="scards">'
         . $card('Dnes', $nf($today), 'návštěvníků', 'hi')
         . $card($D === 1 ? 'Návštěvy dnes' : 'Návštěvy za ' . $PER[$D], $nf($visits), $nf($people) . ' různých lidí*')
+        . $card('Vracející se', $nf($back), $people ? round($back / $people * 100) . ' % lidí přišlo víckrát' : '—')
         . $card('Kliknutí na telefon', $nf($ev['tel'] ?? 0), $visits ? round(($ev['tel'] ?? 0) / $visits * 100, 1) . ' % návštěv' : '—')
         . $card('Objednané poukazy z webu', $nf($ev['poukaz'] ?? 0), 'e-mail: ' . $nf($ev['mail'] ?? 0) . ' kliknutí')
         . '</div>';
@@ -673,8 +676,8 @@ if (isset($_GET['navstevnost'])) {
     if ($D > 1) {
         $byMonth = $D === 365;
         $rows = $q($byMonth
-            ? "SELECT DATE_FORMAT(den,'%Y-%m') k, COUNT(*) n, SUM(zarizeni='mobil') m FROM bb_navstevy WHERE udalost='view' AND den >= ? GROUP BY k"
-            : "SELECT den k, COUNT(*) n, SUM(zarizeni='mobil') m FROM bb_navstevy WHERE udalost='view' AND den >= ? GROUP BY k", [$from]);
+            ? "SELECT DATE_FORMAT(den,'%Y-%m') k, COUNT(*) n, SUM(zarizeni='mobil') m FROM `$T` WHERE udalost='view' AND den >= ? GROUP BY k"
+            : "SELECT den k, COUNT(*) n, SUM(zarizeni='mobil') m FROM `$T` WHERE udalost='view' AND den >= ? GROUP BY k", [$from]);
         $map = []; foreach ($rows as $r) $map[$r['k']] = $r;
         $pts = [];
         if ($byMonth) { for ($i = 11; $i >= 0; $i--) { $t = strtotime(date('Y-m-01') . " -$i month"); $pts[] = [date('Y-m', $t), date('n/y', $t)]; } }
@@ -691,8 +694,8 @@ if (isset($_GET['navstevnost'])) {
     }
 
     /* zdroje */
-    $src = $q("SELECT zdroj, COUNT(*) n FROM bb_navstevy WHERE udalost='view' AND den >= ? GROUP BY zdroj ORDER BY n DESC", [$from]);
-    $tel = []; foreach ($q("SELECT zdroj, COUNT(*) n FROM bb_navstevy WHERE udalost='tel' AND den >= ? GROUP BY zdroj", [$from]) as $r) $tel[$r['zdroj']] = (int) $r['n'];
+    $src = $q("SELECT zdroj, COUNT(*) n FROM `$T` WHERE udalost='view' AND den >= ? GROUP BY zdroj ORDER BY n DESC", [$from]);
+    $tel = []; foreach ($q("SELECT zdroj, COUNT(*) n FROM `$T` WHERE udalost='tel' AND den >= ? GROUP BY zdroj", [$from]) as $r) $tel[$r['zdroj']] = (int) $r['n'];
     $out .= '<div class="o"><div class="ttl" style="margin-bottom:10px">Odkud lidé přišli</div>';
     if (!$src) {
         $out .= '<p class="meta" style="margin:0">Zatím žádná data – návštěvy se začnou počítat od nahrání této verze webu.</p>';
@@ -708,24 +711,24 @@ if (isset($_GET['navstevnost'])) {
 
     /* zařízení + weby + kampaně */
     $dev = ['mobil' => 0, 'pc' => 0, 'tablet' => 0];
-    foreach ($q("SELECT zarizeni, COUNT(*) n FROM bb_navstevy WHERE udalost='view' AND den >= ? GROUP BY zarizeni", [$from]) as $r) if (isset($dev[$r['zarizeni']])) $dev[$r['zarizeni']] = (int) $r['n'];
+    foreach ($q("SELECT zarizeni, COUNT(*) n FROM `$T` WHERE udalost='view' AND den >= ? GROUP BY zarizeni", [$from]) as $r) if (isset($dev[$r['zarizeni']])) $dev[$r['zarizeni']] = (int) $r['n'];
     $dt = max(1, array_sum($dev));
     $pm = round($dev['mobil'] / $dt * 100); $pt = round($dev['tablet'] / $dt * 100); $pp = max(0, 100 - $pm - $pt);
     $out .= '<div class="o split"><div class="ttl">Zařízení</div><div class="bar2"><i style="width:' . $pm . '%"></i><i class="g" style="width:' . $pp . '%"></i></div>
 <div class="leg"><span>Mobil ' . $nf($dev['mobil']) . ' (' . $pm . ' %)</span><span class="g">Počítač ' . $nf($dev['pc']) . ' (' . $pp . ' %)</span>' . ($dev['tablet'] ? '<span>Tablet ' . $nf($dev['tablet']) . '</span>' : '') . '</div></div>';
-    $hosts = $q("SELECT odkaz, COUNT(*) n FROM bb_navstevy WHERE udalost='view' AND odkaz<>'' AND den >= ? GROUP BY odkaz ORDER BY n DESC LIMIT 12", [$from]);
+    $hosts = $q("SELECT odkaz, COUNT(*) n FROM `$T` WHERE udalost='view' AND odkaz<>'' AND den >= ? GROUP BY odkaz ORDER BY n DESC LIMIT 12", [$from]);
     if ($hosts) {
         $out .= '<div class="o"><div class="ttl" style="margin-bottom:10px">Odkazující weby</div><table class="st"><tbody>';
         foreach ($hosts as $r) $out .= '<tr><td>' . $h($r['odkaz']) . '</td><td class="r"><b>' . $nf($r['n']) . '</b></td></tr>';
         $out .= '</tbody></table></div>';
     }
-    $camps = $q("SELECT kampan, zdroj, COUNT(*) n FROM bb_navstevy WHERE udalost='view' AND kampan<>'' AND den >= ? GROUP BY kampan, zdroj ORDER BY n DESC LIMIT 12", [$from]);
+    $camps = $q("SELECT kampan, zdroj, COUNT(*) n FROM `$T` WHERE udalost='view' AND kampan<>'' AND den >= ? GROUP BY kampan, zdroj ORDER BY n DESC LIMIT 12", [$from]);
     if ($camps) {
         $out .= '<div class="o"><div class="ttl" style="margin-bottom:10px">Kampaně <em>utm_campaign</em></div><table class="st"><tbody>';
         foreach ($camps as $r) $out .= '<tr><td><b>' . $h($r['kampan']) . '</b> <span style="color:var(--mut)">· ' . $h($r['zdroj']) . '</span></td><td class="r"><b>' . $nf($r['n']) . '</b></td></tr>';
         $out .= '</tbody></table></div>';
     }
-    $out .= '<p class="meta">Návštěva = jeden člověk během 30 minut. *Různí lidé se počítají v rámci každého dne – kvůli soukromí se návštěvník nedá poznat druhý den (žádné cookies, IP adresa se neukládá), proto se tahle statistika obejde bez cookie lišty. Roboty a Vaše vlastní návštěvy z tohoto prohlížeče se nepočítají. Tip: do odkazu v příspěvku přidejte <code>?utm_source=facebook&amp;utm_campaign=vanoce</code> a uvidíte, kolik lidí přišlo právě z něj.</p></div>';
+    $out .= '<p class="meta">Návštěva = jeden člověk během 30 minut. *Stejného člověka web pozná v rámci kalendářního měsíce (podle anonymního otisku, bez cookies, IP adresa se neukládá – proto není potřeba cookie lišta). Na mobilních datech se IP adresa občas mění, takže počet lidí může být o něco vyšší než ve skutečnosti. Vracející se = přišel v daném měsíci víckrát. Roboty a Vaše vlastní návštěvy z tohoto prohlížeče se nepočítají. Tip: do odkazu v příspěvku přidejte <code>?utm_source=facebook&amp;utm_campaign=vanoce</code> a uvidíte, kolik lidí přišlo právě z něj.</p></div>';
     page('Návštěvnost', $out);
 }
 

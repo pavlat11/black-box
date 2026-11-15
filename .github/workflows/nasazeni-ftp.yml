@@ -5,7 +5,8 @@ name: Nasazení na web (FTP)
 # config.php a data objednávek se nenahrávají (build je neobsahuje).
 # Websupport/Active24: u FTP účtu musí Geo ochrana povolovat USA (GitHub Actions běží v USA).
 
-# Cíl „test“ = testovací verze (dev/) na https://blackboxx.cz/test/ (neindexuje se, objednávky tam nefungují).
+# Cíl „test“ = testovací verze (dev/) na https://blackboxx.cz/test/ (neindexuje se, objednávky poukazů vypnuté,
+#   návštěvnost se zapisuje do tabulky bb_navstevy_test).
 # Cíl „live“ = ostrý web https://blackboxx.cz/.
 # „smazat-test“ = smaže složku /test/ na serveru (při dalším nahrání na test se vytvoří znovu).
 
@@ -51,7 +52,7 @@ jobs:
           elif [ "${{ inputs.cil }}" = "smazat-test" ]; then
             mkdir -p build
           else
-            python3 tools/build_prod.py build --dev --bez-serveru
+            python3 tools/build_prod.py build --test
           fi
 
       - name: Nahrát na server (SFTP)
