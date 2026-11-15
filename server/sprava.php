@@ -669,7 +669,6 @@ if (isset($_GET['navstevnost'])) {
         . $card($D === 1 ? 'Návštěvy dnes' : 'Návštěvy za ' . $PER[$D], $nf($visits), $nf($people) . ' různých lidí*')
         . $card('Vracející se', $nf($back), $people ? round($back / $people * 100) . ' % lidí přišlo víckrát' : '—')
         . $card('Kliknutí na telefon', $nf($ev['tel'] ?? 0), $visits ? round(($ev['tel'] ?? 0) / $visits * 100, 1) . ' % návštěv' : '—')
-        . $card('Objednané poukazy z webu', $nf($ev['poukaz'] ?? 0), 'e-mail: ' . $nf($ev['mail'] ?? 0) . ' kliknutí')
         . '</div>';
 
     /* graf po dnech / měsících */
