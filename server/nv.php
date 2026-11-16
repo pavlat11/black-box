@@ -15,6 +15,7 @@ if (!empty($_COOKIE['bbsprava'])) {
     session_name('bbsprava');
     @session_start(['read_and_close' => true]);
     if (!empty($_SESSION['bb_admin'])) {
+        try { if ($db = bb_db()) bb_stat_purge_me($db); } catch (Throwable $e) {}
         http_response_code(204);
         exit;
     }
@@ -31,6 +32,7 @@ if (in_array($in['e'] ?? '', ['optout', 'optin'], true)) {
     try {
         if ($in['e'] === 'optout') {
             bb_stat_optout('odkaz ?nepocitat');
+            if ($db = bb_db()) bb_stat_purge_me($db);
         } else {
             bb_stat_optin();
         }

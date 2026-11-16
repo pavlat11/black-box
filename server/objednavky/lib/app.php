@@ -911,7 +911,9 @@ function bb_db_install(PDO $db): void
         odkaz      VARCHAR(120) NOT NULL DEFAULT '' COMMENT 'doména, ze které návštěvník přišel',
         kampan     VARCHAR(80)  NOT NULL DEFAULT '',
         zarizeni   VARCHAR(10)  NOT NULL DEFAULT '',
+        prohlizec  VARCHAR(40)  NOT NULL DEFAULT '',
         KEY k_den (den),
+        KEY k_navstevnik (navstevnik),
         KEY k_den_udalost (den, udalost)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Black Box – návštěvnost webu (bez cookies, anonymně)'");
     $db->exec("CREATE TABLE IF NOT EXISTS bb_cislovani (
@@ -1526,11 +1528,35 @@ function bb_stat_source(string $ref, string $utm, string $q, string $ua): array
     return [$src, mb_substr($host, 0, 120)];
 }
 
-function bb_stat_device(string $ua): string
+function bb_stat_device(string $ua, array $in = []): string
 {
-    if (preg_match('/iPad|Tablet|Nexus (7|9|10)|SM-T|Kindle|Silk/i', $ua) || (preg_match('/Android/i', $ua) && !preg_match('/Mobile/i', $ua))) return 'tablet';
-    if (preg_match('/Mobi|iPhone|iPod|Android|IEMobile|Opera Mini/i', $ua)) return 'mobil';
+    if (preg_match('/iPad|Tablet|Nexus (7|9|10)|SM-T|Kindle|Silk/i', $ua) || (preg_match('/Android/i', $ua) && !preg_match('/Mobile|FB_IAB|FBAV|Instagram/i', $ua))) return 'tablet';
+    $ch = (string) ($_SERVER['HTTP_SEC_CH_UA_MOBILE'] ?? '');      // Chrome/Edge/Samsung posílají ?1 = mobil, ?0 = počítač
+    if ($ch === '?1') return 'mobil';
+    if ($ch === '?0') return 'pc';
+    if (isset($in['m']) && is_bool($in['m'])) return $in['m'] ? 'mobil' : 'pc';   // z prohlížeče (navigator.userAgentData)
+    if (preg_match('/Mobi|iPhone|iPod|Android|IEMobile|Opera Mini|FBAN|FBAV|Instagram/i', $ua)) return 'mobil';
     return 'pc';
+}
+
+/** Anonymní otisk návštěvníka (sůl + měsíc + IP + prohlížeč). */
+function bb_stat_hash(PDO $db): string
+{
+    $salt = $db->query("SELECT hodnota FROM bb_nastaveni WHERE klic = 'stat_salt'")->fetchColumn();
+    if (!$salt) {
+        $salt = bin2hex(random_bytes(16));
+        $db->prepare("INSERT IGNORE INTO bb_nastaveni (klic, hodnota, upraveno) VALUES ('stat_salt', ?, NOW())")->execute([$salt]);
+    }
+    return substr(hash('sha256', $salt . date('Y-m') . ($_SERVER['REMOTE_ADDR'] ?? '') . ($_SERVER['HTTP_USER_AGENT'] ?? '')), 0, 16);
+}
+
+/** Smaže dřívější návštěvy tohoto prohlížeče (stejná IP + prohlížeč tento měsíc) – když je vyřazený. */
+function bb_stat_purge_me(PDO $db): int
+{
+    $T = bb_stat_table($db);
+    $st = $db->prepare("DELETE FROM `$T` WHERE navstevnik = ?");
+    $st->execute([bb_stat_hash($db)]);
+    return $st->rowCount();
 }
 
 /** Tabulka návštěvnosti – testovací web (/test/) zapisuje do vlastní tabulky, aby se data nemíchala. */
@@ -1540,6 +1566,9 @@ function bb_stat_table(PDO $db): string
     if ($t !== null) return $t;
     $t = preg_replace('/[^a-z0-9_]/', '', (string) ($GLOBALS['cfg']['stat_table'] ?? '')) ?: 'bb_navstevy';
     if ($t !== 'bb_navstevy') $db->exec("CREATE TABLE IF NOT EXISTS `$t` LIKE bb_navstevy");
+    if (!$db->query("SHOW COLUMNS FROM `$t` LIKE 'prohlizec'")->fetch()) {          // doplnění sloupce (starší tabulka)
+        $db->exec("ALTER TABLE `$t` ADD COLUMN prohlizec VARCHAR(40) NOT NULL DEFAULT '' AFTER zarizeni, ADD KEY k_navstevnik (navstevnik)");
+    }
     return $t;
 }
 
@@ -1549,20 +1578,16 @@ function bb_stat_record(PDO $db, array $in): void
     $T = bb_stat_table($db);
     $ua = (string) ($_SERVER['HTTP_USER_AGENT'] ?? '');
     if ($ua === '' || preg_match('/bot|crawl|spider|slurp|facebookexternalhit|preview|headless|lighthouse|pingdom|uptime|monitor|curl|wget|python|axios|java\//i', $ua)) return;
-    if (bb_stat_is_ignored_browser()) return;
     $ip = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
+    $ignored = bb_stat_is_ignored_browser();
     foreach (bb_setting_get('stat_ignore_ips') ?? [] as $x) {      // vyřazené IP adresy (domov, provozovna…)
-        if (($x['ip'] ?? '') === $ip) return;
+        if (($x['ip'] ?? '') === $ip) $ignored = true;
     }
+    if ($ignored) { bb_stat_purge_me($db); return; }               // a smazat i dřívější návštěvy z tohoto prohlížeče
     $ev = (string) ($in['e'] ?? 'view');
     if (!in_array($ev, ['view', 'tel', 'poukaz', 'mail'], true)) return;
 
-    $salt = $db->query("SELECT hodnota FROM bb_nastaveni WHERE klic = 'stat_salt'")->fetchColumn();
-    if (!$salt) {
-        $salt = bin2hex(random_bytes(16));
-        $db->prepare("INSERT IGNORE INTO bb_nastaveni (klic, hodnota, upraveno) VALUES ('stat_salt', ?, NOW())")->execute([$salt]);
-    }
-    $vis = substr(hash('sha256', $salt . date('Y-m') . $ip . $ua), 0, 16);   // platí jen tento měsíc, IP z něj nejde zjistit
+    $vis = bb_stat_hash($db);   // platí jen tento měsíc, IP z něj nejde zjistit
     $q = (string) ($in['q'] ?? '');
     [$src, $host] = bb_stat_source((string) ($in['r'] ?? ''), (string) ($in['u'] ?? ''), $q, $ua);
     $camp = mb_substr(trim((string) ($in['c'] ?? '')), 0, 80);
@@ -1576,8 +1601,8 @@ function bb_stat_record(PDO $db, array $in): void
         $st->execute([$vis]);
         if ($r = $st->fetch()) { $src = $r['zdroj']; $host = $r['odkaz']; $camp = $r['kampan']; }
     }
-    $db->prepare("INSERT INTO `$T` (cas, den, navstevnik, udalost, zdroj, odkaz, kampan, zarizeni) VALUES (NOW(), CURDATE(), ?, ?, ?, ?, ?, ?)")
-       ->execute([$vis, $ev, $src, $host, $camp, bb_stat_device($ua)]);
+    $db->prepare("INSERT INTO `$T` (cas, den, navstevnik, udalost, zdroj, odkaz, kampan, zarizeni, prohlizec) VALUES (NOW(), CURDATE(), ?, ?, ?, ?, ?, ?, ?)")
+       ->execute([$vis, $ev, $src, $host, $camp, bb_stat_device($ua, $in), bb_ua_label($ua)]);
     if (random_int(1, 500) === 1) {
         $db->exec("DELETE FROM `$T` WHERE den < (CURDATE() - INTERVAL 400 DAY)");
     }

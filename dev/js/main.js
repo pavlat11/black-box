@@ -1270,5 +1270,5 @@ fix();addEventListener('resize',fix);if(document.fonts)document.fonts.ready.then
     qs.delete('nepocitat');qs.delete('pocitat');history.replaceState(null,'',location.pathname+(qs.toString()?'?'+qs:'')+location.hash);
     if(off)return;}
   const send=d=>{const b=JSON.stringify(d);if(navigator.sendBeacon&&navigator.sendBeacon('nv.php',new Blob([b],{type:'application/json'})))return;fetch('nv.php',{method:'POST',body:b,keepalive:true,headers:{'Content-Type':'application/json'}}).catch(()=>{});};
-  send({e:'view',r:document.referrer||'',u:qs.get('utm_source')||'',c:qs.get('utm_campaign')||'',q:location.search.slice(0,300)});
+  send({e:'view',m:(navigator.userAgentData&&typeof navigator.userAgentData.mobile==='boolean')?navigator.userAgentData.mobile:undefined,r:document.referrer||'',u:qs.get('utm_source')||'',c:qs.get('utm_campaign')||'',q:location.search.slice(0,300)});
 }catch(e){}})();

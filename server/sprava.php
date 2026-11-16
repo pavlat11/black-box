@@ -641,6 +641,10 @@ try {
     if (!bb_stat_is_ignored_browser() && empty($_SESSION['stat_optin'])) {
         bb_stat_optout('přihlášení do správy');
     }
+    if (empty($_SESSION['stat_optin']) && ($_SESSION['stat_purged'] ?? '') !== date('Y-m-d H') && ($pdb = bb_db())) {
+        bb_stat_purge_me($pdb);                       // vlastní dřívější návštěvy z tohoto prohlížeče pryč
+        $_SESSION['stat_purged'] = date('Y-m-d H');
+    }
 } catch (Throwable $e) {
 }
 
@@ -667,6 +671,11 @@ if (isset($_GET['navstevnost'])) {
             unset($_SESSION['stat_optin']);
             bb_stat_optout('přihlášení do správy');
             header('Location: ?navstevnost=1&v=nepocitat');
+            exit;
+        } elseif ($_POST['ip_akce'] === 'smazat_navstevnika') {
+            $nv = preg_replace('/[^a-f0-9]/', '', (string) ($_POST['nv'] ?? ''));
+            if (strlen($nv) === 16) $db->prepare("DELETE FROM `$T` WHERE navstevnik = ?")->execute([$nv]);
+            header('Location: ?navstevnost=1&v=navstevy&d=' . (int) ($_GET['d'] ?? 30) . '&n=' . (int) ($_GET['n'] ?? 20) . '&p=' . (int) ($_GET['p'] ?? 1));
             exit;
         } elseif ($_POST['ip_akce'] === 'odebrat') {
             $ips = array_values(array_filter($ips, fn($x) => ($x['ip'] ?? '') !== (string) ($_POST['ip'] ?? '')));
@@ -785,7 +794,7 @@ if (isset($_GET['navstevnost'])) {
     $pages = max(1, (int) ceil($tot / $per));
     $page = min($pages, max(1, (int) ($_GET['p'] ?? 1)));
     $pl = fn(int $p, int $n = 0) => '?navstevnost=1&amp;v=navstevy&amp;d=' . $D . '&amp;n=' . ($n ?: $per) . '&amp;p=' . $p;
-    $rows = $q("SELECT v.cas, v.navstevnik, v.zdroj, v.odkaz, v.kampan, v.zarizeni,
+    $rows = $q("SELECT v.cas, v.navstevnik, v.zdroj, v.odkaz, v.kampan, v.zarizeni, v.prohlizec,
                 (SELECT COUNT(*) FROM `$T` w WHERE w.udalost='view' AND w.navstevnik = v.navstevnik AND w.id < v.id AND DATE_FORMAT(w.den,'%Y-%m') = DATE_FORMAT(v.den,'%Y-%m')) predtim
                 FROM `$T` v WHERE v.udalost='view' AND v.den >= ? ORDER BY v.cas DESC, v.id DESC LIMIT $per OFFSET " . (($page - 1) * $per), [$from]);
     $dn = ['Ne', 'Po', 'Út', 'St', 'Čt', 'Pá', 'So'];
@@ -797,13 +806,14 @@ if (isset($_GET['navstevnost'])) {
     if (!$rows) {
         $out .= '<p class="meta" style="margin:0">Zatím žádné návštěvy.</p>';
     } else {
-        $out .= '<div style="overflow-x:auto"><table class="st raw"><thead><tr><th>Kdy</th><th>Odkud</th><th>Zařízení</th><th>Návštěvník</th></tr></thead><tbody>';
+        $out .= '<div style="overflow-x:auto"><table class="st raw"><thead><tr><th>Kdy</th><th>Odkud</th><th>Zařízení</th><th>Návštěvník</th><th></th></tr></thead><tbody>';
         foreach ($rows as $r) {
             $t = strtotime($r['cas']);
             $kdy = (date('Y-m-d', $t) === date('Y-m-d') ? 'dnes' : (date('Y-m-d', $t) === date('Y-m-d', strtotime('-1 day')) ? 'včera' : $dn[(int) date('w', $t)] . ' ' . date('j.n.', $t)));
             $od = '<b>' . $h($r['zdroj']) . '</b>' . ($r['odkaz'] !== '' ? ' <span style="color:var(--mut)">· ' . $h($r['odkaz']) . '</span>' : '') . ($r['kampan'] !== '' ? ' <span style="color:var(--mut)">· kampaň ' . $h($r['kampan']) . '</span>' : '');
             $who = '#' . $h(substr($r['navstevnik'], 0, 6)) . ($r['predtim'] > 0 ? ' <span class="tag" style="font-size:11px;padding:2px 8px">' . ($r['predtim'] + 1) . '. návštěva</span>' : '');
-            $out .= '<tr><td style="white-space:nowrap">' . $kdy . ' <b>' . date('H:i', $t) . '</b></td><td>' . $od . '</td><td>' . (['mobil' => 'Mobil', 'pc' => 'Počítač', 'tablet' => 'Tablet'][$r['zarizeni']] ?? $h($r['zarizeni'])) . '</td><td style="white-space:nowrap">' . $who . '</td></tr>';
+            $out .= '<tr><td style="white-space:nowrap">' . $kdy . ' <b>' . date('H:i', $t) . '</b></td><td>' . $od . '</td><td>' . (['mobil' => 'Mobil', 'pc' => 'Počítač', 'tablet' => 'Tablet'][$r['zarizeni']] ?? $h($r['zarizeni'])) . ($r['prohlizec'] !== '' ? '<br><span style="color:var(--mut);font-size:12px">' . $h($r['prohlizec']) . '</span>' : '') . '</td><td style="white-space:nowrap">' . $who . '</td>'
+                . '<td class="r"><form method="post" action="?navstevnost=1&amp;v=navstevy&amp;d=' . $D . '&amp;n=' . $per . '&amp;p=' . $page . '" style="margin:0" onsubmit="return confirm(\'Smazat všechny návštěvy návštěvníka #' . $h(substr($r['navstevnik'], 0, 6)) . '?\')">' . $csrfIn . '<input type="hidden" name="nv" value="' . $h($r['navstevnik']) . '"><button class="btn ghost" style="padding:4px 10px;font-size:12px" name="ip_akce" value="smazat_navstevnika" title="Smazat všechny návštěvy tohoto návštěvníka">Smazat</button></form></td></tr>';
         }
         $out .= '</tbody></table></div>';
         /* stránkování */
