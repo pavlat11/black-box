@@ -549,7 +549,7 @@ try {
 /* ---- hlavní menu správy ---- */
 function menu(string $on): string
 {
-    $items = ['objednavky' => 'Objednávky', 'cenik' => 'Ceník', 'oznameni' => 'Oznámení', 'statistiky' => 'Statistiky', 'navstevnost' => 'Návštěvnost'];
+    $items = ['objednavky' => 'Objednávky', 'cenik' => 'Ceník', 'emaily' => 'E-maily', 'oznameni' => 'Oznámení', 'statistiky' => 'Statistiky', 'navstevnost' => 'Návštěvnost'];
     $self = strtok($_SERVER['REQUEST_URI'] ?? 'sprava.php', '?') ?: 'sprava.php';
     $o = '<nav class="menu"><a class="mlogo" href="' . bb_h($self) . '"><img src="?logo=1" alt="">Black Box</a><div class="mi">';
     foreach ($items as $k => $t) {
@@ -617,6 +617,61 @@ if (isset($_GET['cenik'])) {
     $out .= '<button class="btn" type="submit">Uložit ceník</button>
 <p class="meta" style="margin-top:14px">Cena se změní všude najednou: v ceníku na webu, u dárkových poukazů, v objednávce i na nových fakturách. Už vystavené faktury a objednávky si nechají původní cenu i splatnost.</p></form></div>';
     page('Ceník', $out);
+}
+
+/* ---- e-maily: zkušební odeslání a denní úloha ---- */
+if (isset($_GET['emaily'])) {
+    if ($isPost) {
+        try {
+            csrf_ok();
+            $to = trim((string) ($_POST['komu'] ?? ''));
+            if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
+                throw new RuntimeException('Zadejte platnou e-mailovou adresu.');
+            }
+            $kind = ($_POST['druh'] ?? '') === 'gold' ? 'gold' : 'standard';
+            @set_time_limit(120);
+            $res = bb_send_test_mails($cfg, $DATA, $to, $kind);
+            bb_setting_set('test_mail', ['komu' => $to]);
+            $bad = array_filter($res);
+            $li = '';
+            foreach ($res as $n => $e) {
+                $li .= '<li>' . ($e === '' ? '✓ ' : '✕ ') . $h($n) . ($e === '' ? '' : ' – ' . $h($e)) . '</li>';
+            }
+            $_SESSION['flash_html'] = '<ul class="tm-res">' . $li . '</ul>';
+            $_SESSION['flash'] = $bad ? ['err', 'Odesláno ' . (count($res) - count($bad)) . ' z ' . count($res) . ' zkušebních e-mailů na ' . $to . '.'] : ['ok', 'Všech ' . count($res) . ' zkušebních e-mailů odesláno na ' . $to . '.'];
+        } catch (Throwable $e) {
+            $_SESSION['flash'] = ['err', 'Nepovedlo se: ' . $e->getMessage()];
+        }
+        header('Location: ' . $self . '?emaily=1');
+        exit;
+    }
+    $last = bb_setting_get('cron_last') ?? [];
+    $lt = (int) ($last['t'] ?? 0);
+    $okCron = $lt > time() - 36 * 3600;
+    $to = (string) (bb_setting_get('test_mail')['komu'] ?? ($cfg['invoice_copy_to'] ?? ''));
+    $host = ($secure ? 'https://' : 'http://') . ($_SERVER['HTTP_HOST'] ?? 'blackboxx.cz');
+    $url = $host . rtrim(dirname($self), '/\\') . '/ukoly.php?k=' . bb_cron_key($cfg);
+    $resHtml = (string) ($_SESSION['flash_html'] ?? '');
+    unset($_SESSION['flash_html']);
+    $dd = bb_due_days($cfg);
+    $out = menu('emaily') . '<style>.tm-res{list-style:none;margin:0 0 18px;padding:14px 18px;border:1px solid var(--line);border-radius:14px;line-height:1.9}.em-card{border:1px solid var(--line);border-radius:18px;padding:20px 22px;margin:0 0 18px;max-width:760px}.em-card h2{margin:0 0 6px;font-size:18px;font-weight:600}.em-card label{display:block;font-weight:600}.em-card input[type=email],.em-card select{display:block;width:100%;max-width:420px;box-sizing:border-box;margin:6px 0 14px;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--txt);font:inherit;font-weight:400}.em-card select option{background:#0e0b2c}.em-card code{display:block;word-break:break-all;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.06);margin:6px 0 12px;font-size:13px;user-select:all}.em-st{display:inline-block;padding:4px 12px;border-radius:999px;font-weight:600;font-size:13px}.em-st.ok{background:rgba(95,211,154,.16);color:#5fd39a}.em-st.bad{background:rgba(255,107,138,.16);color:#ff6b8a}.em-card ol{margin:8px 0 0;padding-left:20px;line-height:1.7}</style>
+<div class="wrap"><h1 class="ph">E-maily</h1>' . flash() . $resHtml . '
+<div class="em-card"><h2>Odeslat zkušební e-maily</h2>
+<p class="meta">Pošle všech 6 e-mailů, které chodí zákazníkům, na zvolenou adresu: faktura, připomínka splatnosti, storno, platba přijata (s poukazem e-mailem i s poukazem poštou) a poukaz odeslán poštou. Jsou to jen ukázky – žádná objednávka ani faktura nevznikne.</p>
+<form method="post">' . $csrfIn . '
+<label>Na jaký e-mail<input type="email" name="komu" value="' . $h($to) . '" required></label>
+<label>Varianta<select name="druh"><option value="standard">Standard</option><option value="gold">Gold Time</option></select></label>
+<button class="btn" type="submit">Odeslat zkušební e-maily</button></form></div>
+<div class="em-card"><h2>Automatická připomínka a storno</h2>
+<p><span class="em-st ' . ($okCron ? 'ok' : 'bad') . '">' . ($lt ? 'Denní úloha naposledy běžela ' . date('j. n. Y H:i', $lt) : 'Denní úloha zatím nikdy neběžela') . '</span></p>
+<ol><li>Den před splatností přijde zákazníkovi připomínka s QR kódem.</li>
+<li>První den po splatnosti (teď ' . $dd . ' dní od vystavení) se nezaplacená objednávka sama stornuje a zákazník dostane e-mail. Kopie přijde i Vám.</li>
+<li>Objednávku, kterou ručně obnovíte ze storna, už systém znovu nezruší.</li></ol>
+<p class="meta" style="margin-top:14px">Aby to běželo samo, nastavte v administraci hostingu úlohu (cron) <b>jednou denně, nejlépe v 9:00</b>. Stačí jedna z možností:</p>
+<p class="meta">A) volání adresy (URL):</p><code>' . $h($url) . '</code>
+<p class="meta">B) příkaz:</p><code>php ' . $h($BASE) . '/cron.php</code>
+<p class="meta">Dokud úloha nastavená není, kontrola proběhne jen při otevření této správy. Adresu nikomu neposílejte; po změně hesla do správy se změní.</p></div></div>';
+    page('E-maily', $out);
 }
 
 /* ---- oznámení na web ---- */
@@ -1548,6 +1603,7 @@ if ($isPost) {
 
             case 'obnovit':
                 $o['status'] = $o['prev_status'] ?? (($o['way'] ?? '') === 'faktura' ? 'ceka' : 'nova');
+                $o['no_auto'] = 1;          // ručně obnovená – automatické storno ji už nezruší
                 bb_save_order($DATA, $o);
                 $_SESSION['flash'] = ['ok', "Objednávka – $who – obnovena."];
                 break;

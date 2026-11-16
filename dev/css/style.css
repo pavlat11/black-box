@@ -2126,8 +2126,21 @@ body.menu .bbmenu nav a:nth-child(7){transition-delay:.38s}body.menu .bbmenu nav
 .nav .btn.sm{white-space:nowrap}
 @media (min-width:961px) and (max-width:1180px){.snd .t{display:none}.links{gap:12px}.nav .btn.sm{padding:12px 14px}}
 
-/* potvrzení objednávky faktury: QR kód a stažení */
-.pay-box{margin-top:18px;text-align:center}
-.pay-qr{display:block;margin:0 auto 10px;width:190px;height:190px;max-width:70vw;max-height:70vw;border-radius:12px;background:#fff;padding:8px;box-sizing:content-box}
-.pay-meta{font-size:14px;opacity:.85;margin:8px 0 0}
-.pay-btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:14px}
+/* potvrzení objednávky faktury: výzva zaplatit hned, QR kód, stažení */
+.vo-done.has-pay{padding-top:0!important}
+.vo-done.has-pay>svg{width:40px;height:40px;margin-bottom:8px}
+.vo-done.has-pay h3{padding:0!important;text-align:center}
+.vo-done.has-pay>.btn{margin-top:16px}
+.pay-box{display:flex;flex-direction:column;align-items:center;text-align:center;margin-top:16px}
+.pay-now{display:block;width:100%;box-sizing:border-box;padding:16px 18px;border-radius:18px;border:1px solid rgba(185,140,255,.55);background:linear-gradient(140deg,rgba(138,77,255,.34),rgba(92,200,255,.14));box-shadow:0 0 44px -12px rgba(138,77,255,.75)}
+.pay-now b{display:block;font-family:Unbounded,sans-serif;font-weight:600;font-size:clamp(19px,5vw,24px);line-height:1.2;color:#fff}
+.pay-now span{display:block;margin-top:6px;font-size:14.5px;line-height:1.45;color:var(--chrome)}
+.is-gold .pay-now{border-color:rgba(240,207,133,.6);background:linear-gradient(140deg,rgba(240,207,133,.26),rgba(138,77,255,.14));box-shadow:0 0 44px -12px rgba(240,207,133,.6)}
+.pay-qr{display:block;width:min(260px,72vw);height:auto;aspect-ratio:1;margin:18px auto 0;border-radius:16px;background:#fff;padding:10px;box-sizing:border-box;box-shadow:0 12px 40px -12px rgba(0,0,0,.7)}
+.pay-meta{display:flex;justify-content:center;flex-wrap:wrap;gap:8px 22px;margin-top:16px}
+.pay-meta>span{display:flex;flex-direction:column;align-items:center}
+.pay-meta i{font-style:normal;font-size:10.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)}
+.pay-meta b{font-size:15.5px;color:#fff;font-weight:700;white-space:nowrap}
+.pay-btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:16px}
+.pay-dl{display:inline-flex;align-items:center;justify-content:center;padding:10px 16px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--chrome);font-size:13.5px;font-weight:600;text-decoration:none;transition:background .2s}
+.pay-dl:hover{background:rgba(255,255,255,.12)}

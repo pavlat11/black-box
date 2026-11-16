@@ -1440,6 +1440,7 @@ function bb_send_paid(array $cfg, array $o): void
         $m->addStringAttachment($pdf, $file, 'base64', 'application/pdf');
     }
     $m->send();
+    if (!empty($o['_test'])) return;
     try {
         $m = bb_mailer($cfg);
         $m->addAddress($cfg['invoice_copy_to']);
@@ -1510,13 +1511,14 @@ function bb_invoice_link(array $o): string
 function bb_email_reminder(array $cfg, array $o, bool $hasQrImg): string
 {
     $gold = $o['kind'] === 'gold';
+    $tomorrow = date('Y-m-d') < date('Y-m-d', (int) $o['due']);
     $acc = $gold ? '#f0cf85' : '#b98cff';
     $f = 'font-family:Manrope,\'Segoe UI\',Helvetica,Arial,sans-serif;';
     $qr = $hasQrImg ? '<tr><td class="px" align="center" style="padding:0 40px 26px;"><img src="cid:bbqr" width="170" height="170" alt="QR platba" style="display:inline-block;width:170px;height:170px;border:0;border-radius:10px;background:#ffffff;"></td></tr>' : '';
     $inner = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
 <tr><td class="px" style="padding:38px 40px 8px;' . $f . 'font-size:11px;letter-spacing:3px;text-transform:uppercase;color:' . $acc . ';font-weight:700;">Připomínka splatnosti</td></tr>
-<tr><td class="px h1" style="padding:0 40px 14px;font-family:Unbounded,\'Segoe UI\',Helvetica,Arial,sans-serif;font-size:30px;line-height:38px;color:#ffffff;font-weight:400;">Zítra končí splatnost.</td></tr>
-<tr><td class="px" style="padding:0 40px 26px;' . $f . 'font-size:16px;line-height:25px;color:#c9c3ee;">Faktura č. <b style="color:#ffffff;">' . bb_h($o['no']) . '</b> za <b style="color:#ffffff;">' . bb_h(bb_money((float) $o['product']['price'])) . '</b> je splatná <b style="color:#ffffff;">' . bb_h(bb_date($o['due'])) . '</b>. Pokud platba ještě nedorazila, zaplaťte ji prosím dnes.</td></tr>
+<tr><td class="px h1" style="padding:0 40px 14px;font-family:Unbounded,\'Segoe UI\',Helvetica,Arial,sans-serif;font-size:30px;line-height:38px;color:#ffffff;font-weight:400;">' . ($tomorrow ? 'Zítra končí splatnost.' : 'Dnes končí splatnost.') . '</td></tr>
+<tr><td class="px" style="padding:0 40px 26px;' . $f . 'font-size:16px;line-height:25px;color:#c9c3ee;">Faktura č. <b style="color:#ffffff;">' . bb_h($o['no']) . '</b> za <b style="color:#ffffff;">' . bb_h(bb_money((float) $o['product']['price'])) . '</b> je splatná <b style="color:#ffffff;">' . bb_h(bb_date($o['due'])) . '</b>. Pokud jste ještě neplatili, zaplaťte prosím včas – nezaplacenou objednávku po splatnosti automaticky rušíme. Pokud už jste zaplatili, berte tento e-mail jako bezpředmětný.</td></tr>
 ' . $qr . '
 ' . bb_email_steps([
         'Naskenujte QR kód v bankovní aplikaci – částka i variabilní symbol se vyplní samy.',
@@ -1524,7 +1526,7 @@ function bb_email_reminder(array $cfg, array $o, bool $hasQrImg): string
         'Po připsání platby Vám <b style="color:#ffffff;">pošleme poukaz e-mailem</b>' . (bb_delivery($o) === 'posta' ? ' (nebo poštou)' : '') . '.',
     ], $gold) . '
 </table>';
-    return bb_email_layout('Připomínka: faktura č. ' . $o['no'] . ' je splatná zítra.', $inner, $cfg, $gold);
+    return bb_email_layout('Připomínka: faktura č. ' . $o['no'] . ' je splatná ' . bb_date($o['due']) . '.', $inner, $cfg, $gold);
 }
 
 function bb_email_storno(array $cfg, array $o): string
@@ -1548,7 +1550,7 @@ function bb_send_reminder(array $cfg, array $o): void
     $qrPng = bb_qr_png((string) $o['spayd']);
     $m = bb_mailer($cfg);
     $m->addAddress($o['customer']['email'], $o['customer']['name']);
-    $m->Subject = 'Připomínka: faktura č. ' . $o['no'] . ' je splatná zítra';
+    $m->Subject = 'Připomínka: faktura č. ' . $o['no'] . ' je splatná ' . bb_date($o['due']);
     $m->isHTML(true);
     $m->addEmbeddedImage(__DIR__ . '/assets/logo-email.png', 'bblogo', 'black-box.png');
     if ($qrPng) {
@@ -1571,6 +1573,7 @@ function bb_send_storno_mail(array $cfg, array $o): void
     $m->AltBody = "Faktura č. {$o['no']} nebyla uhrazena do splatnosti, objednávku jsme proto zrušili.\n"
         . "Pokud máte stále zájem, objednejte si poukaz znovu na {$cfg['web']}.\n\nBlack Box Luxury";
     $m->send();
+    if (!empty($o['_test'])) return;
     try {
         $m = bb_mailer($cfg);
         $m->addAddress($cfg['invoice_copy_to']);
@@ -1601,7 +1604,7 @@ function bb_open_orders(string $dataDir): array
 }
 
 /**
- * Připomínka den před splatností a storno v den splatnosti (podle kalendářního dne, Europe/Prague).
+ * Připomínka den před splatností; storno první den po splatnosti (podle kalendářního dne, Europe/Prague).
  * Spouští se denně z cron.php a při otevření správy. Zámek brání souběhu.
  */
 function bb_sweep_orders(array $cfg, string $dataDir): array
@@ -1622,7 +1625,10 @@ function bb_sweep_orders(array $cfg, string $dataDir): array
                 $issued = date('Y-m-d', (int) $o['issued']);
                 $log = fn(string $s) => @file_put_contents($dataDir . '/sweep.log', date('c') . " $s\n", FILE_APPEND);
 
-                if ($today >= $due && $due > $issued) {                 // splatnost nastala (aspoň den po vystavení)
+                if (!empty($o['no_auto'])) {                              // ručně obnovená objednávka – už ji neřešíme
+                    continue;
+                }
+                if ($today > $due && $due > $issued) {                  // den splatnosti uplynul a platba není potvrzená
                     bb_send_storno_mail($cfg, $o);
                     $o['prev_status'] = $o['status'];
                     $o['status'] = 'storno';
@@ -1630,7 +1636,8 @@ function bb_sweep_orders(array $cfg, string $dataDir): array
                     bb_save_order($dataDir, $o);
                     $stat['storno']++;
                     $log('storno ' . $o['id']);
-                } elseif ($today === date('Y-m-d', strtotime('-1 day', (int) $o['due'])) && empty($o['reminder_sent'])) {
+                } elseif (empty($o['reminder_sent']) && $today > $issued && $today <= $due
+                    && $today >= date('Y-m-d', strtotime('-1 day', (int) $o['due']))) {   // den před splatností (nebo v den splatnosti, když úloha den vynechala)
                     bb_send_reminder($cfg, $o);
                     $o['reminder_sent'] = time();
                     bb_save_order($dataDir, $o);
@@ -1647,6 +1654,58 @@ function bb_sweep_orders(array $cfg, string $dataDir): array
         fclose($lock);
     }
     return $stat;
+}
+
+/** Klíč pro spouštění denní úlohy přes adresu (ukoly.php?k=…). Odvozený z hesla správy, nikde se neukládá. */
+function bb_cron_key(array $cfg): string
+{
+    return substr(hash_hmac('sha256', 'bb-denni-uloha', (string) ($cfg['admin_password'] ?? '') . '|' . (string) ($cfg['smtp']['pass'] ?? '')), 0, 32);
+}
+
+/** Denní úloha (cron): průchod objednávek + záznam, kdy naposledy běžela. */
+function bb_cron_run(array $cfg, string $dataDir, string $src): array
+{
+    $stat = bb_sweep_orders($cfg, $dataDir);
+    try {
+        bb_setting_set('cron_last', ['t' => time(), 'src' => $src] + $stat);
+    } catch (Throwable $e) {
+    }
+    return $stat;
+}
+
+/** Zkušební e-maily: všechny zákaznické šablony na zadanou adresu. Nic se neukládá, kopie majiteli se neposílají. */
+function bb_send_test_mails(array $cfg, string $dataDir, string $to, string $kind = 'standard'): array
+{
+    $iban = bb_iban((string) $cfg['bank_account']) ?: 'CZ6508000000192000145399';
+    $now = time();
+    $base = [
+        '_test' => 1, 'id' => 'ZKOUSKA', 'no' => 'ZKOUSKA', 'vs' => '2026999', 'way' => 'faktura', 'status' => 'ceka', 'kind' => $kind,
+        'product' => bb_products($cfg)[$kind], 'quick' => false, 'send_voucher' => true, 'wanted_voucher' => true, 'delivery' => 'email', 'for' => '', 'msg' => '',
+        'customer' => ['name' => 'Zkušební Zákazník', 'phone' => (string) $cfg['phone'], 'email' => $to, 'addr' => 'Ukázková 12, 390 01 Tábor', 'company' => '', 'ico' => ''],
+        'issued' => $now, 'created' => $now, 'due' => strtotime('+1 day', $now), 'paid_at' => $now,
+        'account' => preg_replace('/\s+/', '', (string) $cfg['bank_account']), 'iban' => $iban,
+        'voucher' => '2026999', 'invoice_file' => 'faktura-ZKOUSKA.pdf',
+    ];
+    $base['spayd'] = bb_spayd($iban, (float) $base['product']['price'], $base['vs'], 'Poukaz Black Box ZKOUSKA');
+    $post = ['delivery' => 'posta', 'ship' => ['name' => 'Zkušební Zákazník', 'street' => 'Ukázková 12', 'zip' => '390 01', 'city' => 'Tábor'], 'voucher_sent_at' => $now] + $base;
+    $jobs = [
+        'Faktura (po objednávce)' => fn() => bb_send_invoice_customer($cfg, $dataDir, $base),
+        'Připomínka splatnosti' => fn() => bb_send_reminder($cfg, $base),
+        'Storno nezaplacené objednávky' => fn() => bb_send_storno_mail($cfg, ['due' => strtotime('-1 day', $now)] + $base),
+        'Platba přijata + poukaz e-mailem' => fn() => bb_send_paid($cfg, $base),
+        'Platba přijata – poukaz půjde poštou' => fn() => bb_send_paid($cfg, ['voucher' => '', 'voucher_sent_at' => 0] + $post),
+        'Poukaz odeslán poštou' => fn() => bb_send_posted($cfg, $post),
+    ];
+    $res = [];
+    foreach ($jobs as $name => $job) {
+        try {
+            $job();
+            $res[$name] = '';
+        } catch (Throwable $e) {
+            $res[$name] = $e->getMessage();
+        }
+    }
+    return $res;
 }
 
 /* ---------- návštěvnost webu (vlastní, bez cookies; IP adresa se neukládá) ---------- */
