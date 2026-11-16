@@ -25,6 +25,21 @@ $in = json_decode($raw, true);
 if (!is_array($in)) {
     $in = $_GET;
 }
+// odkaz ?nepocitat / ?pocitat – vyřazení tohoto prohlížeče (spravuje se ve správě)
+if (in_array($in['e'] ?? '', ['optout', 'optin'], true)) {
+    header('Content-Type: application/json; charset=utf-8');
+    try {
+        if ($in['e'] === 'optout') {
+            bb_stat_optout('odkaz ?nepocitat');
+        } else {
+            bb_stat_optin();
+        }
+        echo json_encode(['ok' => true]);
+    } catch (Throwable $e) {
+        echo json_encode(['ok' => false]);
+    }
+    exit;
+}
 try {
     if ($db = bb_db()) {
         bb_stat_record($db, $in);

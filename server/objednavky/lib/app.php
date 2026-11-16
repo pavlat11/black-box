@@ -1549,7 +1549,7 @@ function bb_stat_record(PDO $db, array $in): void
     $T = bb_stat_table($db);
     $ua = (string) ($_SERVER['HTTP_USER_AGENT'] ?? '');
     if ($ua === '' || preg_match('/bot|crawl|spider|slurp|facebookexternalhit|preview|headless|lighthouse|pingdom|uptime|monitor|curl|wget|python|axios|java\//i', $ua)) return;
-    if (!empty($_COOKIE['bb_nostat'])) return;
+    if (bb_stat_is_ignored_browser()) return;
     $ip = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
     foreach (bb_setting_get('stat_ignore_ips') ?? [] as $x) {      // vyřazené IP adresy (domov, provozovna…)
         if (($x['ip'] ?? '') === $ip) return;
@@ -1581,4 +1581,77 @@ function bb_stat_record(PDO $db, array $in): void
     if (random_int(1, 500) === 1) {
         $db->exec("DELETE FROM `$T` WHERE den < (CURDATE() - INTERVAL 400 DAY)");
     }
+}
+
+
+/* ---------- vyřazené prohlížeče (moje návštěvy nepočítat) – seznam v bb_nastaveni 'stat_ignore_browsers' ---------- */
+
+/** Krátký popis prohlížeče, např. „Facebook · Android“, „Chrome · Windows“. */
+function bb_ua_label(string $ua): string
+{
+    $app = preg_match('/Instagram/i', $ua) ? 'Instagram'
+        : (preg_match('/MessengerForiOS|\bOrca-Android|FB_IAB\/MESSENGER/i', $ua) ? 'Messenger'
+        : (preg_match('/FBAN|FBAV|FB_IAB|FBIOS/i', $ua) ? 'Facebook'
+        : (preg_match('/Edg\//', $ua) ? 'Edge' : (preg_match('/OPR\//', $ua) ? 'Opera'
+        : (preg_match('/SamsungBrowser/', $ua) ? 'Samsung Internet' : (preg_match('/Firefox|FxiOS/', $ua) ? 'Firefox'
+        : (preg_match('/Chrome|CriOS/', $ua) ? 'Chrome' : (preg_match('/Safari/', $ua) ? 'Safari' : 'Prohlížeč'))))))));
+    $os = preg_match('/iPhone/', $ua) ? 'iPhone' : (preg_match('/iPad/', $ua) ? 'iPad' : (preg_match('/Android/', $ua) ? 'Android'
+        : (preg_match('/Windows/', $ua) ? 'Windows' : (preg_match('/Mac OS X|Macintosh/', $ua) ? 'Mac' : (preg_match('/Linux/', $ua) ? 'Linux' : '')))));
+    return $app . ($os !== '' ? ' · ' . $os : '');
+}
+
+function bb_stat_browsers(): array
+{
+    return bb_setting_get('stat_ignore_browsers') ?? [];
+}
+
+function bb_stat_cookie(string $val, int $days): void
+{
+    setcookie('bb_nostat', $val, ['expires' => $days ? time() + $days * 86400 : time() - 3600, 'path' => '/', 'secure' => !empty($_SERVER['HTTPS']), 'httponly' => false, 'samesite' => 'Lax']);
+    $_COOKIE['bb_nostat'] = $days ? $val : '';
+}
+
+/** Vyřadí tento prohlížeč z návštěvnosti (zapíše do seznamu + cookie). Vrací id. */
+function bb_stat_optout(string $odkud = 'odkaz'): string
+{
+    $list = bb_stat_browsers();
+    $cur = (string) ($_COOKIE['bb_nostat'] ?? '');
+    if ($cur !== '' && in_array($cur, array_column($list, 'id'), true)) {
+        bb_stat_cookie($cur, 400);
+        return $cur;
+    }
+    $id = bin2hex(random_bytes(8));
+    $list[] = ['id' => $id, 'nazev' => bb_ua_label((string) ($_SERVER['HTTP_USER_AGENT'] ?? '')), 'odkud' => $odkud, 'od' => date('Y-m-d H:i'), 'naposledy' => date('Y-m-d H:i')];
+    bb_setting_set('stat_ignore_browsers', $list);
+    bb_stat_cookie($id, 400);
+    return $id;
+}
+
+/** Zase počítat (odebrat ze seznamu). Bez $id = tento prohlížeč. */
+function bb_stat_optin(?string $id = null): void
+{
+    $self = $id === null;
+    $id ??= (string) ($_COOKIE['bb_nostat'] ?? '');
+    $list = array_values(array_filter(bb_stat_browsers(), fn($x) => ($x['id'] ?? '') !== $id));
+    bb_setting_set('stat_ignore_browsers', $list);
+    if ($self) bb_stat_cookie('', 0);
+}
+
+/** Je tento prohlížeč vyřazený? (staré cookie „1“ se převede do seznamu, odebrané se zase počítá) */
+function bb_stat_is_ignored_browser(): bool
+{
+    $cur = (string) ($_COOKIE['bb_nostat'] ?? '');
+    if ($cur === '') return false;
+    if ($cur === '1') { bb_stat_optout('starší nastavení'); return true; }
+    $list = bb_stat_browsers();
+    foreach ($list as $i => $x) {
+        if (($x['id'] ?? '') === $cur) {
+            if (substr((string) ($x['naposledy'] ?? ''), 0, 13) !== date('Y-m-d H')) {   // „naposledy“ aktualizovat max. 1× za hodinu
+                $list[$i]['naposledy'] = date('Y-m-d H:i');
+                bb_setting_set('stat_ignore_browsers', $list);
+            }
+            return true;
+        }
+    }
+    return false;   // ve správě odebraný → zase se počítá
 }

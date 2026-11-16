@@ -636,8 +636,11 @@ if (isset($_GET['oznameni'])) {
 }
 
 /* ---- správce se do návštěvnosti nepočítá (cookie jen pro tento prohlížeč) ---- */
-if (empty($_COOKIE['bb_nostat'])) {
-    setcookie('bb_nostat', '1', ['expires' => time() + 400 * 86400, 'path' => '/', 'secure' => !empty($_SERVER['HTTPS']), 'httponly' => true, 'samesite' => 'Lax']);
+try {
+    if (!bb_stat_is_ignored_browser() && empty($_SESSION['stat_optin'])) {
+        bb_stat_optout('přihlášení do správy');
+    }
+} catch (Throwable $e) {
 }
 
 /* ---- návštěvnost webu ---- */
@@ -653,6 +656,17 @@ if (isset($_GET['navstevnost'])) {
         $ips = bb_setting_get('stat_ignore_ips') ?? [];
         if ($_POST['ip_akce'] === 'pridat' && $myIp !== '' && !in_array($myIp, array_column($ips, 'ip'), true)) {
             $ips[] = ['ip' => $myIp, 'nazev' => mb_substr(trim((string) ($_POST['nazev'] ?? '')), 0, 40) ?: 'Bez názvu', 'od' => date('j.n.Y')];
+        } elseif ($_POST['ip_akce'] === 'prohlizec_odebrat') {
+            $bid = (string) ($_POST['bid'] ?? '');
+            if ($bid !== '' && $bid === (string) ($_COOKIE['bb_nostat'] ?? '')) $_SESSION['stat_optin'] = 1;   // tento prohlížeč: nepřidávat hned zpátky
+            bb_stat_optin($bid === (string) ($_COOKIE['bb_nostat'] ?? '') ? null : $bid);
+            header('Location: ?navstevnost=1&d=' . (int) ($_GET['d'] ?? 30) . '#nepocitat');
+            exit;
+        } elseif ($_POST['ip_akce'] === 'prohlizec_pridat') {
+            unset($_SESSION['stat_optin']);
+            bb_stat_optout('přihlášení do správy');
+            header('Location: ?navstevnost=1&d=' . (int) ($_GET['d'] ?? 30) . '#nepocitat');
+            exit;
         } elseif ($_POST['ip_akce'] === 'odebrat') {
             $ips = array_values(array_filter($ips, fn($x) => ($x['ip'] ?? '') !== (string) ($_POST['ip'] ?? '')));
         }
@@ -817,6 +831,26 @@ if (isset($_GET['navstevnost'])) {
             $out .= '<tr><td><b>' . $h($x['nazev'] ?? '') . '</b> <span style="color:var(--mut)">· ' . $h($x['ip'] ?? '') . ' · od ' . $h($x['od'] ?? '') . '</span></td><td class="r"><form method="post" action="?navstevnost=1&amp;d=' . $D . '" style="margin:0">' . $csrfIn . '<input type="hidden" name="ip" value="' . $h($x['ip'] ?? '') . '"><button class="btn ghost" style="padding:6px 12px;font-size:12px" name="ip_akce" value="odebrat">Odebrat</button></form></td></tr>';
         }
         $out .= '</tbody></table>';
+    }
+    /* vyřazené prohlížeče */
+    $brs = bb_stat_browsers();
+    $curB = (string) ($_COOKIE['bb_nostat'] ?? '');
+    $fmt = fn($d) => $d ? date('j.n.Y H:i', strtotime($d)) : '—';
+    $out .= '<p style="margin:22px 0 6px"><b>3. Vyřazené prohlížeče</b> <span class="meta">– tyhle se nepočítají. Odebráním se zase začnou počítat.</span></p>';
+    if (!in_array($curB, array_column($brs, 'id'), true)) {
+        $out .= '<form method="post" action="?navstevnost=1&amp;d=' . $D . '" style="margin:6px 0 10px">' . $csrfIn . '<span class="meta" style="margin-right:10px">Tento prohlížeč se teď počítá.</span><button class="btn ghost" style="padding:6px 12px;font-size:12px" name="ip_akce" value="prohlizec_pridat">Nepočítat tento prohlížeč</button></form>';
+    }
+    if ($brs) {
+        $out .= '<div style="overflow-x:auto"><table class="st"><thead><tr><th>Prohlížeč</th><th>Vyřazen</th><th>Naposledy na webu</th><th></th></tr></thead><tbody>';
+        foreach (array_reverse($brs) as $x) {
+            $me = ($x['id'] ?? '') === $curB;
+            $out .= '<tr><td><b>' . $h($x['nazev'] ?? '') . '</b>' . ($me ? ' <span class="tag" style="font-size:11px;padding:2px 8px">tento</span>' : '') . '<br><span style="color:var(--mut);font-size:12px">' . $h($x['odkud'] ?? '') . '</span></td>'
+                . '<td style="white-space:nowrap">' . $fmt($x['od'] ?? '') . '</td><td style="white-space:nowrap">' . $fmt($x['naposledy'] ?? '') . '</td>'
+                . '<td class="r"><form method="post" action="?navstevnost=1&amp;d=' . $D . '" style="margin:0">' . $csrfIn . '<input type="hidden" name="bid" value="' . $h($x['id'] ?? '') . '"><button class="btn ghost" style="padding:6px 12px;font-size:12px" name="ip_akce" value="prohlizec_odebrat">Zase počítat</button></form></td></tr>';
+        }
+        $out .= '</tbody></table></div>';
+    } else {
+        $out .= '<p class="meta" style="margin:0">Zatím žádné.</p>';
     }
     $out .= '</div>';
 
