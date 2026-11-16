@@ -582,8 +582,13 @@ if (isset($_GET['cenik'])) {
                 }
                 $new[$k] = $n;
             }
+            $sd = trim((string) ($_POST['splatnost'] ?? ''));
+            if (!preg_match('/^\d{1,2}$/', $sd) || (int) $sd > 90) {
+                throw new RuntimeException('Splatnost faktury zadejte jako počet dní (0–90).');
+            }
             bb_save_prices($new);
-            $_SESSION['flash'] = ['ok', 'Ceník uložen. Na webu se nové ceny projeví do minuty.'];
+            bb_setting_set('splatnost', ['dni' => (int) $sd]);
+            $_SESSION['flash'] = ['ok', 'Ceník uložen. Na webu se nové ceny projeví do minuty, nová splatnost platí pro další vystavené faktury.'];
         } catch (Throwable $e) {
             $_SESSION['flash'] = ['err', 'Nepovedlo se: ' . $e->getMessage()];
         }
@@ -595,8 +600,11 @@ if (isset($_GET['cenik'])) {
         $out .= '<label class="o' . ($k === 'gold' ? ' gold' : '') . ' pc"><span class="ttl">' . $h($NAMES[$k][0]) . '<em>' . $h($NAMES[$k][1]) . '</em></span>
 <span class="pin"><input type="text" inputmode="numeric" pattern="[0-9 ]*" name="cena_' . $h($k) . '" value="' . $h((string) $v) . '" required><b>Kč</b></span></label>';
     }
+    $dd = bb_due_days($cfg);
+    $out .= '<label class="o pc"><span class="ttl">Splatnost faktury<em>počet dní od vystavení faktury</em></span>
+<span class="pin"><input type="number" name="splatnost" min="0" max="90" step="1" value="' . $dd . '" required><b>dní</b></span></label>';
     $out .= '<button class="btn" type="submit">Uložit ceník</button>
-<p class="meta" style="margin-top:14px">Cena se změní všude najednou: v ceníku na webu, u dárkových poukazů, v objednávce i na nových fakturách. Už vystavené faktury a objednávky si nechají původní cenu.</p></form></div>';
+<p class="meta" style="margin-top:14px">Cena se změní všude najednou: v ceníku na webu, u dárkových poukazů, v objednávce i na nových fakturách. Už vystavené faktury a objednávky si nechají původní cenu i splatnost.</p></form></div>';
     page('Ceník', $out);
 }
 

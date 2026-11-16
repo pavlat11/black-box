@@ -146,6 +146,14 @@ function bb_prices(array $cfg): array
     return $p;
 }
 
+/** Splatnost faktury ve dnech: uložená ve správě (Ceník), jinak z config.php. */
+function bb_due_days(array $cfg): int
+{
+    $d = bb_setting_get('splatnost')['dni'] ?? null;
+    if (is_numeric($d) && (int) $d >= 0 && (int) $d <= 90) return (int) $d;
+    return (int) ($cfg['due_days'] ?? 7);
+}
+
 function bb_save_prices(array $prices): void
 {
     bb_setting_set('ceny', $prices);
@@ -1352,7 +1360,7 @@ function bb_issue_invoice(array $cfg, string $dataDir, array $o, string $iban): 
         'no' => $no,
         'vs' => preg_replace('/\D/', '', $no),
         'issued' => $issued,
-        'due' => strtotime('+' . (int) $cfg['due_days'] . ' days', $issued),
+        'due' => strtotime('+' . bb_due_days($cfg) . ' days', $issued),
         'account' => preg_replace('/\s+/', '', (string) $cfg['bank_account']),
         'iban' => $iban,
     ]);
