@@ -678,7 +678,8 @@ if (isset($_GET['navstevnost'])) {
     foreach ($PER as $k => $t) $tabs .= '<a' . ($k === $D ? ' class="on"' : '') . ' href="?navstevnost=1&amp;d=' . $k . '">' . $t . '</a>';
     $tabs .= '</div>';
 
-    $out = menu('navstevnost') . '<div class="wrap"><h1 class="ph">Návštěvnost webu' . ($T !== 'bb_navstevy' ? ' <span style="font-size:13px;color:var(--warn)">· TESTOVACÍ WEB</span>' : '') . '</h1>' . $tabs . '<div class="scards">'
+    $out = menu('navstevnost') . '<div class="wrap"><h1 class="ph">Návštěvnost webu' . ($T !== 'bb_navstevy' ? ' <span style="font-size:13px;color:var(--warn)">· TESTOVACÍ WEB</span>' : '') . '</h1>'
+        . '<p class="meta" style="margin:-6px 0 16px;color:#6fe0a0">✓ Přihlášený do správy se do návštěvnosti nepočítá – Vaše návštěvy webu z tohoto prohlížeče se neukládají.</p>' . $tabs . '<div class="scards">'
         . $card('Dnes', $nf($today), 'návštěvníků', 'hi')
         . $card($D === 1 ? 'Návštěvy dnes' : 'Návštěvy za ' . $PER[$D], $nf($visits), $nf($people) . ' různých lidí*')
         . $card('Vracející se', $nf($back), $people ? round($back / $people * 100) . ' % lidí přišlo víckrát' : '—')
@@ -772,7 +773,7 @@ if (isset($_GET['navstevnost'])) {
     }
     $out .= '</div>';
 
-    $out .= '<p class="meta">Návštěva = jeden člověk během 30 minut. *Stejného člověka web pozná v rámci kalendářního měsíce (podle anonymního otisku, bez cookies, IP adresa se neukládá – proto není potřeba cookie lišta). Na mobilních datech se IP adresa občas mění, takže počet lidí může být o něco vyšší než ve skutečnosti. Vracející se = přišel v daném měsíci víckrát. Roboty a Vaše vlastní návštěvy z tohoto prohlížeče se nepočítají. Tip: do odkazu v příspěvku přidejte <code>?utm_source=facebook&amp;utm_campaign=vanoce</code> a uvidíte, kolik lidí přišlo právě z něj.</p></div>';
+    $out .= '<p class="meta">Návštěva = jeden člověk během 30 minut. *Stejného člověka web pozná v rámci kalendářního měsíce (podle anonymního otisku, bez cookies, IP adresa se neukládá – proto není potřeba cookie lišta). Na mobilních datech se IP adresa občas mění, takže počet lidí může být o něco vyšší než ve skutečnosti. Vracející se = přišel v daném měsíci víckrát. Nepočítají se roboti ani kdokoli přihlášený do správy (a prohlížeč, ve kterém se do správy někdy přihlásil). Tip: do odkazu v příspěvku přidejte <code>?utm_source=facebook&amp;utm_campaign=vanoce</code> a uvidíte, kolik lidí přišlo právě z něj.</p></div>';
     page('Návštěvnost', $out);
 }
 

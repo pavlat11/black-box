@@ -10,6 +10,16 @@ $BASE = __DIR__ . '/objednavky';
 $cfg = require $BASE . '/config.php';
 require $BASE . '/lib/app.php';
 
+// přihlášený do správy = vlastní návštěva, nepočítat
+if (!empty($_COOKIE['bbsprava'])) {
+    session_name('bbsprava');
+    @session_start(['read_and_close' => true]);
+    if (!empty($_SESSION['bb_admin'])) {
+        http_response_code(204);
+        exit;
+    }
+}
+
 $raw = file_get_contents('php://input', false, null, 0, 4096) ?: '';
 $in = json_decode($raw, true);
 if (!is_array($in)) {
