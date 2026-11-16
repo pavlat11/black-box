@@ -844,6 +844,7 @@ if (isset($_GET['navstevnost'])) {
         . '<p style="margin:0 0 6px"><b>1. Odkaz pro každý prohlížeč</b></p>'
         . '<p class="meta" style="margin:0 0 10px">Pošlete si tenhle odkaz (třeba zprávou na Messengeru / v Instagramu sami sobě) a jednou ho otevřete v aplikaci Facebook, v Instagramu i v Chromu. Web potvrdí „Tento prohlížeč se nepočítá“.</p>'
         . '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:18px"><input id="noLink" readonly value="' . $h($host . '?nepocitat') . '" style="flex:1;min-width:220px"><button class="btn ghost" type="button" onclick="navigator.clipboard.writeText(document.getElementById(\'noLink\').value);this.textContent=\'Zkopírováno ✓\'">Kopírovat</button></div>'
+        . '<p class="meta" style="margin:-8px 0 18px">Kontrola: odkaz <b>' . $h($host . '?overit') . '</b> ukáže, jestli se návštěva z daného prohlížeče započítala (zařízení, prohlížeč, zdroj – nebo proč ne).</p>'
         . '<p style="margin:0 0 6px"><b>2. Vyřadit IP adresu</b> <span class="meta">– vše, co jde přes tuto síť (domácí / firemní Wi-Fi). Na mobilních datech se IP mění, tam pomůže odkaz.</span></p>'
         . '<form method="post" action="?navstevnost=1&amp;v=nepocitat" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0 12px">' . $csrfIn
         . '<span class="meta" style="margin:0">Teď jste připojený z <b>' . $h($myIp) . '</b>' . ($mine ? ' <span style="color:#6fe0a0">– už se nepočítá ✓</span>' : '') . '</span>'

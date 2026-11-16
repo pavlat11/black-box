@@ -16,6 +16,11 @@ if (!empty($_COOKIE['bbsprava'])) {
     @session_start(['read_and_close' => true]);
     if (!empty($_SESSION['bb_admin'])) {
         try { if ($db = bb_db()) bb_stat_purge_me($db); } catch (Throwable $e) {}
+        if (!empty($_GET['dbg']) || !empty(json_decode(file_get_contents('php://input') ?: '', true)['dbg'])) {
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['ok' => false, 'proc' => 'jste přihlášený do správy']);
+            exit;
+        }
         http_response_code(204);
         exit;
     }
@@ -42,11 +47,17 @@ if (in_array($in['e'] ?? '', ['optout', 'optin'], true)) {
     }
     exit;
 }
+$res = ['ok' => false, 'proc' => 'databáze nedostupná'];
 try {
     if ($db = bb_db()) {
-        bb_stat_record($db, $in);
+        $res = bb_stat_record($db, $in);
     }
 } catch (Throwable $e) {
-    // statistika nesmí nikdy rozbít web
+    $res = ['ok' => false, 'proc' => 'chyba serveru'];   // statistika nesmí nikdy rozbít web
+}
+if (!empty($in['dbg'])) {       // odkaz ?overit – ukázat, jak se návštěva vyhodnotila
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode($res + ['ua' => (string) ($_SERVER['HTTP_USER_AGENT'] ?? ''), 'ch_mobile' => (string) ($_SERVER['HTTP_SEC_CH_UA_MOBILE'] ?? '')]);
+    exit;
 }
 http_response_code(204);

@@ -1573,19 +1573,19 @@ function bb_stat_table(PDO $db): string
 }
 
 /** Uloží jednu událost (zobrazení stránky / klik). Roboty a správce (cookie bb_nostat) přeskočí. */
-function bb_stat_record(PDO $db, array $in): void
+function bb_stat_record(PDO $db, array $in): array
 {
     $T = bb_stat_table($db);
     $ua = (string) ($_SERVER['HTTP_USER_AGENT'] ?? '');
-    if ($ua === '' || preg_match('/bot|crawl|spider|slurp|facebookexternalhit|preview|headless|lighthouse|pingdom|uptime|monitor|curl|wget|python|axios|java\//i', $ua)) return;
+    if ($ua === '' || preg_match('/bot|crawl|spider|slurp|facebookexternalhit|preview|headless|lighthouse|pingdom|uptime|monitor|curl|wget|python|axios|java\//i', $ua)) return ['ok' => false, 'proc' => 'robot / neznámý prohlížeč'];
     $ip = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
-    $ignored = bb_stat_is_ignored_browser();
+    $why = bb_stat_is_ignored_browser() ? 'tento prohlížeč je vyřazený (Nepočítat mě)' : '';
     foreach (bb_setting_get('stat_ignore_ips') ?? [] as $x) {      // vyřazené IP adresy (domov, provozovna…)
-        if (($x['ip'] ?? '') === $ip) $ignored = true;
+        if (($x['ip'] ?? '') === $ip) $why = 'vyřazená IP adresa „' . ($x['nazev'] ?? '') . '“';
     }
-    if ($ignored) { bb_stat_purge_me($db); return; }               // a smazat i dřívější návštěvy z tohoto prohlížeče
+    if ($why !== '') { bb_stat_purge_me($db); return ['ok' => false, 'proc' => $why]; }   // a smazat i dřívější návštěvy
     $ev = (string) ($in['e'] ?? 'view');
-    if (!in_array($ev, ['view', 'tel', 'poukaz', 'mail'], true)) return;
+    if (!in_array($ev, ['view', 'tel', 'poukaz', 'mail'], true)) return ['ok' => false, 'proc' => 'neznámá událost'];
 
     $vis = bb_stat_hash($db);   // platí jen tento měsíc, IP z něj nejde zjistit
     $q = (string) ($in['q'] ?? '');
@@ -1595,17 +1595,18 @@ function bb_stat_record(PDO $db, array $in): void
     if ($ev === 'view') {   // stejný návštěvník během 30 minut = jedna návštěva
         $st = $db->prepare("SELECT 1 FROM `$T` WHERE navstevnik = ? AND udalost = 'view' AND cas > (NOW() - INTERVAL 30 MINUTE) LIMIT 1");
         $st->execute([$vis]);
-        if ($st->fetchColumn()) return;
+        if ($st->fetchColumn()) return ['ok' => false, 'proc' => 'stejný návštěvník už má návštěvu v posledních 30 minutách (počítá se jako jedna)', 'zarizeni' => bb_stat_device($ua, $in), 'prohlizec' => bb_ua_label($ua), 'zdroj' => $src];
     } else {                // klik přiřadit ke zdroji dnešní návštěvy
         $st = $db->prepare("SELECT zdroj, odkaz, kampan FROM `$T` WHERE navstevnik = ? AND udalost = 'view' ORDER BY id DESC LIMIT 1");
         $st->execute([$vis]);
         if ($r = $st->fetch()) { $src = $r['zdroj']; $host = $r['odkaz']; $camp = $r['kampan']; }
     }
     $db->prepare("INSERT INTO `$T` (cas, den, navstevnik, udalost, zdroj, odkaz, kampan, zarizeni, prohlizec) VALUES (NOW(), CURDATE(), ?, ?, ?, ?, ?, ?, ?)")
-       ->execute([$vis, $ev, $src, $host, $camp, bb_stat_device($ua, $in), bb_ua_label($ua)]);
+       ->execute([$vis, $ev, $src, $host, $camp, $dev = bb_stat_device($ua, $in), $lab = bb_ua_label($ua)]);
     if (random_int(1, 500) === 1) {
         $db->exec("DELETE FROM `$T` WHERE den < (CURDATE() - INTERVAL 400 DAY)");
     }
+    return ['ok' => true, 'zarizeni' => $dev, 'prohlizec' => $lab, 'zdroj' => $src];
 }
 
 

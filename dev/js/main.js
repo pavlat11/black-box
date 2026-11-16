@@ -1270,5 +1270,13 @@ fix();addEventListener('resize',fix);if(document.fonts)document.fonts.ready.then
     qs.delete('nepocitat');qs.delete('pocitat');history.replaceState(null,'',location.pathname+(qs.toString()?'?'+qs:'')+location.hash);
     if(off)return;}
   const send=d=>{const b=JSON.stringify(d);if(navigator.sendBeacon&&navigator.sendBeacon('nv.php',new Blob([b],{type:'application/json'})))return;fetch('nv.php',{method:'POST',body:b,keepalive:true,headers:{'Content-Type':'application/json'}}).catch(()=>{});};
+  /* ?overit = ukázat, jak se tahle návštěva započítala (zařízení, prohlížeč, zdroj, případně proč ne) */
+  if(qs.has('overit')){qs.delete('overit');history.replaceState(null,'',location.pathname+(qs.toString()?'?'+qs:'')+location.hash);
+    fetch('nv.php',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({e:'view',dbg:1,m:(navigator.userAgentData&&typeof navigator.userAgentData.mobile==='boolean')?navigator.userAgentData.mobile:undefined,r:document.referrer||'',q:location.search.slice(0,300)})})
+    .then(r=>r.json()).then(j=>{const Z={mobil:'Mobil',pc:'Počítač',tablet:'Tablet'};const t=document.createElement('div');
+      t.innerHTML=(j.ok?'✓ Návštěva zapsána':'✗ Nezapsáno')+'<br><small style="font-weight:500;opacity:.85">'+(j.zarizeni?(Z[j.zarizeni]||j.zarizeni)+' · '+(j.prohlizec||'')+' · zdroj '+(j.zdroj||''):'')+(j.proc?'<br>'+j.proc:'')+'</small>';
+      t.style.cssText='position:fixed;left:50%;bottom:24px;transform:translateX(-50%);width:max-content;max-width:92vw;text-align:center;z-index:9999;padding:14px 22px;border-radius:20px;background:#0c0a24;border:1px solid '+(j.ok?'#6fe0a0':'#ffb86b')+';color:#fff;font:600 15px/1.4 Manrope,sans-serif;box-shadow:0 10px 40px rgba(0,0,0,.6)';
+      document.body.appendChild(t);setTimeout(()=>t.remove(),12000);}).catch(()=>{});
+    return;}
   send({e:'view',m:(navigator.userAgentData&&typeof navigator.userAgentData.mobile==='boolean')?navigator.userAgentData.mobile:undefined,r:document.referrer||'',u:qs.get('utm_source')||'',c:qs.get('utm_campaign')||'',q:location.search.slice(0,300)});
 }catch(e){}})();
