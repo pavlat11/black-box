@@ -529,6 +529,16 @@ if (empty($_SESSION['bb_admin'])) {
         . ($err ? '<p style="color:#ff6b8a;margin:14px 0 0">' . bb_h($err) . '</p>' : '') . '</div>');
 }
 
+/* Připomínky a storno i bez cronu: nejvýš jednou za 30 minut, při přihlášené správě */
+try {
+    $sw = bb_setting_get('sweep')['t'] ?? 0;
+    if ((int) $sw < time() - 1800) {
+        bb_setting_set('sweep', ['t' => time()]);
+        bb_sweep_orders($cfg, $DATA);
+    }
+} catch (Throwable $e) {
+}
+
 /* ---- databáze ---- */
 try {
     bb_db();

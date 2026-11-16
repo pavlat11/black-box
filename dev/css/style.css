@@ -2125,3 +2125,9 @@ body.menu .bbmenu nav a:nth-child(7){transition-delay:.38s}body.menu .bbmenu nav
 .vcard.vt .vt-svg text{white-space:pre;-webkit-text-size-adjust:none;text-size-adjust:none}
 .nav .btn.sm{white-space:nowrap}
 @media (min-width:961px) and (max-width:1180px){.snd .t{display:none}.links{gap:12px}.nav .btn.sm{padding:12px 14px}}
+
+/* potvrzení objednávky faktury: QR kód a stažení */
+.pay-box{margin-top:18px;text-align:center}
+.pay-qr{display:block;margin:0 auto 10px;width:190px;height:190px;max-width:70vw;max-height:70vw;border-radius:12px;background:#fff;padding:8px;box-sizing:content-box}
+.pay-meta{font-size:14px;opacity:.85;margin:8px 0 0}
+.pay-btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:14px}

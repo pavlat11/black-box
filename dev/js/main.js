@@ -1,3 +1,13 @@
+/* potvrzení objednávky faktury: QR kód pro platbu hned + stažení faktury */
+function bbPayHtml(j){
+  if(!j||!j.pdf)return '';
+  const e=t=>String(t==null?'':t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  return '<div class="pay-box">'
+    +(j.qr?'<img class="pay-qr" src="'+e(j.qr)+'" width="190" height="190" alt="QR kód pro platbu">':'')
+    +'<p class="pay-meta">Částka <b>'+e(j.amount)+'</b> · VS <b>'+e(j.vs)+'</b> · splatnost <b>'+e(j.due)+'</b></p>'
+    +'<div class="pay-btns"><a class="btn sm" href="'+e(j.pdf)+'" download>Stáhnout fakturu (PDF)</a>'
+    +(j.qr?'<a class="btn sm" href="'+e(j.qr)+'" download="qr-platba.png">Stáhnout QR kód</a>':'')+'</div></div>';
+}
 /* Ceník a oznámení: mění se ve správě (sprava.php), web si je načte z ceny.php */
 window.BB_PRICES={standard:1990,gold:2490};
 function bbFmt(n){return String(n).replace(/\B(?=(\d{3})+(?!\d))/g,'\u00a0');}
@@ -510,7 +520,7 @@ if('IntersectionObserver' in window&&!reduce){const io=new IntersectionObserver(
       .then(r=>r.json().catch(()=>({ok:false,_fallback:true})).then(j=>({r,j})))
       .then(({r,j})=>{
         if(j.ok){const m=esc(v('voMail'));
-          if(j.mode==='invoice')done('Faktura je na cestě','Poslali jsme ji na <b>'+m+'</b>. '+after);
+          if(j.mode==='invoice')done('Faktura je na cestě','Poslali jsme ji na <b>'+m+'</b>. '+after+bbPayHtml(j));
           else done('Objednávka přijata','Fakturu Vám brzy pošleme na <b>'+m+'</b>. '+after);
           return;}
         if(r.status===422||r.status===429){err.textContent=j.error||'Zkontrolujte prosím údaje.';return;}
@@ -1168,7 +1178,7 @@ try{
     fetch('objednavka.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:ctl.signal})
       .then(r=>r.json().catch(()=>({ok:false})).then(j=>({r,j})))
       .then(({r,j})=>{if(j.ok){const m=esc(v('qoMail'));
-          if(j.mode==='invoice')done('Faktura je na cestě','Poslali jsme ji na <b>'+m+'</b>. '+after);
+          if(j.mode==='invoice')done('Faktura je na cestě','Poslali jsme ji na <b>'+m+'</b>. '+after+bbPayHtml(j));
           else done('Objednávka přijata','Fakturu Vám brzy pošleme na <b>'+m+'</b>. '+after);return;}
         if(r.status===422||r.status===429){err.textContent=j.error||'Zkontrolujte prosím údaje.';return;}throw new Error('server');})
       .catch(()=>{viaMail();done('Skoro hotovo','Otevřeli jsme Vám e-mail s objednávkou. Stačí ho odeslat a fakturu Vám pošleme.');})

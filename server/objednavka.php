@@ -151,7 +151,13 @@ try {
     bb_save_order($DATA, $o);
 
     log_order($DATA, [date('Y-m-d H:i'), $quick ? 'objednávka (faktura)' : 'faktura', $no, $o['product']['name'], $o['product']['price'], bb_delivery_label($o), '', $name, $phone, $email, $addr, $company, $ico, 'faktura odeslána']);
-    out(['ok' => true, 'mode' => 'invoice', 'invoice' => $no]);
+    $qrPng = bb_qr_png((string) $o['spayd']);
+    out([
+        'ok' => true, 'mode' => 'invoice', 'invoice' => $no,
+        'amount' => bb_money((float) $o['product']['price']), 'vs' => $o['vs'], 'due' => bb_date($o['due']),
+        'pdf' => bb_invoice_link($o),
+        'qr' => $qrPng ? 'data:image/png;base64,' . base64_encode($qrPng) : '',
+    ]);
 } catch (Throwable $e) {
     @file_put_contents($DATA . '/chyby.log', date('c') . ' ' . $e->getMessage() . "\n", FILE_APPEND);
     out(['ok' => false, 'error' => 'Objednávku se nepodařilo odeslat.'], 500);
