@@ -56,6 +56,7 @@ header h1 small{display:block;font-size:12px;color:var(--mut);font-weight:500;le
 .warn{padding:12px 16px;border-radius:12px;margin:0 0 16px;background:rgba(255,184,107,.1);border:1px solid rgba(255,184,107,.35);color:var(--warn);font-size:14px}
 .o{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px 18px 16px;margin-bottom:12px;position:relative;overflow:hidden}
 .o.gold{border-color:#5c4a22}
+.subtabs{display:flex;gap:4px;margin:0 0 18px;padding:4px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid var(--line);width:max-content;max-width:100%;overflow-x:auto}.subtabs a{padding:9px 16px;border-radius:10px;color:var(--mut);text-decoration:none;font-weight:600;font-size:14px;white-space:nowrap}.subtabs a:hover{color:var(--txt)}.subtabs a.on{background:var(--acc);color:#fff}
 .pgn{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px}.pgn-i{color:var(--mut);font-size:13px}.pgn-b{display:flex;gap:6px;flex-wrap:wrap}.pgn-b a,.pgn-b span{min-width:36px;padding:7px 11px;border-radius:10px;border:1px solid var(--line);text-align:center;font-size:13px;color:var(--txt);text-decoration:none}.pgn-b a:hover{border-color:var(--acc)}.pgn-b a.on{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:700}.pgn-b .dis{opacity:.35}.pgn-n{color:var(--mut);font-size:13px}.pgn-n a{padding:4px 8px;border-radius:8px;color:var(--txt);text-decoration:none}.pgn-n a.on{background:var(--acc);color:#fff}
 .vchart{display:flex;align-items:flex-end;gap:3px;height:190px;padding:18px 0 22px}.vchart .vb{flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;position:relative;min-width:0}.vchart .vb i{display:block;width:100%;max-width:34px;min-height:2px;max-height:calc(100% - 16px);border-radius:5px 5px 2px 2px;background:linear-gradient(180deg,#c9a4ff,var(--acc2));position:relative;overflow:hidden}.vchart .vb i s{position:absolute;left:0;right:0;bottom:0;background:rgba(40,10,110,.55)}.vchart .vb em{font-style:normal;font-size:10px;color:var(--mut);margin-bottom:3px}.vchart .vb span{position:absolute;bottom:-20px;font-size:10px;color:var(--mut);white-space:nowrap}
 .o::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--acc2)}
@@ -660,20 +661,21 @@ if (isset($_GET['navstevnost'])) {
             $bid = (string) ($_POST['bid'] ?? '');
             if ($bid !== '' && $bid === (string) ($_COOKIE['bb_nostat'] ?? '')) $_SESSION['stat_optin'] = 1;   // tento prohlížeč: nepřidávat hned zpátky
             bb_stat_optin($bid === (string) ($_COOKIE['bb_nostat'] ?? '') ? null : $bid);
-            header('Location: ?navstevnost=1&d=' . (int) ($_GET['d'] ?? 30) . '#nepocitat');
+            header('Location: ?navstevnost=1&v=nepocitat');
             exit;
         } elseif ($_POST['ip_akce'] === 'prohlizec_pridat') {
             unset($_SESSION['stat_optin']);
             bb_stat_optout('přihlášení do správy');
-            header('Location: ?navstevnost=1&d=' . (int) ($_GET['d'] ?? 30) . '#nepocitat');
+            header('Location: ?navstevnost=1&v=nepocitat');
             exit;
         } elseif ($_POST['ip_akce'] === 'odebrat') {
             $ips = array_values(array_filter($ips, fn($x) => ($x['ip'] ?? '') !== (string) ($_POST['ip'] ?? '')));
         }
         bb_setting_set('stat_ignore_ips', $ips);
-        header('Location: ?navstevnost=1&d=' . (int) ($_GET['d'] ?? 30) . '#nepocitat');
+        header('Location: ?navstevnost=1&v=nepocitat');
         exit;
     }
+    $V = in_array($_GET['v'] ?? '', ['prehled', 'navstevy', 'nepocitat'], true) ? $_GET['v'] : 'prehled';
     $D = (int) ($_GET['d'] ?? 30);
     if (!in_array($D, [1, 7, 30, 90, 365], true)) $D = 30;
     $from = date('Y-m-d', strtotime('-' . ($D - 1) . ' days'));
@@ -703,11 +705,17 @@ if (isset($_GET['navstevnost'])) {
     $card = fn($t, $v, $sub = '', $cls = '') => '<div class="sc ' . $cls . '"><span>' . $t . '</span><b>' . $v . '</b><small>' . $sub . '</small></div>';
     $PER = [1 => 'Dnes', 7 => '7 dní', 30 => '30 dní', 90 => '90 dní', 365 => 'Rok'];
     $tabs = '<div class="tabs" style="margin:0 0 16px">';
-    foreach ($PER as $k => $t) $tabs .= '<a' . ($k === $D ? ' class="on"' : '') . ' href="?navstevnost=1&amp;d=' . $k . '">' . $t . '</a>';
+    foreach ($PER as $k => $t) $tabs .= '<a' . ($k === $D ? ' class="on"' : '') . ' href="?navstevnost=1&amp;v=' . $V . '&amp;d=' . $k . '">' . $t . '</a>';
     $tabs .= '</div>';
 
     $out = menu('navstevnost') . '<div class="wrap"><h1 class="ph">Návštěvnost webu' . ($T !== 'bb_navstevy' ? ' <span style="font-size:13px;color:var(--warn)">· TESTOVACÍ WEB</span>' : '') . '</h1>'
-        . '<p class="meta" style="margin:-6px 0 16px;color:#6fe0a0">✓ Přihlášený do správy se do návštěvnosti nepočítá – Vaše návštěvy webu z tohoto prohlížeče se neukládají.</p>' . $tabs . '<div class="scards">'
+        . '<p class="meta" style="margin:-6px 0 16px;color:#6fe0a0">✓ Přihlášený do správy se do návštěvnosti nepočítá – Vaše návštěvy webu z tohoto prohlížeče se neukládají.</p>' . '<div class="subtabs">'
+        . '<a' . ($V === 'prehled' ? ' class="on"' : '') . ' href="?navstevnost=1&amp;v=prehled&amp;d=' . $D . '">Přehled</a>'
+        . '<a' . ($V === 'navstevy' ? ' class="on"' : '') . ' href="?navstevnost=1&amp;v=navstevy&amp;d=' . $D . '">Poslední návštěvy</a>'
+        . '<a' . ($V === 'nepocitat' ? ' class="on"' : '') . ' href="?navstevnost=1&amp;v=nepocitat">Nepočítat mě</a></div>'
+        . ($V !== 'nepocitat' ? $tabs : '');
+    if ($V === 'prehled') {
+    $out .= '' . '<div class="scards">'
         . $card('Dnes', $nf($today), 'návštěvníků', 'hi')
         . $card($D === 1 ? 'Návštěvy dnes' : 'Návštěvy za ' . $PER[$D], $nf($visits), $nf($people) . ' různých lidí*')
         . $card('Vracející se', $nf($back), $people ? round($back / $people * 100) . ' % lidí přišlo víckrát' : '—')
@@ -768,12 +776,15 @@ if (isset($_GET['navstevnost'])) {
         foreach ($camps as $r) $out .= '<tr><td><b>' . $h($r['kampan']) . '</b> <span style="color:var(--mut)">· ' . $h($r['zdroj']) . '</span></td><td class="r"><b>' . $nf($r['n']) . '</b></td></tr>';
         $out .= '</tbody></table></div>';
     }
+    }
+
+    if ($V === 'navstevy') {
     /* poslední návštěvy – surová data */
     $per = in_array((int) ($_GET['n'] ?? 20), [20, 50, 100], true) ? (int) ($_GET['n'] ?? 20) : 20;
     $tot = $one("SELECT COUNT(*) FROM `$T` WHERE udalost='view' AND den >= ?", [$from]);
     $pages = max(1, (int) ceil($tot / $per));
     $page = min($pages, max(1, (int) ($_GET['p'] ?? 1)));
-    $pl = fn(int $p, int $n = 0) => '?navstevnost=1&amp;d=' . $D . '&amp;n=' . ($n ?: $per) . '&amp;p=' . $p . '#posledni';
+    $pl = fn(int $p, int $n = 0) => '?navstevnost=1&amp;v=navstevy&amp;d=' . $D . '&amp;n=' . ($n ?: $per) . '&amp;p=' . $p;
     $rows = $q("SELECT v.cas, v.navstevnik, v.zdroj, v.odkaz, v.kampan, v.zarizeni,
                 (SELECT COUNT(*) FROM `$T` w WHERE w.udalost='view' AND w.navstevnik = v.navstevnik AND w.id < v.id AND DATE_FORMAT(w.den,'%Y-%m') = DATE_FORMAT(v.den,'%Y-%m')) predtim
                 FROM `$T` v WHERE v.udalost='view' AND v.den >= ? ORDER BY v.cas DESC, v.id DESC LIMIT $per OFFSET " . (($page - 1) * $per), [$from]);
@@ -811,6 +822,9 @@ if (isset($_GET['navstevnost'])) {
     }
     $out .= '</div>';
 
+    }
+
+    if ($V === 'nepocitat') {
     /* vlastní návštěvy – vyřazení IP adres a odkaz pro prohlížeče FB/IG */
     $ips = bb_setting_get('stat_ignore_ips') ?? [];
     $mine = in_array($myIp, array_column($ips, 'ip'), true);
@@ -821,14 +835,14 @@ if (isset($_GET['navstevnost'])) {
         . '<p class="meta" style="margin:0 0 10px">Pošlete si tenhle odkaz (třeba zprávou na Messengeru / v Instagramu sami sobě) a jednou ho otevřete v aplikaci Facebook, v Instagramu i v Chromu. Web potvrdí „Tento prohlížeč se nepočítá“.</p>'
         . '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:18px"><input id="noLink" readonly value="' . $h($host . '?nepocitat') . '" style="flex:1;min-width:220px"><button class="btn ghost" type="button" onclick="navigator.clipboard.writeText(document.getElementById(\'noLink\').value);this.textContent=\'Zkopírováno ✓\'">Kopírovat</button></div>'
         . '<p style="margin:0 0 6px"><b>2. Vyřadit IP adresu</b> <span class="meta">– vše, co jde přes tuto síť (domácí / firemní Wi-Fi). Na mobilních datech se IP mění, tam pomůže odkaz.</span></p>'
-        . '<form method="post" action="?navstevnost=1&amp;d=' . $D . '" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0 12px">' . $csrfIn
+        . '<form method="post" action="?navstevnost=1&amp;v=nepocitat" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0 12px">' . $csrfIn
         . '<span class="meta" style="margin:0">Teď jste připojený z <b>' . $h($myIp) . '</b>' . ($mine ? ' <span style="color:#6fe0a0">– už se nepočítá ✓</span>' : '') . '</span>'
         . ($mine ? '' : '<input name="nazev" placeholder="Název, např. Doma" maxlength="40" style="width:180px"><button class="btn" name="ip_akce" value="pridat">Nepočítat tuto IP</button>')
         . '</form>';
     if ($ips) {
         $out .= '<table class="st"><tbody>';
         foreach ($ips as $x) {
-            $out .= '<tr><td><b>' . $h($x['nazev'] ?? '') . '</b> <span style="color:var(--mut)">· ' . $h($x['ip'] ?? '') . ' · od ' . $h($x['od'] ?? '') . '</span></td><td class="r"><form method="post" action="?navstevnost=1&amp;d=' . $D . '" style="margin:0">' . $csrfIn . '<input type="hidden" name="ip" value="' . $h($x['ip'] ?? '') . '"><button class="btn ghost" style="padding:6px 12px;font-size:12px" name="ip_akce" value="odebrat">Odebrat</button></form></td></tr>';
+            $out .= '<tr><td><b>' . $h($x['nazev'] ?? '') . '</b> <span style="color:var(--mut)">· ' . $h($x['ip'] ?? '') . ' · od ' . $h($x['od'] ?? '') . '</span></td><td class="r"><form method="post" action="?navstevnost=1&amp;v=nepocitat" style="margin:0">' . $csrfIn . '<input type="hidden" name="ip" value="' . $h($x['ip'] ?? '') . '"><button class="btn ghost" style="padding:6px 12px;font-size:12px" name="ip_akce" value="odebrat">Odebrat</button></form></td></tr>';
         }
         $out .= '</tbody></table>';
     }
@@ -838,7 +852,7 @@ if (isset($_GET['navstevnost'])) {
     $fmt = fn($d) => $d ? date('j.n.Y H:i', strtotime($d)) : '—';
     $out .= '<p style="margin:22px 0 6px"><b>3. Vyřazené prohlížeče</b> <span class="meta">– tyhle se nepočítají. Odebráním se zase začnou počítat.</span></p>';
     if (!in_array($curB, array_column($brs, 'id'), true)) {
-        $out .= '<form method="post" action="?navstevnost=1&amp;d=' . $D . '" style="margin:6px 0 10px">' . $csrfIn . '<span class="meta" style="margin-right:10px">Tento prohlížeč se teď počítá.</span><button class="btn ghost" style="padding:6px 12px;font-size:12px" name="ip_akce" value="prohlizec_pridat">Nepočítat tento prohlížeč</button></form>';
+        $out .= '<form method="post" action="?navstevnost=1&amp;v=nepocitat" style="margin:6px 0 10px">' . $csrfIn . '<span class="meta" style="margin-right:10px">Tento prohlížeč se teď počítá.</span><button class="btn ghost" style="padding:6px 12px;font-size:12px" name="ip_akce" value="prohlizec_pridat">Nepočítat tento prohlížeč</button></form>';
     }
     if ($brs) {
         $out .= '<div style="overflow-x:auto"><table class="st"><thead><tr><th>Prohlížeč</th><th>Vyřazen</th><th>Naposledy na webu</th><th></th></tr></thead><tbody>';
@@ -846,13 +860,15 @@ if (isset($_GET['navstevnost'])) {
             $me = ($x['id'] ?? '') === $curB;
             $out .= '<tr><td><b>' . $h($x['nazev'] ?? '') . '</b>' . ($me ? ' <span class="tag" style="font-size:11px;padding:2px 8px">tento</span>' : '') . '<br><span style="color:var(--mut);font-size:12px">' . $h($x['odkud'] ?? '') . '</span></td>'
                 . '<td style="white-space:nowrap">' . $fmt($x['od'] ?? '') . '</td><td style="white-space:nowrap">' . $fmt($x['naposledy'] ?? '') . '</td>'
-                . '<td class="r"><form method="post" action="?navstevnost=1&amp;d=' . $D . '" style="margin:0">' . $csrfIn . '<input type="hidden" name="bid" value="' . $h($x['id'] ?? '') . '"><button class="btn ghost" style="padding:6px 12px;font-size:12px" name="ip_akce" value="prohlizec_odebrat">Zase počítat</button></form></td></tr>';
+                . '<td class="r"><form method="post" action="?navstevnost=1&amp;v=nepocitat" style="margin:0">' . $csrfIn . '<input type="hidden" name="bid" value="' . $h($x['id'] ?? '') . '"><button class="btn ghost" style="padding:6px 12px;font-size:12px" name="ip_akce" value="prohlizec_odebrat">Zase počítat</button></form></td></tr>';
         }
         $out .= '</tbody></table></div>';
     } else {
         $out .= '<p class="meta" style="margin:0">Zatím žádné.</p>';
     }
     $out .= '</div>';
+
+    }
 
     $out .= '<p class="meta">Návštěva = jeden člověk během 30 minut. *Stejného člověka web pozná v rámci kalendářního měsíce (podle anonymního otisku, bez cookies, IP adresa se neukládá – proto není potřeba cookie lišta). Na mobilních datech se IP adresa občas mění, takže počet lidí může být o něco vyšší než ve skutečnosti. Vracející se = přišel v daném měsíci víckrát. Nepočítají se roboti, kdokoli přihlášený do správy (a prohlížeč, ve kterém se do správy někdy přihlásil), prohlížeče vyřazené odkazem ?nepocitat a vyřazené IP adresy. Tip: do odkazu v příspěvku přidejte <code>?utm_source=facebook&amp;utm_campaign=vanoce</code> a uvidíte, kolik lidí přišlo právě z něj.</p></div>';
     page('Návštěvnost', $out);
