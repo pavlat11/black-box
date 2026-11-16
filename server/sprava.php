@@ -646,6 +646,19 @@ if (isset($_GET['navstevnost'])) {
         page('Návštěvnost', menu('navstevnost') . '<div class="wrap"><h1 class="ph">Návštěvnost webu</h1><div class="warn">Návštěvnost potřebuje databázi (údaje <code>db</code> v config.php).</div></div>');
     }
     $T = bb_stat_table($db);
+    $myIp = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
+    if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_POST['ip_akce'])) {
+        csrf_ok();
+        $ips = bb_setting_get('stat_ignore_ips') ?? [];
+        if ($_POST['ip_akce'] === 'pridat' && $myIp !== '' && !in_array($myIp, array_column($ips, 'ip'), true)) {
+            $ips[] = ['ip' => $myIp, 'nazev' => mb_substr(trim((string) ($_POST['nazev'] ?? '')), 0, 40) ?: 'Bez názvu', 'od' => date('j.n.Y')];
+        } elseif ($_POST['ip_akce'] === 'odebrat') {
+            $ips = array_values(array_filter($ips, fn($x) => ($x['ip'] ?? '') !== (string) ($_POST['ip'] ?? '')));
+        }
+        bb_setting_set('stat_ignore_ips', $ips);
+        header('Location: ?navstevnost=1&d=' . (int) ($_GET['d'] ?? 30) . '#nepocitat');
+        exit;
+    }
     $D = (int) ($_GET['d'] ?? 30);
     if (!in_array($D, [1, 7, 30, 90, 365], true)) $D = 30;
     $from = date('Y-m-d', strtotime('-' . ($D - 1) . ' days'));
@@ -773,7 +786,30 @@ if (isset($_GET['navstevnost'])) {
     }
     $out .= '</div>';
 
-    $out .= '<p class="meta">Návštěva = jeden člověk během 30 minut. *Stejného člověka web pozná v rámci kalendářního měsíce (podle anonymního otisku, bez cookies, IP adresa se neukládá – proto není potřeba cookie lišta). Na mobilních datech se IP adresa občas mění, takže počet lidí může být o něco vyšší než ve skutečnosti. Vracející se = přišel v daném měsíci víckrát. Nepočítají se roboti ani kdokoli přihlášený do správy (a prohlížeč, ve kterém se do správy někdy přihlásil). Tip: do odkazu v příspěvku přidejte <code>?utm_source=facebook&amp;utm_campaign=vanoce</code> a uvidíte, kolik lidí přišlo právě z něj.</p></div>';
+    /* vlastní návštěvy – vyřazení IP adres a odkaz pro prohlížeče FB/IG */
+    $ips = bb_setting_get('stat_ignore_ips') ?? [];
+    $mine = in_array($myIp, array_column($ips, 'ip'), true);
+    $host = 'https://' . preg_replace('/^www\./', '', (string) ($_SERVER['HTTP_HOST'] ?? 'blackboxx.cz')) . rtrim(dirname($_SERVER['SCRIPT_NAME'] ?? '/'), '/\\') . '/';
+    $out .= '<div class="o" id="nepocitat"><div class="ttl" style="margin-bottom:6px">Moje návštěvy nepočítat</div>'
+        . '<p class="meta" style="margin:0 0 14px">Facebook a Instagram otevírají web ve vlastním prohlížeči, který o přihlášení do správy neví. Použijte jedno nebo obojí:</p>'
+        . '<p style="margin:0 0 6px"><b>1. Odkaz pro každý prohlížeč</b></p>'
+        . '<p class="meta" style="margin:0 0 10px">Pošlete si tenhle odkaz (třeba zprávou na Messengeru / v Instagramu sami sobě) a jednou ho otevřete v aplikaci Facebook, v Instagramu i v Chromu. Web potvrdí „Tento prohlížeč se nepočítá“.</p>'
+        . '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:18px"><input id="noLink" readonly value="' . $h($host . '?nepocitat') . '" style="flex:1;min-width:220px"><button class="btn ghost" type="button" onclick="navigator.clipboard.writeText(document.getElementById(\'noLink\').value);this.textContent=\'Zkopírováno ✓\'">Kopírovat</button></div>'
+        . '<p style="margin:0 0 6px"><b>2. Vyřadit IP adresu</b> <span class="meta">– vše, co jde přes tuto síť (domácí / firemní Wi-Fi). Na mobilních datech se IP mění, tam pomůže odkaz.</span></p>'
+        . '<form method="post" action="?navstevnost=1&amp;d=' . $D . '" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0 12px">' . $csrfIn
+        . '<span class="meta" style="margin:0">Teď jste připojený z <b>' . $h($myIp) . '</b>' . ($mine ? ' <span style="color:#6fe0a0">– už se nepočítá ✓</span>' : '') . '</span>'
+        . ($mine ? '' : '<input name="nazev" placeholder="Název, např. Doma" maxlength="40" style="width:180px"><button class="btn" name="ip_akce" value="pridat">Nepočítat tuto IP</button>')
+        . '</form>';
+    if ($ips) {
+        $out .= '<table class="st"><tbody>';
+        foreach ($ips as $x) {
+            $out .= '<tr><td><b>' . $h($x['nazev'] ?? '') . '</b> <span style="color:var(--mut)">· ' . $h($x['ip'] ?? '') . ' · od ' . $h($x['od'] ?? '') . '</span></td><td class="r"><form method="post" action="?navstevnost=1&amp;d=' . $D . '" style="margin:0">' . $csrfIn . '<input type="hidden" name="ip" value="' . $h($x['ip'] ?? '') . '"><button class="btn ghost" style="padding:6px 12px;font-size:12px" name="ip_akce" value="odebrat">Odebrat</button></form></td></tr>';
+        }
+        $out .= '</tbody></table>';
+    }
+    $out .= '</div>';
+
+    $out .= '<p class="meta">Návštěva = jeden člověk během 30 minut. *Stejného člověka web pozná v rámci kalendářního měsíce (podle anonymního otisku, bez cookies, IP adresa se neukládá – proto není potřeba cookie lišta). Na mobilních datech se IP adresa občas mění, takže počet lidí může být o něco vyšší než ve skutečnosti. Vracející se = přišel v daném měsíci víckrát. Nepočítají se roboti, kdokoli přihlášený do správy (a prohlížeč, ve kterém se do správy někdy přihlásil), prohlížeče vyřazené odkazem ?nepocitat a vyřazené IP adresy. Tip: do odkazu v příspěvku přidejte <code>?utm_source=facebook&amp;utm_campaign=vanoce</code> a uvidíte, kolik lidí přišlo právě z něj.</p></div>';
     page('Návštěvnost', $out);
 }
 

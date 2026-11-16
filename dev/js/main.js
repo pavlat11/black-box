@@ -1261,6 +1261,15 @@ fix();addEventListener('resize',fix);if(document.fonts)document.fonts.ready.then
   if(location.protocol!=='https:'&&location.protocol!=='http:')return;
   if(/github\.io$|localhost|127\.0\.0\.1/.test(location.hostname))return;
   const qs=new URLSearchParams(location.search);
+  /* ?nepocitat = tento prohlížeč (i FB/IG) vyřadit z návštěvnosti, ?pocitat = zase počítat */
+  if(qs.has('nepocitat')||qs.has('pocitat')){const off=qs.has('nepocitat');
+    document.cookie='bb_nostat='+(off?'1;max-age=34560000':';max-age=0')+';path=/;SameSite=Lax'+(location.protocol==='https:'?';Secure':'');
+    const t=document.createElement('div');t.textContent=off?'✓ Tento prohlížeč se do návštěvnosti nepočítá':'Tento prohlížeč se zase počítá';
+    t.style.cssText='position:fixed;left:50%;bottom:24px;transform:translateX(-50%);width:max-content;max-width:90vw;text-align:center;z-index:9999;padding:14px 22px;border-radius:999px;background:#0c0a24;border:1px solid #6fe0a0;color:#fff;font:600 15px Manrope,sans-serif;box-shadow:0 10px 40px rgba(0,0,0,.6)';
+    document.body.appendChild(t);setTimeout(()=>t.remove(),5000);
+    qs.delete('nepocitat');qs.delete('pocitat');history.replaceState(null,'',location.pathname+(qs.toString()?'?'+qs:'')+location.hash);
+    if(off)return;}
+  if(/(^|; )bb_nostat=1/.test(document.cookie))return;
   const send=d=>{const b=JSON.stringify(d);if(navigator.sendBeacon&&navigator.sendBeacon('nv.php',new Blob([b],{type:'application/json'})))return;fetch('nv.php',{method:'POST',body:b,keepalive:true,headers:{'Content-Type':'application/json'}}).catch(()=>{});};
   send({e:'view',r:document.referrer||'',u:qs.get('utm_source')||'',c:qs.get('utm_campaign')||'',q:location.search.slice(0,300)});
 }catch(e){}})();

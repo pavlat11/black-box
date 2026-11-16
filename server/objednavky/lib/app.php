@@ -1550,6 +1550,10 @@ function bb_stat_record(PDO $db, array $in): void
     $ua = (string) ($_SERVER['HTTP_USER_AGENT'] ?? '');
     if ($ua === '' || preg_match('/bot|crawl|spider|slurp|facebookexternalhit|preview|headless|lighthouse|pingdom|uptime|monitor|curl|wget|python|axios|java\//i', $ua)) return;
     if (!empty($_COOKIE['bb_nostat'])) return;
+    $ip = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
+    foreach (bb_setting_get('stat_ignore_ips') ?? [] as $x) {      // vyřazené IP adresy (domov, provozovna…)
+        if (($x['ip'] ?? '') === $ip) return;
+    }
     $ev = (string) ($in['e'] ?? 'view');
     if (!in_array($ev, ['view', 'tel', 'poukaz', 'mail'], true)) return;
 
@@ -1558,7 +1562,6 @@ function bb_stat_record(PDO $db, array $in): void
         $salt = bin2hex(random_bytes(16));
         $db->prepare("INSERT IGNORE INTO bb_nastaveni (klic, hodnota, upraveno) VALUES ('stat_salt', ?, NOW())")->execute([$salt]);
     }
-    $ip = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
     $vis = substr(hash('sha256', $salt . date('Y-m') . $ip . $ua), 0, 16);   // platí jen tento měsíc, IP z něj nejde zjistit
     $q = (string) ($in['q'] ?? '');
     [$src, $host] = bb_stat_source((string) ($in['r'] ?? ''), (string) ($in['u'] ?? ''), $q, $ua);
