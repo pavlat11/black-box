@@ -1354,7 +1354,8 @@ function bb_email_paid(array $cfg, array $o): string
 
 function bb_issue_invoice(array $cfg, string $dataDir, array $o, string $iban): array
 {
-    $no = bb_next_invoice_no($cfg, $dataDir);
+    $test = !empty($cfg['test_mode']);          // testovací web: zkušební číslo, nečerpá číselnou řadu
+    $no = $test ? 'TEST' . date('ymdHis') : bb_next_invoice_no($cfg, $dataDir);
     $issued = time();
     $o = array_merge($o, [
         'no' => $no,
@@ -1373,7 +1374,8 @@ function bb_issue_invoice(array $cfg, string $dataDir, array $o, string $iban): 
     file_put_contents($dataDir . '/faktury/' . $o['invoice_file'], bb_invoice_pdf($cfg, $o));
     $o['id'] = $no;
     $o['way'] = 'faktura';
-    $o['status'] = 'ceka';
+    $o['status'] = $test ? 'storno' : 'ceka';   // zkušební objednávka se rovnou řadí do stornovaných
+    if ($test) $o['test'] = 1;
     $o['created'] = $o['created'] ?? $issued;
     bb_save_order($dataDir, $o);
     return $o;

@@ -19,7 +19,7 @@ if out.exists():
     shutil.rmtree(out)
 shutil.copytree(ROOT / 'dev', out)
 if not web_only:
-    skip = {'.gitignore', 'test-souboru.php', 'config.php'} | ({'objednavka.php'} if test_mode else set())
+    skip = {'.gitignore', 'test-souboru.php', 'config.php'}
     for p in (ROOT / 'server').rglob('*'):
         rel = p.relative_to(ROOT / 'server')
         if p.is_dir() or p.name in skip:
@@ -37,6 +37,7 @@ if test_mode and not web_only:
         "<?php\n// TESTOVACÍ WEB (/test/): použije nastavení ostrého webu, ale návštěvy zapisuje zvlášť\n"
         "$c = require __DIR__ . '/../../objednavky/config.php';\n"
         "$c['stat_table'] = 'bb_navstevy_test';\n"
+        "$c['test_mode'] = true;   // objednávky jsou zkušební (číslo TEST…, hned ve stornovaných)\n"
         "return $c;\n", encoding='utf-8')
 
 idx = out / 'index.html'

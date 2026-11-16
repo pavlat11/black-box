@@ -144,7 +144,7 @@ try {
     $no = $o['no'];
     bb_send_invoice_customer($cfg, $DATA, $o);
     try {
-        bb_send_invoice_copy($cfg, $DATA, $o, 'Nová faktura');
+        if (empty($cfg['test_mode'])) bb_send_invoice_copy($cfg, $DATA, $o, 'Nová faktura');
     } catch (Throwable $e) {
     }
     $o['sent_at'] = time();
