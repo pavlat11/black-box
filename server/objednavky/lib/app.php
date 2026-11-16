@@ -912,6 +912,7 @@ function bb_db_install(PDO $db): void
         kampan     VARCHAR(80)  NOT NULL DEFAULT '',
         zarizeni   VARCHAR(10)  NOT NULL DEFAULT '',
         prohlizec  VARCHAR(40)  NOT NULL DEFAULT '',
+        model      VARCHAR(60)  NOT NULL DEFAULT '' COMMENT 'model telefonu, pokud ho prohlížeč prozradí',
         KEY k_den (den),
         KEY k_navstevnik (navstevnik),
         KEY k_den_udalost (den, udalost)
@@ -1569,6 +1570,9 @@ function bb_stat_table(PDO $db): string
     if (!$db->query("SHOW COLUMNS FROM `$t` LIKE 'prohlizec'")->fetch()) {          // doplnění sloupce (starší tabulka)
         $db->exec("ALTER TABLE `$t` ADD COLUMN prohlizec VARCHAR(40) NOT NULL DEFAULT '' AFTER zarizeni, ADD KEY k_navstevnik (navstevnik)");
     }
+    if (!$db->query("SHOW COLUMNS FROM `$t` LIKE 'model'")->fetch()) {
+        $db->exec("ALTER TABLE `$t` ADD COLUMN model VARCHAR(60) NOT NULL DEFAULT '' AFTER prohlizec");
+    }
     return $t;
 }
 
@@ -1601,12 +1605,13 @@ function bb_stat_record(PDO $db, array $in): array
         $st->execute([$vis]);
         if ($r = $st->fetch()) { $src = $r['zdroj']; $host = $r['odkaz']; $camp = $r['kampan']; }
     }
-    $db->prepare("INSERT INTO `$T` (cas, den, navstevnik, udalost, zdroj, odkaz, kampan, zarizeni, prohlizec) VALUES (NOW(), CURDATE(), ?, ?, ?, ?, ?, ?, ?)")
-       ->execute([$vis, $ev, $src, $host, $camp, $dev = bb_stat_device($ua, $in), $lab = bb_ua_label($ua)]);
+    $mod = bb_device_model($ua, (string) ($in['mo'] ?? ''));
+    $db->prepare("INSERT INTO `$T` (cas, den, navstevnik, udalost, zdroj, odkaz, kampan, zarizeni, prohlizec, model) VALUES (NOW(), CURDATE(), ?, ?, ?, ?, ?, ?, ?, ?)")
+       ->execute([$vis, $ev, $src, $host, $camp, $dev = bb_stat_device($ua, $in), $lab = bb_ua_label($ua), $mod]);
     if (random_int(1, 500) === 1) {
         $db->exec("DELETE FROM `$T` WHERE den < (CURDATE() - INTERVAL 400 DAY)");
     }
-    return ['ok' => true, 'zarizeni' => $dev, 'prohlizec' => $lab, 'zdroj' => $src];
+    return ['ok' => true, 'zarizeni' => $dev, 'prohlizec' => $lab, 'model' => $mod, 'zdroj' => $src];
 }
 
 
@@ -1680,4 +1685,60 @@ function bb_stat_is_ignored_browser(): bool
         }
     }
     return false;   // ve správě odebraný → zase se počítá
+}
+
+
+/* ---------- model zařízení (z prohlížeče / aplikace FB, IG) ---------- */
+
+/** Kód modelu z UA nebo z navigator.userAgentData (getHighEntropyValues). */
+function bb_device_model(string $ua, string $hint = ''): string
+{
+    $code = trim(preg_replace('/[^\w ,.+()\/-]/u', '', $hint));
+    if ($code === '' && preg_match('/FBDV\/([^;\]]+)/', $ua, $m)) $code = $m[1];                                    // aplikace Facebook
+    if ($code === '' && preg_match('/Instagram [\d.]+ \((iPhone[\d,]+|iPad[\d,]+);/', $ua, $m)) $code = $m[1];       // Instagram iOS
+    if ($code === '' && preg_match('/Instagram [\d.]+ Android \([^;]*;[^;]*;[^;]*;\s*([^;]+);\s*([^;]+);/', $ua, $m)) $code = trim($m[2]);   // Instagram Android
+    if ($code === '' && preg_match('/Android [\d.]+; (?:[a-z]{2}[-_][a-z]{2}; )?([^;)]+?)(?: Build\/[^;)]*)?[;)]/i', $ua, $m)) $code = trim($m[1]);
+    if ($code === '' || in_array(strtolower($code), ['k', 'wv', 'mobile', 'tablet', 'linux', 'u'], true)) {
+        if (preg_match('/iPhone/', $ua)) return 'iPhone';
+        if (preg_match('/iPad/', $ua)) return 'iPad';
+        return '';
+    }
+    $name = bb_model_name($code);
+    return mb_substr($name !== '' && $name !== $code ? $name . ' (' . $code . ')' : $code, 0, 60);
+}
+
+/** Převod kódu na obchodní název (nejběžnější iPhony, Samsungy, Pixely). */
+function bb_model_name(string $c): string
+{
+    static $ip = ['iPhone10,1' => 'iPhone 8', 'iPhone10,4' => 'iPhone 8', 'iPhone10,2' => 'iPhone 8 Plus', 'iPhone10,5' => 'iPhone 8 Plus', 'iPhone10,3' => 'iPhone X', 'iPhone10,6' => 'iPhone X',
+        'iPhone11,2' => 'iPhone XS', 'iPhone11,4' => 'iPhone XS Max', 'iPhone11,6' => 'iPhone XS Max', 'iPhone11,8' => 'iPhone XR',
+        'iPhone12,1' => 'iPhone 11', 'iPhone12,3' => 'iPhone 11 Pro', 'iPhone12,5' => 'iPhone 11 Pro Max', 'iPhone12,8' => 'iPhone SE (2. gen.)',
+        'iPhone13,1' => 'iPhone 12 mini', 'iPhone13,2' => 'iPhone 12', 'iPhone13,3' => 'iPhone 12 Pro', 'iPhone13,4' => 'iPhone 12 Pro Max',
+        'iPhone14,4' => 'iPhone 13 mini', 'iPhone14,5' => 'iPhone 13', 'iPhone14,2' => 'iPhone 13 Pro', 'iPhone14,3' => 'iPhone 13 Pro Max', 'iPhone14,6' => 'iPhone SE (3. gen.)',
+        'iPhone14,7' => 'iPhone 14', 'iPhone14,8' => 'iPhone 14 Plus', 'iPhone15,2' => 'iPhone 14 Pro', 'iPhone15,3' => 'iPhone 14 Pro Max',
+        'iPhone15,4' => 'iPhone 15', 'iPhone15,5' => 'iPhone 15 Plus', 'iPhone16,1' => 'iPhone 15 Pro', 'iPhone16,2' => 'iPhone 15 Pro Max',
+        'iPhone17,3' => 'iPhone 16', 'iPhone17,4' => 'iPhone 16 Plus', 'iPhone17,1' => 'iPhone 16 Pro', 'iPhone17,2' => 'iPhone 16 Pro Max', 'iPhone17,5' => 'iPhone 16e',
+        'iPhone18,3' => 'iPhone 17', 'iPhone18,1' => 'iPhone 17 Pro', 'iPhone18,2' => 'iPhone 17 Pro Max', 'iPhone18,4' => 'iPhone Air'];
+    if (isset($ip[$c])) return $ip[$c];
+    if (preg_match('/^(SM-[A-Z]\d{3})/', strtoupper($c), $m)) {
+        $k = $m[1];
+        static $sm = ['SM-S93' => 'Galaxy S25', 'SM-S92' => 'Galaxy S24', 'SM-S91' => 'Galaxy S23', 'SM-S90' => 'Galaxy S22', 'SM-G99' => 'Galaxy S21', 'SM-G98' => 'Galaxy S20',
+            'SM-S711' => 'Galaxy S23 FE', 'SM-S721' => 'Galaxy S24 FE', 'SM-G990' => 'Galaxy S21 FE', 'SM-F94' => 'Galaxy Z Fold', 'SM-F93' => 'Galaxy Z Fold', 'SM-F95' => 'Galaxy Z Fold', 'SM-F96' => 'Galaxy Z Fold',
+            'SM-F71' => 'Galaxy Z Flip', 'SM-F72' => 'Galaxy Z Flip', 'SM-F73' => 'Galaxy Z Flip', 'SM-F74' => 'Galaxy Z Flip', 'SM-F76' => 'Galaxy Z Flip',
+            'SM-A566' => 'Galaxy A56', 'SM-A556' => 'Galaxy A55', 'SM-A546' => 'Galaxy A54', 'SM-A536' => 'Galaxy A53', 'SM-A52' => 'Galaxy A52', 'SM-A515' => 'Galaxy A51',
+            'SM-A366' => 'Galaxy A36', 'SM-A356' => 'Galaxy A35', 'SM-A346' => 'Galaxy A34', 'SM-A336' => 'Galaxy A33', 'SM-A32' => 'Galaxy A32',
+            'SM-A266' => 'Galaxy A26', 'SM-A256' => 'Galaxy A25', 'SM-A236' => 'Galaxy A23', 'SM-A22' => 'Galaxy A22', 'SM-A166' => 'Galaxy A16', 'SM-A165' => 'Galaxy A16',
+            'SM-A15' => 'Galaxy A15', 'SM-A14' => 'Galaxy A14', 'SM-A13' => 'Galaxy A13', 'SM-A12' => 'Galaxy A12', 'SM-A05' => 'Galaxy A05', 'SM-A04' => 'Galaxy A04',
+            'SM-M' => 'Galaxy M', 'SM-X' => 'Galaxy Tab', 'SM-T' => 'Galaxy Tab', 'SM-P' => 'Galaxy Tab'];
+        foreach ($sm as $pre => $n) {
+            if (str_starts_with($k, $pre)) {
+                if (preg_match('/^SM-S9\d(6)/', $k) || preg_match('/^SM-G99(6)/', $k)) return $n . '+';
+                if (preg_match('/^SM-S9\d8/', $k) || preg_match('/^SM-G998/', $k)) return $n . ' Ultra';
+                return $n;
+            }
+        }
+        return '';
+    }
+    if (preg_match('/^Pixel/i', $c)) return $c;
+    return '';
 }

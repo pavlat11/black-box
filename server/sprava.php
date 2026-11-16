@@ -694,15 +694,15 @@ if (isset($_GET['navstevnost'])) {
 
     /* surová data jako CSV (otevře se v Excelu) */
     if (isset($_GET['csv'])) {
-        $st = $db->prepare("SELECT cas, navstevnik, zdroj, odkaz, kampan, zarizeni FROM `$T` WHERE udalost='view' AND den >= ? ORDER BY cas DESC, id DESC");
+        $st = $db->prepare("SELECT cas, navstevnik, zdroj, odkaz, kampan, zarizeni, prohlizec, model FROM `$T` WHERE udalost='view' AND den >= ? ORDER BY cas DESC, id DESC");
         $st->execute([$from]);
         header('Content-Type: text/csv; charset=utf-8');
         header('Content-Disposition: attachment; filename="navstevnost-' . $from . '-az-' . date('Y-m-d') . '.csv"');
         $f = fopen('php://output', 'w');
         fwrite($f, "\xEF\xBB\xBF");
-        fputcsv($f, ['Datum a čas', 'Návštěvník', 'Zdroj', 'Odkazující web', 'Kampaň', 'Zařízení'], ';');
+        fputcsv($f, ['Datum a čas', 'Návštěvník', 'Zdroj', 'Odkazující web', 'Kampaň', 'Zařízení', 'Prohlížeč', 'Model'], ';');
         while ($r = $st->fetch()) {
-            fputcsv($f, [date('j.n.Y H:i', strtotime($r['cas'])), substr($r['navstevnik'], 0, 6), $r['zdroj'], $r['odkaz'], $r['kampan'], $r['zarizeni']], ';');
+            fputcsv($f, [date('j.n.Y H:i', strtotime($r['cas'])), substr($r['navstevnik'], 0, 6), $r['zdroj'], $r['odkaz'], $r['kampan'], $r['zarizeni'], $r['prohlizec'], $r['model']], ';');
         }
         exit;
     }
@@ -773,6 +773,12 @@ if (isset($_GET['navstevnost'])) {
     $pm = round($dev['mobil'] / $dt * 100); $pt = round($dev['tablet'] / $dt * 100); $pp = max(0, 100 - $pm - $pt);
     $out .= '<div class="o split"><div class="ttl">Zařízení</div><div class="bar2"><i style="width:' . $pm . '%"></i><i class="g" style="width:' . $pp . '%"></i></div>
 <div class="leg"><span>Mobil ' . $nf($dev['mobil']) . ' (' . $pm . ' %)</span><span class="g">Počítač ' . $nf($dev['pc']) . ' (' . $pp . ' %)</span>' . ($dev['tablet'] ? '<span>Tablet ' . $nf($dev['tablet']) . '</span>' : '') . '</div></div>';
+    $models = $q("SELECT model, COUNT(*) n FROM `$T` WHERE udalost='view' AND model<>'' AND den >= ? GROUP BY model ORDER BY n DESC LIMIT 12", [$from]);
+    if ($models) {
+        $out .= '<div class="o"><div class="ttl" style="margin-bottom:10px">Nejčastější telefony</div><table class="st"><tbody>';
+        foreach ($models as $r) $out .= '<tr><td>' . $h($r['model']) . '</td><td class="r"><b>' . $nf($r['n']) . '</b></td></tr>';
+        $out .= '</tbody></table></div>';
+    }
     $hosts = $q("SELECT odkaz, COUNT(*) n FROM `$T` WHERE udalost='view' AND odkaz<>'' AND den >= ? GROUP BY odkaz ORDER BY n DESC LIMIT 12", [$from]);
     if ($hosts) {
         $out .= '<div class="o"><div class="ttl" style="margin-bottom:10px">Odkazující weby</div><table class="st"><tbody>';
@@ -794,7 +800,7 @@ if (isset($_GET['navstevnost'])) {
     $pages = max(1, (int) ceil($tot / $per));
     $page = min($pages, max(1, (int) ($_GET['p'] ?? 1)));
     $pl = fn(int $p, int $n = 0) => '?navstevnost=1&amp;v=navstevy&amp;d=' . $D . '&amp;n=' . ($n ?: $per) . '&amp;p=' . $p;
-    $rows = $q("SELECT v.cas, v.navstevnik, v.zdroj, v.odkaz, v.kampan, v.zarizeni, v.prohlizec,
+    $rows = $q("SELECT v.cas, v.navstevnik, v.zdroj, v.odkaz, v.kampan, v.zarizeni, v.prohlizec, v.model,
                 (SELECT COUNT(*) FROM `$T` w WHERE w.udalost='view' AND w.navstevnik = v.navstevnik AND w.id < v.id AND DATE_FORMAT(w.den,'%Y-%m') = DATE_FORMAT(v.den,'%Y-%m')) predtim
                 FROM `$T` v WHERE v.udalost='view' AND v.den >= ? ORDER BY v.cas DESC, v.id DESC LIMIT $per OFFSET " . (($page - 1) * $per), [$from]);
     $dn = ['Ne', 'Po', 'Út', 'St', 'Čt', 'Pá', 'So'];
@@ -812,7 +818,7 @@ if (isset($_GET['navstevnost'])) {
             $kdy = (date('Y-m-d', $t) === date('Y-m-d') ? 'dnes' : (date('Y-m-d', $t) === date('Y-m-d', strtotime('-1 day')) ? 'včera' : $dn[(int) date('w', $t)] . ' ' . date('j.n.', $t)));
             $od = '<b>' . $h($r['zdroj']) . '</b>' . ($r['odkaz'] !== '' ? ' <span style="color:var(--mut)">· ' . $h($r['odkaz']) . '</span>' : '') . ($r['kampan'] !== '' ? ' <span style="color:var(--mut)">· kampaň ' . $h($r['kampan']) . '</span>' : '');
             $who = '#' . $h(substr($r['navstevnik'], 0, 6)) . ($r['predtim'] > 0 ? ' <span class="tag" style="font-size:11px;padding:2px 8px">' . ($r['predtim'] + 1) . '. návštěva</span>' : '');
-            $out .= '<tr><td style="white-space:nowrap">' . $kdy . ' <b>' . date('H:i', $t) . '</b></td><td>' . $od . '</td><td>' . (['mobil' => 'Mobil', 'pc' => 'Počítač', 'tablet' => 'Tablet'][$r['zarizeni']] ?? $h($r['zarizeni'])) . ($r['prohlizec'] !== '' ? '<br><span style="color:var(--mut);font-size:12px">' . $h($r['prohlizec']) . '</span>' : '') . '</td><td style="white-space:nowrap">' . $who . '</td>'
+            $out .= '<tr><td style="white-space:nowrap">' . $kdy . ' <b>' . date('H:i', $t) . '</b></td><td>' . $od . '</td><td>' . (['mobil' => 'Mobil', 'pc' => 'Počítač', 'tablet' => 'Tablet'][$r['zarizeni']] ?? $h($r['zarizeni'])) . ($r['model'] !== '' ? ' · <b style="font-weight:600">' . $h($r['model']) . '</b>' : '') . ($r['prohlizec'] !== '' ? '<br><span style="color:var(--mut);font-size:12px">' . $h($r['prohlizec']) . '</span>' : '') . '</td><td style="white-space:nowrap">' . $who . '</td>'
                 . '<td class="r"><form method="post" action="?navstevnost=1&amp;v=navstevy&amp;d=' . $D . '&amp;n=' . $per . '&amp;p=' . $page . '" style="margin:0" onsubmit="return confirm(\'Smazat všechny návštěvy návštěvníka #' . $h(substr($r['navstevnik'], 0, 6)) . '?\')">' . $csrfIn . '<input type="hidden" name="nv" value="' . $h($r['navstevnik']) . '"><button class="btn ghost" style="padding:4px 10px;font-size:12px" name="ip_akce" value="smazat_navstevnika" title="Smazat všechny návštěvy tohoto návštěvníka">Smazat</button></form></td></tr>';
         }
         $out .= '</tbody></table></div>';
