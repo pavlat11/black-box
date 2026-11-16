@@ -56,6 +56,7 @@ header h1 small{display:block;font-size:12px;color:var(--mut);font-weight:500;le
 .warn{padding:12px 16px;border-radius:12px;margin:0 0 16px;background:rgba(255,184,107,.1);border:1px solid rgba(255,184,107,.35);color:var(--warn);font-size:14px}
 .o{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px 18px 16px;margin-bottom:12px;position:relative;overflow:hidden}
 .o.gold{border-color:#5c4a22}
+.pgn{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px}.pgn-i{color:var(--mut);font-size:13px}.pgn-b{display:flex;gap:6px;flex-wrap:wrap}.pgn-b a,.pgn-b span{min-width:36px;padding:7px 11px;border-radius:10px;border:1px solid var(--line);text-align:center;font-size:13px;color:var(--txt);text-decoration:none}.pgn-b a:hover{border-color:var(--acc)}.pgn-b a.on{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:700}.pgn-b .dis{opacity:.35}.pgn-n{color:var(--mut);font-size:13px}.pgn-n a{padding:4px 8px;border-radius:8px;color:var(--txt);text-decoration:none}.pgn-n a.on{background:var(--acc);color:#fff}
 .vchart{display:flex;align-items:flex-end;gap:3px;height:190px;padding:18px 0 22px}.vchart .vb{flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;position:relative;min-width:0}.vchart .vb i{display:block;width:100%;max-width:34px;min-height:2px;max-height:calc(100% - 16px);border-radius:5px 5px 2px 2px;background:linear-gradient(180deg,#c9a4ff,var(--acc2));position:relative;overflow:hidden}.vchart .vb i s{position:absolute;left:0;right:0;bottom:0;background:rgba(40,10,110,.55)}.vchart .vb em{font-style:normal;font-size:10px;color:var(--mut);margin-bottom:3px}.vchart .vb span{position:absolute;bottom:-20px;font-size:10px;color:var(--mut);white-space:nowrap}
 .o::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--acc2)}
 .o.gold::before{background:var(--gold)}
@@ -754,15 +755,20 @@ if (isset($_GET['navstevnost'])) {
         $out .= '</tbody></table></div>';
     }
     /* poslední návštěvy – surová data */
-    $page = max(1, (int) ($_GET['p'] ?? 1));
-    $per = 50;
+    $per = in_array((int) ($_GET['n'] ?? 20), [20, 50, 100], true) ? (int) ($_GET['n'] ?? 20) : 20;
     $tot = $one("SELECT COUNT(*) FROM `$T` WHERE udalost='view' AND den >= ?", [$from]);
+    $pages = max(1, (int) ceil($tot / $per));
+    $page = min($pages, max(1, (int) ($_GET['p'] ?? 1)));
+    $pl = fn(int $p, int $n = 0) => '?navstevnost=1&amp;d=' . $D . '&amp;n=' . ($n ?: $per) . '&amp;p=' . $p . '#posledni';
     $rows = $q("SELECT v.cas, v.navstevnik, v.zdroj, v.odkaz, v.kampan, v.zarizeni,
                 (SELECT COUNT(*) FROM `$T` w WHERE w.udalost='view' AND w.navstevnik = v.navstevnik AND w.id < v.id AND DATE_FORMAT(w.den,'%Y-%m') = DATE_FORMAT(v.den,'%Y-%m')) predtim
                 FROM `$T` v WHERE v.udalost='view' AND v.den >= ? ORDER BY v.cas DESC, v.id DESC LIMIT $per OFFSET " . (($page - 1) * $per), [$from]);
     $dn = ['Ne', 'Po', 'Út', 'St', 'Čt', 'Pá', 'So'];
-    $out .= '<div class="o"><div class="ttl" style="margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><span>Poslední návštěvy <em>' . $nf($tot) . ' za období</em></span>'
-        . '<a class="btn ghost" style="padding:8px 14px;font-size:13px" href="?navstevnost=1&amp;d=' . $D . '&amp;csv=1">Stáhnout CSV (Excel)</a></div>';
+    $nsel = '<span class="pgn-n">Na stránku:';
+    foreach ([20, 50, 100] as $n) $nsel .= ' <a' . ($n === $per ? ' class="on"' : '') . ' href="' . $pl(1, $n) . '">' . $n . '</a>';
+    $nsel .= '</span>';
+    $out .= '<div class="o" id="posledni"><div class="ttl" style="margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><span>Poslední návštěvy <em>' . $nf($tot) . ' za období</em></span>'
+        . '<span style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">' . $nsel . '<a class="btn ghost" style="padding:8px 14px;font-size:13px" href="?navstevnost=1&amp;d=' . $D . '&amp;csv=1">Stáhnout CSV (Excel)</a></span></div>';
     if (!$rows) {
         $out .= '<p class="meta" style="margin:0">Zatím žádné návštěvy.</p>';
     } else {
@@ -775,14 +781,19 @@ if (isset($_GET['navstevnost'])) {
             $out .= '<tr><td style="white-space:nowrap">' . $kdy . ' <b>' . date('H:i', $t) . '</b></td><td>' . $od . '</td><td>' . (['mobil' => 'Mobil', 'pc' => 'Počítač', 'tablet' => 'Tablet'][$r['zarizeni']] ?? $h($r['zarizeni'])) . '</td><td style="white-space:nowrap">' . $who . '</td></tr>';
         }
         $out .= '</tbody></table></div>';
-        $pages = (int) ceil($tot / $per);
-        if ($pages > 1) {
-            $out .= '<div class="tabs" style="margin:14px 0 0">';
-            if ($page > 1) $out .= '<a href="?navstevnost=1&amp;d=' . $D . '&amp;p=' . ($page - 1) . '">← Novější</a>';
-            $out .= '<a class="on" style="pointer-events:none">' . $page . ' / ' . $pages . '</a>';
-            if ($page < $pages) $out .= '<a href="?navstevnost=1&amp;d=' . $D . '&amp;p=' . ($page + 1) . '">Starší →</a>';
-            $out .= '</div>';
+        /* stránkování */
+        $od = ($page - 1) * $per + 1; $do = min($tot, $page * $per);
+        $out .= '<div class="pgn"><span class="pgn-i">' . $nf($od) . '–' . $nf($do) . ' z ' . $nf($tot) . '</span><span class="pgn-b">';
+        $btn = fn($p, $t, $on = false, $dis = false) => $dis ? '<span class="dis">' . $t . '</span>' : '<a' . ($on ? ' class="on"' : '') . ' href="' . $pl($p) . '">' . $t . '</a>';
+        $out .= $btn(1, '«', false, $page === 1) . $btn($page - 1, '‹ Novější', false, $page === 1);
+        $show = array_unique(array_filter([1, $page - 2, $page - 1, $page, $page + 1, $page + 2, $pages], fn($x) => $x >= 1 && $x <= $pages));
+        sort($show); $prev = 0;
+        foreach ($show as $x) {
+            if ($prev && $x > $prev + 1) $out .= '<span class="dis">…</span>';
+            $out .= $btn($x, (string) $x, $x === $page);
+            $prev = $x;
         }
+        $out .= $btn($page + 1, 'Starší ›', false, $page >= $pages) . $btn($pages, '»', false, $page >= $pages) . '</span></div>';
     }
     $out .= '</div>';
 
