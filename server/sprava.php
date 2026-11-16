@@ -781,12 +781,6 @@ if (isset($_GET['navstevnost'])) {
     $pm = round($dev['mobil'] / $dt * 100); $pt = round($dev['tablet'] / $dt * 100); $pp = max(0, 100 - $pm - $pt);
     $out .= '<div class="o split"><div class="ttl">Zařízení</div><div class="bar2"><i style="width:' . $pm . '%"></i><i class="g" style="width:' . $pp . '%"></i></div>
 <div class="leg"><span>Mobil ' . $nf($dev['mobil']) . ' (' . $pm . ' %)</span><span class="g">Počítač ' . $nf($dev['pc']) . ' (' . $pp . ' %)</span>' . ($dev['tablet'] ? '<span>Tablet ' . $nf($dev['tablet']) . '</span>' : '') . '</div></div>';
-    $models = $q("SELECT model, COUNT(*) n FROM `$T` WHERE udalost='view' AND model<>'' AND den >= ? GROUP BY model ORDER BY n DESC LIMIT 12", [$from]);
-    if ($models) {
-        $out .= '<div class="o"><div class="ttl" style="margin-bottom:10px">Nejčastější telefony</div><table class="st"><tbody>';
-        foreach ($models as $r) $out .= '<tr><td>' . $h($r['model']) . '</td><td class="r"><b>' . $nf($r['n']) . '</b></td></tr>';
-        $out .= '</tbody></table></div>';
-    }
     $hosts = $q("SELECT odkaz, COUNT(*) n FROM `$T` WHERE udalost='view' AND odkaz<>'' AND den >= ? GROUP BY odkaz ORDER BY n DESC LIMIT 12", [$from]);
     if ($hosts) {
         $out .= '<div class="o"><div class="ttl" style="margin-bottom:10px">Odkazující weby</div><table class="st"><tbody>';
