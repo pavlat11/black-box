@@ -1563,8 +1563,10 @@ function bb_stat_hash(PDO $db): string
 function bb_stat_purge_me(PDO $db): int
 {
     $T = bb_stat_table($db);
+    $hsh = bb_stat_hash($db);
+    $db->prepare("DELETE a FROM `{$T}_akce` a JOIN `$T` v ON v.id = a.navsteva WHERE v.navstevnik = ?")->execute([$hsh]);
     $st = $db->prepare("DELETE FROM `$T` WHERE navstevnik = ?");
-    $st->execute([bb_stat_hash($db)]);
+    $st->execute([$hsh]);
     return $st->rowCount();
 }
 
@@ -1581,6 +1583,21 @@ function bb_stat_table(PDO $db): string
     if (!$db->query("SHOW COLUMNS FROM `$t` LIKE 'model'")->fetch()) {
         $db->exec("ALTER TABLE `$t` ADD COLUMN model VARCHAR(60) NOT NULL DEFAULT '' AFTER prohlizec");
     }
+    if (!$db->query("SHOW COLUMNS FROM `$t` LIKE 'doba'")->fetch()) {             // chování: doba, kde odešel, kam došel
+        $db->exec("ALTER TABLE `$t` ADD COLUMN doba INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'sekund aktivně na stránce' AFTER model,
+            ADD COLUMN odchod VARCHAR(20) NOT NULL DEFAULT '' COMMENT 'sekce při odchodu' AFTER doba,
+            ADD COLUMN sekce VARCHAR(255) NOT NULL DEFAULT '' COMMENT 'sekce, které viděl' AFTER odchod");
+    }
+    $db->exec("CREATE TABLE IF NOT EXISTS `{$t}_akce` (
+        id       BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        navsteva BIGINT UNSIGNED NOT NULL,
+        cas      DATETIME     NOT NULL,
+        za       INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'sekund od příchodu',
+        akce     VARCHAR(80)  NOT NULL,
+        sekce    VARCHAR(20)  NOT NULL DEFAULT '',
+        KEY k_navsteva (navsteva),
+        KEY k_cas (cas)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Black Box – kliknutí návštěvníků'");
     return $t;
 }
 
@@ -1618,6 +1635,7 @@ function bb_stat_record(PDO $db, array $in): array
        ->execute([$vis, $ev, $src, $host, $camp, $dev = bb_stat_device($ua, $in), $lab = bb_ua_label($ua), $mod]);
     if (random_int(1, 500) === 1) {
         $db->exec("DELETE FROM `$T` WHERE den < (CURDATE() - INTERVAL 400 DAY)");
+        $db->exec("DELETE FROM `{$T}_akce` WHERE cas < (NOW() - INTERVAL 400 DAY)");
     }
     return ['ok' => true, 'zarizeni' => $dev, 'prohlizec' => $lab, 'model' => $mod, 'zdroj' => $src];
 }
@@ -1749,4 +1767,54 @@ function bb_model_name(string $c): string
     }
     if (preg_match('/^Pixel/i', $c)) return $c;
     return '';
+}
+
+
+/* ---------- chování návštěvníků: doba, sekce, kliknutí ---------- */
+
+const BB_SECTIONS = ['top' => 'Úvod', 'koncept' => 'O co jde', 'pribeh' => 'Vaše návštěva', 'prostor' => 'Prostor', 'projekce' => 'Projekce a zvuk',
+    'galerie' => 'Galerie', 'cistota' => 'Čistota a soukromí', 'navsteva' => 'Jak probíhá návštěva', 'goldtime' => 'Gold Time', 'cenik' => 'Ceník',
+    'poukazy' => 'Poukazy', 'faq' => 'Dotazy', 'rezervace' => 'Rezervace', 'kontakt' => 'Kontakt'];
+
+/** Proč se tento návštěvník nepočítá ('' = počítá se). */
+function bb_stat_excluded(): string
+{
+    $ua = (string) ($_SERVER['HTTP_USER_AGENT'] ?? '');
+    if ($ua === '' || preg_match('/bot|crawl|spider|slurp|facebookexternalhit|preview|headless|lighthouse|pingdom|uptime|monitor|curl|wget|python|axios|java\//i', $ua)) return 'robot';
+    if (bb_stat_is_ignored_browser()) return 'prohlížeč';
+    $ip = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
+    foreach (bb_setting_get('stat_ignore_ips') ?? [] as $x) if (($x['ip'] ?? '') === $ip) return 'ip';
+    return '';
+}
+
+/** ping = doba + sekce (průběžně a při odchodu), click = na co klikl. Přiřadí se k poslední návštěvě. */
+function bb_stat_event(PDO $db, array $in): void
+{
+    if (bb_stat_excluded() !== '') return;
+    $T = bb_stat_table($db);
+    $st = $db->prepare("SELECT id, cas, sekce FROM `$T` WHERE navstevnik = ? AND udalost = 'view' AND cas > (NOW() - INTERVAL 6 HOUR) ORDER BY id DESC LIMIT 1");
+    $st->execute([bb_stat_hash($db)]);
+    $v = $st->fetch();
+    if (!$v) return;
+    $sec = (string) ($in['s'] ?? '');
+    if (!isset(BB_SECTIONS[$sec])) $sec = '';
+    if (($in['e'] ?? '') === 'ping') {
+        $d = max(0, min(120, (int) ($in['d'] ?? 0)));
+        $seen = array_filter(explode(',', (string) $v['sekce']));
+        foreach (explode(',', (string) ($in['v'] ?? '')) as $x) if (isset(BB_SECTIONS[$x]) && !in_array($x, $seen, true)) $seen[] = $x;
+        $db->prepare("UPDATE `$T` SET doba = LEAST(doba + ?, 36000), odchod = IF(? = '', odchod, ?), sekce = ? WHERE id = ?")
+           ->execute([$d, $sec, $sec, substr(implode(',', $seen), 0, 255), $v['id']]);
+    } elseif (($in['e'] ?? '') === 'click') {
+        $a = trim(preg_replace('/\s+/u', ' ', (string) ($in['a'] ?? '')));
+        if ($a === '') return;
+        if (preg_match('/^(.*) → ([a-z0-9-]+)$/u', $a, $m)) {             // odkaz na sekci: „Gold Time → goldtime“ → „Přejít na: Gold Time“
+            $nm = BB_SECTIONS[$m[2]] ?? $m[2];
+            $a = mb_strtolower(trim($m[1])) === mb_strtolower($nm) ? 'Přejít na: ' . $nm : trim($m[1]) . ' → ' . $nm;
+        }
+        $n = $db->prepare("SELECT COUNT(*) FROM `{$T}_akce` WHERE navsteva = ?");
+        $n->execute([$v['id']]);
+        if ((int) $n->fetchColumn() >= 80) return;
+        $db->prepare("INSERT INTO `{$T}_akce` (navsteva, cas, za, akce, sekce) VALUES (?, NOW(), GREATEST(0, TIMESTAMPDIFF(SECOND, ?, NOW())), ?, ?)")
+           ->execute([$v['id'], $v['cas'], mb_substr($a, 0, 80), $sec]);
+    }
 }

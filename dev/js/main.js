@@ -1281,4 +1281,27 @@ fix();addEventListener('resize',fix);if(document.fonts)document.fonts.ready.then
       document.body.appendChild(t);setTimeout(()=>t.remove(),12000);}).catch(()=>{}));
     return;}
   model.then(mo=>send({e:'view',mo:mo,m:(uad&&typeof uad.mobile==='boolean')?uad.mobile:undefined,r:document.referrer||'',u:qs.get('utm_source')||'',c:qs.get('utm_campaign')||'',q:location.search.slice(0,300)}));
+
+  /* chování: jak dlouho (jen když je stránka opravdu vidět), kam se doscrolloval, kde odešel, na co klikl */
+  const secs=[...document.querySelectorAll('section[id]')];   /* mimo sekce (nahoře) = Úvod */
+  let cur='top',seen=new Set(['top']),act=0,last=document.visibilityState==='visible'?Date.now():0,sent=0;
+  const where=()=>{const y=innerHeight*0.45;let id='top';for(const e of secs){const r=e.getBoundingClientRect();if(r.top<=y&&r.bottom>y){id=e.id;break;}}cur=id;seen.add(id);};
+  let st=0;addEventListener('scroll',()=>{if(st)return;st=setTimeout(()=>{st=0;where();},250);},{passive:true});
+  const tick=()=>{if(last){act+=Date.now()-last;last=document.visibilityState==='visible'?Date.now():0;}};
+  const ping=()=>{tick();where();const d=Math.round((act-sent)/1000);if(d<1&&!seen.size)return;sent+=d*1000;send({e:'ping',d:d,s:cur,v:[...seen].join(',')});};
+  setInterval(()=>{if(document.visibilityState==='visible')ping();},15000);
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')ping();else last=Date.now();});
+  addEventListener('pagehide',ping);
+  const lbl=el=>{const t=(el.getAttribute('data-stat')||el.getAttribute('aria-label')||el.innerText||el.textContent||el.getAttribute('title')||el.getAttribute('alt')||'').replace(/\s+/g,' ').trim();return t.slice(0,60);};
+  document.addEventListener('click',ev=>{try{
+    const t=ev.target;const el=t.closest&&t.closest('a[href],button,[role=button],summary,label,.gal img,.hs-dot,.vopt');if(!el)return;
+    let a='';const h=el.getAttribute&&el.getAttribute('href')||'';
+    if(h.startsWith('tel:'))a='Telefon';
+    else if(h.startsWith('mailto:'))a='E-mail';
+    else if(/^https?:/.test(h)&&!h.includes(location.hostname)){try{a='Odkaz ven: '+new URL(h).hostname.replace(/^www\./,'');}catch(e){a='Odkaz ven';}}
+    else if(el.tagName==='IMG'||el.querySelector&&el.querySelector('img')&&!lbl(el))a='Fotka v galerii';
+    else a=lbl(el)||(h.startsWith('#')?'Odkaz '+h:'Kliknutí');
+    if(h.startsWith('#')&&h.length>1&&!a.includes('#'))a+=' → '+h.slice(1);
+    where();send({e:'click',a:a,s:cur});
+  }catch(e){}},{capture:true,passive:true});
 }catch(e){}})();

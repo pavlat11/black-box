@@ -56,6 +56,7 @@ header h1 small{display:block;font-size:12px;color:var(--mut);font-weight:500;le
 .warn{padding:12px 16px;border-radius:12px;margin:0 0 16px;background:rgba(255,184,107,.1);border:1px solid rgba(255,184,107,.35);color:var(--warn);font-size:14px}
 .o{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px 18px 16px;margin-bottom:12px;position:relative;overflow:hidden}
 .o.gold{border-color:#5c4a22}
+.clk{margin-top:4px;font-size:12px}.clk summary{cursor:pointer;color:var(--acc);font-weight:600}.clk ol{margin:6px 0 0;padding-left:18px;color:var(--txt)}.clk li{margin:2px 0;white-space:nowrap}.clk li span{color:var(--mut);display:inline-block;min-width:54px}.clk li em{color:var(--mut);font-style:normal}
 .subtabs{display:flex;gap:4px;margin:0 0 18px;padding:4px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid var(--line);width:max-content;max-width:100%;overflow-x:auto}.subtabs a{padding:9px 16px;border-radius:10px;color:var(--mut);text-decoration:none;font-weight:600;font-size:14px;white-space:nowrap}.subtabs a:hover{color:var(--txt)}.subtabs a.on{background:var(--acc);color:#fff}
 .pgn{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px}.pgn-i{color:var(--mut);font-size:13px}.pgn-b{display:flex;gap:6px;flex-wrap:wrap}.pgn-b a,.pgn-b span{min-width:36px;padding:7px 11px;border-radius:10px;border:1px solid var(--line);text-align:center;font-size:13px;color:var(--txt);text-decoration:none}.pgn-b a:hover{border-color:var(--acc)}.pgn-b a.on{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:700}.pgn-b .dis{opacity:.35}.pgn-n{color:var(--mut);font-size:13px}.pgn-n a{padding:4px 8px;border-radius:8px;color:var(--txt);text-decoration:none}.pgn-n a.on{background:var(--acc);color:#fff}
 .vchart{display:flex;align-items:flex-end;gap:3px;height:190px;padding:18px 0 22px}.vchart .vb{flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;position:relative;min-width:0}.vchart .vb i{display:block;width:100%;max-width:34px;min-height:2px;max-height:calc(100% - 16px);border-radius:5px 5px 2px 2px;background:linear-gradient(180deg,#c9a4ff,var(--acc2));position:relative;overflow:hidden}.vchart .vb i s{position:absolute;left:0;right:0;bottom:0;background:rgba(40,10,110,.55)}.vchart .vb em{font-style:normal;font-size:10px;color:var(--mut);margin-bottom:3px}.vchart .vb span{position:absolute;bottom:-20px;font-size:10px;color:var(--mut);white-space:nowrap}
@@ -682,7 +683,10 @@ if (isset($_GET['navstevnost'])) {
             exit;
         } elseif ($_POST['ip_akce'] === 'smazat_navstevnika') {
             $nv = preg_replace('/[^a-f0-9]/', '', (string) ($_POST['nv'] ?? ''));
-            if (strlen($nv) === 16) $db->prepare("DELETE FROM `$T` WHERE navstevnik = ?")->execute([$nv]);
+            if (strlen($nv) === 16) {
+                $db->prepare("DELETE a FROM `{$T}_akce` a JOIN `$T` v ON v.id = a.navsteva WHERE v.navstevnik = ?")->execute([$nv]);
+                $db->prepare("DELETE FROM `$T` WHERE navstevnik = ?")->execute([$nv]);
+            }
             header('Location: ?navstevnost=1&v=navstevy&d=' . (int) ($_GET['d'] ?? 30) . '&n=' . (int) ($_GET['n'] ?? 20) . '&p=' . (int) ($_GET['p'] ?? 1));
             exit;
         } elseif ($_POST['ip_akce'] === 'odebrat') {
@@ -719,6 +723,8 @@ if (isset($_GET['navstevnost'])) {
     $people = $one("SELECT COUNT(DISTINCT DATE_FORMAT(den,'%Y-%m'), navstevnik) FROM `$T` WHERE udalost='view' AND den >= ?", [$from]);
     $back   = $one("SELECT COUNT(*) FROM (SELECT 1 FROM `$T` WHERE udalost='view' AND den >= ? GROUP BY DATE_FORMAT(den,'%Y-%m'), navstevnik HAVING COUNT(*) > 1) x", [$from]);
     $today  = $one("SELECT COUNT(DISTINCT navstevnik) FROM `$T` WHERE udalost='view' AND den = CURDATE()");
+    $dur = fn($sec) => $sec >= 3600 ? floor($sec / 3600) . ' h ' . floor($sec % 3600 / 60) . ' min' : ($sec >= 60 ? floor($sec / 60) . ':' . sprintf('%02d', $sec % 60) . ' min' : (int) $sec . ' s');
+    $SEC = BB_SECTIONS;
     $card = fn($t, $v, $sub = '', $cls = '') => '<div class="sc ' . $cls . '"><span>' . $t . '</span><b>' . $v . '</b><small>' . $sub . '</small></div>';
     $PER = [1 => 'Dnes', 7 => '7 dní', 30 => '30 dní', 90 => '90 dní', 365 => 'Rok'];
     $tabs = '<div class="tabs" style="margin:0 0 16px">';
@@ -736,6 +742,13 @@ if (isset($_GET['navstevnost'])) {
         . $card('Dnes', $nf($today), 'návštěvníků', 'hi')
         . $card($D === 1 ? 'Návštěvy dnes' : 'Návštěvy za ' . $PER[$D], $nf($visits), $nf($people) . ' různých lidí*')
         . $card('Vracející se', $nf($back), $people ? round($back / $people * 100) . ' % lidí přišlo víckrát' : '—')
+        . (function () use ($one, $from, $T, $card, $dur) {
+            $tr = $one("SELECT COUNT(*) FROM `$T` WHERE udalost='view' AND den >= ? AND sekce<>''", [$from]);
+            if (!$tr) return $card('Průměrná doba', '—', 'měří se od nahrání této verze');
+            $avg = $one("SELECT ROUND(AVG(doba)) FROM `$T` WHERE udalost='view' AND den >= ? AND sekce<>''", [$from]);
+            $quick = $one("SELECT COUNT(*) FROM `$T` WHERE udalost='view' AND den >= ? AND sekce<>'' AND doba < 10", [$from]);
+            return $card('Průměrná doba', $dur($avg), round($quick / $tr * 100) . ' % odešlo do 10 s');
+        })()
         . '</div>';
 
     /* graf po dnech / měsících */
@@ -757,6 +770,26 @@ if (isset($_GET['navstevnost'])) {
                 . '<i style="height:' . round($n / $max * 100) . '%"><s style="height:' . ($n ? round($m / $n * 100) : 0) . '%"></s></i><span>' . (($i % $every === 0 || $i === count($pts) - 1) ? $h($lbl) : '') . '</span></div>';
         }
         $out .= '</div></div>';
+    }
+
+    /* chování: kam dojdou, kde odcházejí, na co klikají */
+    $tr = $one("SELECT COUNT(*) FROM `$T` WHERE udalost='view' AND den >= ? AND sekce<>''", [$from]);
+    if ($tr) {
+        $reach = []; foreach ($SEC as $id => $nm) $reach[$id] = $one("SELECT COUNT(*) FROM `$T` WHERE udalost='view' AND den >= ? AND FIND_IN_SET(?, sekce)", [$from, $id]);
+        $exit = []; foreach ($q("SELECT odchod, COUNT(*) n FROM `$T` WHERE udalost='view' AND den >= ? AND sekce<>'' AND odchod<>'' GROUP BY odchod", [$from]) as $r) $exit[$r['odchod']] = (int) $r['n'];
+        $out .= '<div class="o"><div class="ttl" style="margin-bottom:4px">Kam lidé dojdou a kde odcházejí <em>' . $nf($tr) . ' návštěv s měřením</em></div>'
+            . '<p class="meta" style="margin:0 0 12px">Pruh = kolik % návštěv sekci vidělo. Oranžově = kolik lidí v ní stránku opustilo.</p><table class="st"><tbody>';
+        foreach ($SEC as $id => $nm) {
+            $pc = round($reach[$id] / $tr * 100);
+            $out .= '<tr><td style="width:190px">' . $h($nm) . '</td><td class="barc" style="width:auto"><i style="width:' . $pc . '%"></i></td><td class="r" style="width:60px">' . $pc . ' %</td><td class="r" style="width:110px;color:#ffb86b">' . (!empty($exit[$id]) ? $exit[$id] . '× odešel' : '') . '</td></tr>';
+        }
+        $out .= '</tbody></table></div>';
+        $clk = $q("SELECT a.akce, COUNT(*) n, COUNT(DISTINCT a.navsteva) l FROM `{$T}_akce` a JOIN `$T` v ON v.id = a.navsteva WHERE v.den >= ? GROUP BY a.akce ORDER BY n DESC LIMIT 20", [$from]);
+        if ($clk) {
+            $out .= '<div class="o"><div class="ttl" style="margin-bottom:10px">Na co lidé klikají</div><table class="st"><thead><tr><th>Co</th><th class="r">Kliknutí</th><th class="r">Lidí</th></tr></thead><tbody>';
+            foreach ($clk as $r) $out .= '<tr><td>' . $h($r['akce']) . '</td><td class="r"><b>' . $nf($r['n']) . '</b></td><td class="r">' . $nf($r['l']) . '</td></tr>';
+            $out .= '</tbody></table></div>';
+        }
     }
 
     /* zdroje */
@@ -802,10 +835,21 @@ if (isset($_GET['navstevnost'])) {
     $pages = max(1, (int) ceil($tot / $per));
     $page = min($pages, max(1, (int) ($_GET['p'] ?? 1)));
     $pl = fn(int $p, int $n = 0) => '?navstevnost=1&amp;v=navstevy&amp;d=' . $D . '&amp;n=' . ($n ?: $per) . '&amp;p=' . $p;
-    $rows = $q("SELECT v.cas, v.navstevnik, v.zdroj, v.odkaz, v.kampan, v.zarizeni, v.prohlizec, v.model,
+    $rows = $q("SELECT v.id, v.cas, v.navstevnik, v.zdroj, v.odkaz, v.kampan, v.zarizeni, v.prohlizec, v.model, v.doba, v.odchod, v.sekce,
                 (SELECT COUNT(*) FROM `$T` w WHERE w.udalost='view' AND w.navstevnik = v.navstevnik AND w.id < v.id AND DATE_FORMAT(w.den,'%Y-%m') = DATE_FORMAT(v.den,'%Y-%m')) predtim
                 FROM `$T` v WHERE v.udalost='view' AND v.den >= ? ORDER BY v.cas DESC, v.id DESC LIMIT $per OFFSET " . (($page - 1) * $per), [$from]);
     $dn = ['Ne', 'Po', 'Út', 'St', 'Čt', 'Pá', 'So'];
+    $beh = function (array $r, array $acts) use ($h, $dur, $SEC) {
+        if ($r['sekce'] === '' && !$acts) return '<span style="color:var(--mut)">—</span>';
+        $o = '<b>' . $dur((int) $r['doba']) . '</b>';
+        if ($r['odchod'] !== '') $o .= '<br><span style="color:var(--mut);font-size:12px">odešel v: ' . $h($SEC[$r['odchod']] ?? $r['odchod']) . '</span>';
+        if ($acts) {
+            $o .= '<details class="clk"><summary>' . count($acts) . '× kliknutí</summary><ol>';
+            foreach ($acts as $a) $o .= '<li><span>' . $dur((int) $a['za']) . '</span> ' . $h($a['akce']) . ($a['sekce'] !== '' ? ' <em>· ' . $h($SEC[$a['sekce']] ?? $a['sekce']) . '</em>' : '') . '</li>';
+            $o .= '</ol></details>';
+        }
+        return $o;
+    };
     $nsel = '<span class="pgn-n">Na stránku:';
     foreach ([20, 50, 100] as $n) $nsel .= ' <a' . ($n === $per ? ' class="on"' : '') . ' href="' . $pl(1, $n) . '">' . $n . '</a>';
     $nsel .= '</span>';
@@ -814,13 +858,16 @@ if (isset($_GET['navstevnost'])) {
     if (!$rows) {
         $out .= '<p class="meta" style="margin:0">Zatím žádné návštěvy.</p>';
     } else {
-        $out .= '<div style="overflow-x:auto"><table class="st raw"><thead><tr><th>Kdy</th><th>Odkud</th><th>Zařízení</th><th>Návštěvník</th><th></th></tr></thead><tbody>';
+        $ak = [];
+        $ids = array_map('intval', array_column($rows, 'id'));
+        foreach ($q("SELECT navsteva, za, akce, sekce FROM `{$T}_akce` WHERE navsteva IN (" . implode(',', $ids) . ") ORDER BY id") as $a) $ak[(int) $a['navsteva']][] = $a;
+        $out .= '<div style="overflow-x:auto"><table class="st raw"><thead><tr><th>Kdy</th><th>Odkud</th><th>Zařízení</th><th>Na webu</th><th>Návštěvník</th><th></th></tr></thead><tbody>';
         foreach ($rows as $r) {
             $t = strtotime($r['cas']);
             $kdy = (date('Y-m-d', $t) === date('Y-m-d') ? 'dnes' : (date('Y-m-d', $t) === date('Y-m-d', strtotime('-1 day')) ? 'včera' : $dn[(int) date('w', $t)] . ' ' . date('j.n.', $t)));
             $od = '<b>' . $h($r['zdroj']) . '</b>' . ($r['odkaz'] !== '' ? ' <span style="color:var(--mut)">· ' . $h($r['odkaz']) . '</span>' : '') . ($r['kampan'] !== '' ? ' <span style="color:var(--mut)">· kampaň ' . $h($r['kampan']) . '</span>' : '');
             $who = '#' . $h(substr($r['navstevnik'], 0, 6)) . ($r['predtim'] > 0 ? ' <span class="tag" style="font-size:11px;padding:2px 8px">' . ($r['predtim'] + 1) . '. návštěva</span>' : '');
-            $out .= '<tr><td style="white-space:nowrap">' . $kdy . ' <b>' . date('H:i', $t) . '</b></td><td>' . $od . '</td><td>' . (['mobil' => 'Mobil', 'pc' => 'Počítač', 'tablet' => 'Tablet'][$r['zarizeni']] ?? $h($r['zarizeni'])) . ($r['model'] !== '' ? ' · <b style="font-weight:600">' . $h($r['model']) . '</b>' : '') . ($r['prohlizec'] !== '' ? '<br><span style="color:var(--mut);font-size:12px">' . $h($r['prohlizec']) . '</span>' : '') . '</td><td style="white-space:nowrap">' . $who . '</td>'
+            $out .= '<tr><td style="white-space:nowrap">' . $kdy . ' <b>' . date('H:i', $t) . '</b></td><td>' . $od . '</td><td>' . (['mobil' => 'Mobil', 'pc' => 'Počítač', 'tablet' => 'Tablet'][$r['zarizeni']] ?? $h($r['zarizeni'])) . ($r['model'] !== '' ? ' · <b style="font-weight:600">' . $h($r['model']) . '</b>' : '') . ($r['prohlizec'] !== '' ? '<br><span style="color:var(--mut);font-size:12px">' . $h($r['prohlizec']) . '</span>' : '') . '</td><td>' . $beh($r, $ak[(int) $r['id']] ?? []) . '</td><td style="white-space:nowrap">' . $who . '</td>'
                 . '<td class="r"><form method="post" action="?navstevnost=1&amp;v=navstevy&amp;d=' . $D . '&amp;n=' . $per . '&amp;p=' . $page . '" style="margin:0" onsubmit="return confirm(\'Smazat všechny návštěvy návštěvníka #' . $h(substr($r['navstevnik'], 0, 6)) . '?\')">' . $csrfIn . '<input type="hidden" name="nv" value="' . $h($r['navstevnik']) . '"><button class="btn ghost" style="padding:4px 10px;font-size:12px" name="ip_akce" value="smazat_navstevnika" title="Smazat všechny návštěvy tohoto návštěvníka">Smazat</button></form></td></tr>';
         }
         $out .= '</tbody></table></div>';

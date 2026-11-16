@@ -47,6 +47,16 @@ if (in_array($in['e'] ?? '', ['optout', 'optin'], true)) {
     }
     exit;
 }
+// chování během návštěvy (doba, sekce, kliknutí)
+if (in_array($in['e'] ?? '', ['ping', 'click'], true)) {
+    try {
+        if ($db = bb_db()) bb_stat_event($db, $in);
+    } catch (Throwable $e) {
+    }
+    http_response_code(204);
+    exit;
+}
+
 $res = ['ok' => false, 'proc' => 'databáze nedostupná'];
 try {
     if ($db = bb_db()) {
