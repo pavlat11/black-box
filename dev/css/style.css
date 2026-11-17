@@ -2147,3 +2147,11 @@ body.menu .bbmenu nav a:nth-child(7){transition-delay:.38s}body.menu .bbmenu nav
 
 /* Kontakt: tlačítko Objednávka velkými písmeny */
 .bk-order .bko-t b{text-transform:uppercase;letter-spacing:.14em;font-size:1.02em}
+
+/* Rezervace: Objednávka přímo pod „Zavolat a rezervovat“ – stejný tvar tlačítka (pilulka) */
+#rezervace .book-r>.bk-order{margin:12px 0 0;width:100%;justify-content:center;gap:12px;padding:16px 28px;border-radius:999px;border:1px solid rgba(176,102,255,.6);background:linear-gradient(110deg,rgba(176,102,255,.2),rgba(6,5,26,.55));text-align:center}
+#rezervace .book-r>.bk-order .bko-ic{width:auto;height:auto;background:none;border-radius:0;color:#c58bff}
+#rezervace .book-r>.bk-order .bko-ic svg{width:18px;height:18px}
+#rezervace .book-r>.bk-order .bko-t{flex:0 0 auto}
+#rezervace .book-r>.bk-order .bko-t b{font:700 14px/1 var(--body);letter-spacing:.08em}
+#rezervace .book-r>.bk-order .bko-a{display:none}
