@@ -1673,7 +1673,7 @@ function bb_cron_run(array $cfg, string $dataDir, string $src): array
     /* DOČASNĚ: e-mail majiteli po každém běhu denní úlohy (ověření cronu). Smazat tento blok, až bude jisté, že cron běží. */
     try {
         $m = bb_mailer($cfg);
-        $m->addAddress($cfg['invoice_copy_to']);
+        $m->addAddress('pavlatp@email.cz');
         $m->Subject = 'Black Box: denní úloha proběhla (' . date('j. n. Y H:i') . ')';
         $m->isHTML(false);
         $m->Body = "Denní úloha (připomínky a storno) právě proběhla.\nSpuštění: " . ($src === 'cron' ? 'příkaz' : 'adresa/cron hostingu') . "\nOdeslané připomínky: {$stat['pripominka']}\nStornované objednávky: {$stat['storno']}\nChyby: {$stat['chyby']}\n";
