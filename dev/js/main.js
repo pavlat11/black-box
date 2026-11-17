@@ -480,8 +480,8 @@ if('IntersectionObserver' in window&&!reduce){const io=new IntersectionObserver(
   if(matchMedia('(pointer:fine)').matches&&!reduce){vc.addEventListener('mousemove',e=>{const r=vc.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;vc.style.transform=`perspective(1000px) rotateY(${x*10}deg) rotateX(${-y*10}deg)`;});vc.addEventListener('mouseleave',()=>vc.style.transform='');}
   /* objednávka poukazu → modal (doručení e-mailem nebo poštou, platba fakturou) */
   const D=document.getElementById('voDlg'),F=document.getElementById('voForm'),$=id=>document.getElementById(id);
-  const FLOW={email:['Odešlete objednávku.','Fakturu Vám hned pošleme e-mailem.','Po připsání platby přijde poukaz e-mailem (PDF k tisku).'],
-              posta:['Odešlete objednávku.','Fakturu Vám hned pošleme e-mailem.','Po připsání platby pošleme tištěný poukaz poštou.']};
+  const FLOW={email:['Odešlete objednávku.','Ihned zobrazíme QR kód k zaplacení, fakturu Vám pošleme e-mailem.','Po připsání platby přijde poukaz e-mailem (PDF k tisku).'],
+              posta:['Odešlete objednávku.','Ihned zobrazíme QR kód k zaplacení, fakturu Vám pošleme e-mailem.','Po připsání platby pošleme tištěný poukaz poštou.']};
   const LAST='Termín návštěvy si obdarovaný domluví telefonem na <a href="tel:+420737222266">+420 737 22 22 66</a>.';
   const way=()=>F.querySelector('input[name="voWay"]:checked').value;
   function paint(){const w=way(),p=w==='posta';$('voInv').hidden=!p;['voStreet','voZip','voCity'].forEach(id=>$(id).required=p);
@@ -1151,7 +1151,7 @@ try{
   const post=()=>wantV()&&qway()==='posta',ADDR=['qoStreet','qoZip','qoCity'];
   function paint(){const g=kind()==='gold',v=wantV(),p=post();D.classList.toggle('is-gold',g);$('qoVBox').hidden=!v;$('qoAddr').hidden=!p;ADDR.forEach(id=>$(id).required=p);
     const third=!v?'Po připsání platby přijde potvrzení s číslem poukazu e-mailem (PDF).':p?'Po připsání platby pošleme tištěný poukaz poštou.':'Po připsání platby přijde poukaz e-mailem (PDF).';
-    $('qoFlow').innerHTML=['Odešlete objednávku.','Fakturu Vám hned pošleme e-mailem.',third].map(t=>'<li>'+t+'</li>').join('')+'<li class="vo-last">Termín si domluvíte telefonem na '+TEL+'.</li>';}
+    $('qoFlow').innerHTML=['Odešlete objednávku.','Ihned zobrazíme QR kód k zaplacení, fakturu Vám pošleme e-mailem.',third].map(t=>'<li>'+t+'</li>').join('')+'<li class="vo-last">Termín si domluvíte telefonem na '+TEL+'.</li>';}
   F.querySelectorAll('input[name="qoKind"],input[name="qoWay"]').forEach(r=>r.addEventListener('change',()=>{paint();if(post()&&r.name==='qoWay')setTimeout(()=>$('qoStreet').focus({preventScroll:false}),60);}));
   $('qoV').addEventListener('change',()=>{paint();if(!wantV())ADDR.forEach(id=>$(id).closest('.field').classList.remove('vo-field-bad'));});
   F.querySelectorAll('input').forEach(i=>i.addEventListener('input',()=>i.closest('.field')&&i.closest('.field').classList.remove('vo-field-bad')));
