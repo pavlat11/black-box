@@ -2144,3 +2144,6 @@ body.menu .bbmenu nav a:nth-child(7){transition-delay:.38s}body.menu .bbmenu nav
 .pay-btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:16px}
 .pay-dl{display:inline-flex;align-items:center;justify-content:center;padding:10px 16px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--chrome);font-size:13.5px;font-weight:600;text-decoration:none;transition:background .2s}
 .pay-dl:hover{background:rgba(255,255,255,.12)}
+
+/* Kontakt: tlačítko Objednávka velkými písmeny */
+.bk-order .bko-t b{text-transform:uppercase;letter-spacing:.14em;font-size:1.02em}
