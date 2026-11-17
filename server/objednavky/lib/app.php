@@ -856,6 +856,9 @@ function bb_mailer(array $cfg): PHPMailer
 /* ---------- uložené objednávky: MySQL databáze (nebo soubory, když databáze není nastavená) ---------- */
 
 /** Připojení k MySQL podle config.php ('db'). Při prvním připojení vytvoří tabulky a převezme starší data ze souborů. */
+/** Zvýšit při změně tabulek v bb_db_install() – kontrola schématu se pak jednou provede znovu. */
+const BB_SCHEMA_VERSION = 2;
+
 function bb_db(): ?PDO
 {
     static $pdo = false;
@@ -874,7 +877,12 @@ function bb_db(): ?PDO
         [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC, PDO::ATTR_EMULATE_PREPARES => false]
     );
     $pdo->exec("SET time_zone = '" . date('P') . "'");
-    bb_db_install($pdo);
+    /* Kontrola/vytvoření tabulek stačí jednou (značka v data/) – ne při každém načtení stránky. */
+    $mark = dirname(__DIR__) . '/data/.schema-' . BB_SCHEMA_VERSION;
+    if (!is_file($mark)) {
+        bb_db_install($pdo);
+        @file_put_contents($mark, date('c'));
+    }
     return $pdo;
 }
 
@@ -1670,10 +1678,14 @@ function bb_cron_run(array $cfg, string $dataDir, string $src): array
         bb_setting_set('cron_last', ['t' => time(), 'src' => $src] + $stat);
     } catch (Throwable $e) {
     }
-    /* DOČASNĚ: e-mail majiteli po každém běhu denní úlohy (ověření cronu). Smazat tento blok, až bude jisté, že cron běží. */
+    /* DOČASNĚ: e-mail po každém běhu denní úlohy (ověření cronu). Adresu nastavuje majitel ve správě → E-maily; prázdná = nic se neposílá. */
     try {
+        $to = trim((string) (bb_setting_get('cron_notify')['komu'] ?? ''));
+        if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
+            return $stat;
+        }
         $m = bb_mailer($cfg);
-        $m->addAddress('pavlatp@email.cz');
+        $m->addAddress($to);
         $m->Subject = 'Black Box: denní úloha proběhla (' . date('j. n. Y H:i') . ')';
         $m->isHTML(false);
         $m->Body = "Denní úloha (připomínky a storno) právě proběhla.\nSpuštění: " . ($src === 'cron' ? 'příkaz' : 'adresa/cron hostingu') . "\nOdeslané připomínky: {$stat['pripominka']}\nStornované objednávky: {$stat['storno']}\nChyby: {$stat['chyby']}\n";
@@ -1798,6 +1810,8 @@ function bb_stat_table(PDO $db): string
     static $t = null;
     if ($t !== null) return $t;
     $t = preg_replace('/[^a-z0-9_]/', '', (string) ($GLOBALS['cfg']['stat_table'] ?? '')) ?: 'bb_navstevy';
+    $mark = dirname(__DIR__) . '/data/.stat-' . $t . '-' . BB_SCHEMA_VERSION;     // úpravu tabulky stačí ověřit jednou
+    if (is_file($mark)) return $t;
     if ($t !== 'bb_navstevy') $db->exec("CREATE TABLE IF NOT EXISTS `$t` LIKE bb_navstevy");
     if (!$db->query("SHOW COLUMNS FROM `$t` LIKE 'prohlizec'")->fetch()) {          // doplnění sloupce (starší tabulka)
         $db->exec("ALTER TABLE `$t` ADD COLUMN prohlizec VARCHAR(40) NOT NULL DEFAULT '' AFTER zarizeni, ADD KEY k_navstevnik (navstevnik)");
@@ -1820,6 +1834,7 @@ function bb_stat_table(PDO $db): string
         KEY k_navsteva (navsteva),
         KEY k_cas (cas)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Black Box – kliknutí návštěvníků'");
+    @file_put_contents($mark, date('c'));
     return $t;
 }
 
