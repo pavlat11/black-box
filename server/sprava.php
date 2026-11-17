@@ -797,10 +797,38 @@ if (isset($_GET['navstevnost'])) {
         exit;
     }
 
-    $visits = $one("SELECT COUNT(*) FROM `$T` WHERE udalost='view' AND den >= ?", [$from]);
-    $people = $one("SELECT COUNT(DISTINCT DATE_FORMAT(den,'%Y-%m'), navstevnik) FROM `$T` WHERE udalost='view' AND den >= ?", [$from]);
-    $back   = $one("SELECT COUNT(*) FROM (SELECT 1 FROM `$T` WHERE udalost='view' AND den >= ? GROUP BY DATE_FORMAT(den,'%Y-%m'), navstevnik HAVING COUNT(*) > 1) x", [$from]);
-    $today  = $one("SELECT COUNT(DISTINCT navstevnik) FROM `$T` WHERE udalost='view' AND den = CURDATE()");
+    /* Přehled: jediný průchod daty za období (místo ~30 samostatných dotazů, z nichž každý četl celou tabulku). */
+    $visits = $people = $back = $today = $tr = $durSum = $quick = 0;
+    $byKey = $reach = $exitC = $srcC = $devC = $hostC = $campC = [];
+    foreach (array_keys(BB_SECTIONS) as $sid) $reach[$sid] = 0;
+    if ($V === 'prehled') {
+        $st = $db->prepare("SELECT den, navstevnik, zdroj, odkaz, kampan, zarizeni, doba, odchod, sekce FROM `$T` WHERE udalost='view' AND den >= ?");
+        $st->execute([$from]);
+        $todayStr = date('Y-m-d'); $seen = $todayIds = [];
+        while ($r = $st->fetch()) {
+            $visits++;
+            $mk = substr($r['den'], 0, 7) . '|' . $r['navstevnik'];
+            $seen[$mk] = ($seen[$mk] ?? 0) + 1;                                   // „různí lidé“ = otisk platí jeden měsíc
+            if ($r['den'] === $todayStr) $todayIds[$r['navstevnik']] = 1;
+            $k = $D === 365 ? substr($r['den'], 0, 7) : $r['den'];
+            $byKey[$k]['n'] = ($byKey[$k]['n'] ?? 0) + 1;
+            $byKey[$k]['m'] = ($byKey[$k]['m'] ?? 0) + ($r['zarizeni'] === 'mobil' ? 1 : 0);
+            $srcC[$r['zdroj']] = ($srcC[$r['zdroj']] ?? 0) + 1;
+            $devC[$r['zarizeni']] = ($devC[$r['zarizeni']] ?? 0) + 1;
+            if ($r['odkaz'] !== '') $hostC[$r['odkaz']] = ($hostC[$r['odkaz']] ?? 0) + 1;
+            if ($r['kampan'] !== '') { $ck = $r['kampan'] . "\x1f" . $r['zdroj']; $campC[$ck] = ($campC[$ck] ?? 0) + 1; }
+            if ($r['sekce'] !== '') {
+                $tr++; $durSum += (int) $r['doba'];
+                if ((int) $r['doba'] < 10) $quick++;
+                foreach (array_unique(explode(',', $r['sekce'])) as $sid) if (isset($reach[$sid])) $reach[$sid]++;
+                if ($r['odchod'] !== '') $exitC[$r['odchod']] = ($exitC[$r['odchod']] ?? 0) + 1;
+            }
+        }
+        $people = count($seen);
+        $back = count(array_filter($seen, fn($n) => $n > 1));
+        $today = count($todayIds);
+        $avg = $tr ? (int) round($durSum / $tr) : 0;
+    }
     $dur = fn($sec) => $sec >= 3600 ? floor($sec / 3600) . ' h ' . floor($sec % 3600 / 60) . ' min' : ($sec >= 60 ? floor($sec / 60) . ':' . sprintf('%02d', $sec % 60) . ' min' : (int) $sec . ' s');
     $SEC = BB_SECTIONS;
     $card = fn($t, $v, $sub = '', $cls = '') => '<div class="sc ' . $cls . '"><span>' . $t . '</span><b>' . $v . '</b><small>' . $sub . '</small></div>';
@@ -820,22 +848,14 @@ if (isset($_GET['navstevnost'])) {
         . $card('Dnes', $nf($today), 'návštěvníků', 'hi')
         . $card($D === 1 ? 'Návštěvy dnes' : 'Návštěvy za ' . $PER[$D], $nf($visits), $nf($people) . ' různých lidí*')
         . $card('Vracející se', $nf($back), $people ? round($back / $people * 100) . ' % lidí přišlo víckrát' : '—')
-        . (function () use ($one, $from, $T, $card, $dur) {
-            $tr = $one("SELECT COUNT(*) FROM `$T` WHERE udalost='view' AND den >= ? AND sekce<>''", [$from]);
-            if (!$tr) return $card('Průměrná doba', '—', 'měří se od nahrání této verze');
-            $avg = $one("SELECT ROUND(AVG(doba)) FROM `$T` WHERE udalost='view' AND den >= ? AND sekce<>''", [$from]);
-            $quick = $one("SELECT COUNT(*) FROM `$T` WHERE udalost='view' AND den >= ? AND sekce<>'' AND doba < 10", [$from]);
-            return $card('Průměrná doba', $dur($avg), round($quick / $tr * 100) . ' % odešlo do 10 s');
-        })()
+        . (!$tr ? $card('Průměrná doba', '—', 'měří se od nahrání této verze')
+            : $card('Průměrná doba', $dur($avg), round($quick / $tr * 100) . ' % odešlo do 10 s'))
         . '</div>';
 
     /* graf po dnech / měsících */
     if ($D > 1) {
         $byMonth = $D === 365;
-        $rows = $q($byMonth
-            ? "SELECT DATE_FORMAT(den,'%Y-%m') k, COUNT(*) n, SUM(zarizeni='mobil') m FROM `$T` WHERE udalost='view' AND den >= ? GROUP BY k"
-            : "SELECT den k, COUNT(*) n, SUM(zarizeni='mobil') m FROM `$T` WHERE udalost='view' AND den >= ? GROUP BY k", [$from]);
-        $map = []; foreach ($rows as $r) $map[$r['k']] = $r;
+        $map = $byKey;
         $pts = [];
         if ($byMonth) { for ($i = 11; $i >= 0; $i--) { $t = strtotime(date('Y-m-01') . " -$i month"); $pts[] = [date('Y-m', $t), date('n/y', $t)]; } }
         else { for ($i = $D - 1; $i >= 0; $i--) { $t = strtotime("-$i days"); $pts[] = [date('Y-m-d', $t), date('j.n.', $t)]; } }
@@ -851,10 +871,8 @@ if (isset($_GET['navstevnost'])) {
     }
 
     /* chování: kam dojdou, kde odcházejí, na co klikají */
-    $tr = $one("SELECT COUNT(*) FROM `$T` WHERE udalost='view' AND den >= ? AND sekce<>''", [$from]);
     if ($tr) {
-        $reach = []; foreach ($SEC as $id => $nm) $reach[$id] = $one("SELECT COUNT(*) FROM `$T` WHERE udalost='view' AND den >= ? AND FIND_IN_SET(?, sekce)", [$from, $id]);
-        $exit = []; foreach ($q("SELECT odchod, COUNT(*) n FROM `$T` WHERE udalost='view' AND den >= ? AND sekce<>'' AND odchod<>'' GROUP BY odchod", [$from]) as $r) $exit[$r['odchod']] = (int) $r['n'];
+        $exit = $exitC;
         $out .= '<div class="o"><div class="ttl" style="margin-bottom:4px">Kam lidé dojdou a kde odcházejí <em>' . $nf($tr) . ' návštěv s měřením</em></div>'
             . '<p class="meta" style="margin:0 0 12px">Pruh = kolik % návštěv sekci vidělo. Oranžově = kolik lidí v ní stránku opustilo.</p><table class="st"><tbody>';
         foreach ($SEC as $id => $nm) {
@@ -871,7 +889,7 @@ if (isset($_GET['navstevnost'])) {
     }
 
     /* zdroje */
-    $src = $q("SELECT zdroj, COUNT(*) n FROM `$T` WHERE udalost='view' AND den >= ? GROUP BY zdroj ORDER BY n DESC", [$from]);
+    arsort($srcC); $src = []; foreach ($srcC as $k => $n) $src[] = ['zdroj' => (string) $k, 'n' => $n];
     $out .= '<div class="o"><div class="ttl" style="margin-bottom:10px">Odkud lidé přišli</div>';
     if (!$src) {
         $out .= '<p class="meta" style="margin:0">Zatím žádná data – návštěvy se začnou počítat od nahrání této verze webu.</p>';
@@ -887,18 +905,18 @@ if (isset($_GET['navstevnost'])) {
 
     /* zařízení + weby + kampaně */
     $dev = ['mobil' => 0, 'pc' => 0, 'tablet' => 0];
-    foreach ($q("SELECT zarizeni, COUNT(*) n FROM `$T` WHERE udalost='view' AND den >= ? GROUP BY zarizeni", [$from]) as $r) if (isset($dev[$r['zarizeni']])) $dev[$r['zarizeni']] = (int) $r['n'];
+    foreach ($devC as $k => $n) if (isset($dev[$k])) $dev[$k] = (int) $n;
     $dt = max(1, array_sum($dev));
     $pm = round($dev['mobil'] / $dt * 100); $pt = round($dev['tablet'] / $dt * 100); $pp = max(0, 100 - $pm - $pt);
     $out .= '<div class="o split"><div class="ttl">Zařízení</div><div class="bar2"><i style="width:' . $pm . '%"></i><i class="g" style="width:' . $pp . '%"></i></div>
 <div class="leg"><span>Mobil ' . $nf($dev['mobil']) . ' (' . $pm . ' %)</span><span class="g">Počítač ' . $nf($dev['pc']) . ' (' . $pp . ' %)</span>' . ($dev['tablet'] ? '<span>Tablet ' . $nf($dev['tablet']) . '</span>' : '') . '</div></div>';
-    $hosts = $q("SELECT odkaz, COUNT(*) n FROM `$T` WHERE udalost='view' AND odkaz<>'' AND den >= ? GROUP BY odkaz ORDER BY n DESC LIMIT 12", [$from]);
+    arsort($hostC); $hosts = []; foreach (array_slice($hostC, 0, 12, true) as $k => $n) $hosts[] = ['odkaz' => (string) $k, 'n' => $n];
     if ($hosts) {
         $out .= '<div class="o"><div class="ttl" style="margin-bottom:10px">Odkazující weby</div><table class="st"><tbody>';
         foreach ($hosts as $r) $out .= '<tr><td>' . $h($r['odkaz']) . '</td><td class="r"><b>' . $nf($r['n']) . '</b></td></tr>';
         $out .= '</tbody></table></div>';
     }
-    $camps = $q("SELECT kampan, zdroj, COUNT(*) n FROM `$T` WHERE udalost='view' AND kampan<>'' AND den >= ? GROUP BY kampan, zdroj ORDER BY n DESC LIMIT 12", [$from]);
+    arsort($campC); $camps = []; foreach (array_slice($campC, 0, 12, true) as $k => $n) { [$ca, $zd] = explode("\x1f", (string) $k) + [1 => '']; $camps[] = ['kampan' => $ca, 'zdroj' => $zd, 'n' => $n]; }
     if ($camps) {
         $out .= '<div class="o"><div class="ttl" style="margin-bottom:10px">Kampaně <em>utm_campaign</em></div><table class="st"><tbody>';
         foreach ($camps as $r) $out .= '<tr><td><b>' . $h($r['kampan']) . '</b> <span style="color:var(--mut)">· ' . $h($r['zdroj']) . '</span></td><td class="r"><b>' . $nf($r['n']) . '</b></td></tr>';
