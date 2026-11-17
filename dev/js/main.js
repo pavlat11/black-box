@@ -6,7 +6,7 @@ function bbPayHtml(j,after){
     +'<span class="pay-now"><b>Můžete zaplatit hned</b><span>'+(j.qr?'Naskenujte QR kód v bankovní aplikaci. ':'')+e(after||'')+'</span></span>'
     +(j.qr?'<img class="pay-qr" src="'+e(j.qr)+'" width="260" height="260" alt="QR kód pro platbu">':'')
     +'<span class="pay-meta"><span><i>Částka</i><b>'+e(j.amount)+'</b></span><span><i>Variabilní symbol</i><b>'+e(j.vs)+'</b></span><span><i>Splatnost</i><b>'+e(j.due)+'</b></span></span>'
-    +'<span class="pay-btns"><a class="pay-dl" href="'+e(j.pdf)+'" download>Stáhnout fakturu</a>'
+    +'<span class="pay-btns"><a class="pay-dl" href="'+e(j.pdf)+'" download>Stáhnout doklad (PDF)</a>'
     +(j.qr?'<a class="pay-dl" href="'+e(j.qr)+'" download="qr-platba.png">Stáhnout QR kód</a>':'')+'</span></span>';
 }
 /* Ceník a oznámení: mění se ve správě (sprava.php), web si je načte z ceny.php */
@@ -509,7 +509,7 @@ if('IntersectionObserver' in window&&!reduce){const io=new IntersectionObserver(
     const lines=['Dobrý den,','','objednávám dárkový poukaz.','','Typ: '+k+' ('+$('voPrice').textContent+')','Doručení: '+(w==='posta'?'poštou – '+addr:'e-mailem'),'',
       'Jméno: '+v('voName'),'Telefon: '+v('voTel'),'E-mail: '+v('voMail')];
     if(v('voIco'))lines.push('Firma / IČO: '+v('voIco'));
-    lines.push('','Prosím o zaslání faktury. Děkuji');
+    lines.push('','Prosím o zaslání QR kódu k zaplacení. Děkuji');
     const viaMail=()=>{location.href='mailto:'+'info@blackboxx.cz'+'?subject='+encodeURIComponent('Objednávka poukazu – '+k+' – '+(w==='posta'?'poštou':'e-mailem'))+'&body='+encodeURIComponent(lines.join('\n'));};
     const done=(h,p)=>{F.reset();F.querySelectorAll('.vo-field-bad').forEach(x=>x.classList.remove('vo-field-bad'));paint();$('voDoneH').textContent=h;$('voDoneP').innerHTML=p;$('voDone').classList.toggle('has-pay',p.indexOf('pay-box')>-1);$('voStep').hidden=true;$('voDone').hidden=false;D.scrollTop=0;$('voOk').focus({preventScroll:true});};
     const esc=t=>t.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -521,8 +521,8 @@ if('IntersectionObserver' in window&&!reduce){const io=new IntersectionObserver(
       .then(r=>r.json().catch(()=>({ok:false,_fallback:true})).then(j=>({r,j})))
       .then(({r,j})=>{
         if(j.ok){const m=esc(v('voMail'));
-          if(j.mode==='invoice')done('Faktura je na cestě','Poslali jsme ji na <b>'+m+'</b>.'+bbPayHtml(j,after));
-          else done('Objednávka přijata','Fakturu Vám brzy pošleme na <b>'+m+'</b>. '+after);
+          if(j.mode==='invoice')done('Objednávka přijata','Potvrzení jsme poslali na <b>'+m+'</b>.'+bbPayHtml(j,after));
+          else done('Objednávka přijata','QR kód k zaplacení Vám brzy pošleme na <b>'+m+'</b>. '+after);
           return;}
         if(r.status===422||r.status===429){err.textContent=j.error||'Zkontrolujte prosím údaje.';return;}
         throw new Error('server');})
@@ -1168,7 +1168,7 @@ try{
     if(bad){err.textContent=bad.id==='qoZip'?'PSČ má 5 číslic.':bad.id==='qoName'?'Doplňte prosím jméno i příjmení.':'Doplňte prosím zvýrazněné údaje.';bad.scrollIntoView({block:'center',behavior:'smooth'});bad.focus({preventScroll:true});return;}err.textContent='';
     const k=kind(),kl=k==='gold'?'Gold Time ('+bbKc('gold')+')':'Standard – 2 hodiny ('+bbKc('standard')+')',wv=wantV(),p=post();
     const addr=p?v('qoName')+', '+v('qoStreet')+', '+v('qoZip')+' '+v('qoCity'):'';
-    const lines=['Dobrý den,','','objednávám: '+kl,'Dárkový poukaz: '+(wv?(p?'ano – poštou na adresu: '+addr:'ano – e-mailem'):'ne'),'','Jméno: '+v('qoName'),'E-mail: '+v('qoMail'),'Telefon: '+v('qoTel'),'','Prosím o zaslání faktury. Děkuji'];
+    const lines=['Dobrý den,','','objednávám: '+kl,'Dárkový poukaz: '+(wv?(p?'ano – poštou na adresu: '+addr:'ano – e-mailem'):'ne'),'','Jméno: '+v('qoName'),'E-mail: '+v('qoMail'),'Telefon: '+v('qoTel'),'','Prosím o zaslání QR kódu k zaplacení. Děkuji'];
     const viaMail=()=>{location.href='mailto:'+'info@blackboxx.cz'+'?subject='+encodeURIComponent('Objednávka – '+kl)+'&body='+encodeURIComponent(lines.join('\n'));};
     const esc=t=>t.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
     const done=(h,p2)=>{F.reset();F.querySelectorAll('.vo-field-bad').forEach(x=>x.classList.remove('vo-field-bad'));paint();$('qoDoneH').textContent=h;$('qoDoneP').innerHTML=p2;$('qoDone').classList.toggle('has-pay',p2.indexOf('pay-box')>-1);$('qoStep').hidden=true;$('qoDone').hidden=false;D.scrollTop=0;$('qoOk').focus({preventScroll:true});};
@@ -1179,10 +1179,10 @@ try{
     fetch('objednavka.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:ctl.signal})
       .then(r=>r.json().catch(()=>({ok:false})).then(j=>({r,j})))
       .then(({r,j})=>{if(j.ok){const m=esc(v('qoMail'));
-          if(j.mode==='invoice')done('Faktura je na cestě','Poslali jsme ji na <b>'+m+'</b>.'+bbPayHtml(j,after));
-          else done('Objednávka přijata','Fakturu Vám brzy pošleme na <b>'+m+'</b>. '+after);return;}
+          if(j.mode==='invoice')done('Objednávka přijata','Potvrzení jsme poslali na <b>'+m+'</b>.'+bbPayHtml(j,after));
+          else done('Objednávka přijata','QR kód k zaplacení Vám brzy pošleme na <b>'+m+'</b>. '+after);return;}
         if(r.status===422||r.status===429){err.textContent=j.error||'Zkontrolujte prosím údaje.';return;}throw new Error('server');})
-      .catch(()=>{viaMail();done('Skoro hotovo','Otevřeli jsme Vám e-mail s objednávkou. Stačí ho odeslat a fakturu Vám pošleme.');})
+      .catch(()=>{viaMail();done('Skoro hotovo','Otevřeli jsme Vám e-mail s objednávkou. Stačí ho odeslat a QR kód k zaplacení Vám pošleme.');})
       .finally(()=>{clearTimeout(tm);send.disabled=false;send.textContent=lbl;});});
 })();
 }catch(e){console.error(e)}
