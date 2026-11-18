@@ -274,7 +274,8 @@ function bb_qr_png(string $data, int $scale = 8): ?string
 /** Pořadové číslo faktury: prefix + rok + 4 číslice (v databázi atomicky, jinak zamčený soubor) */
 function bb_next_invoice_no(array $cfg, string $dataDir): string
 {
-    $year = 0;                                  // jedna souvislá řada FA01, FA02, … (klíč 0 = bez ohledu na rok)
+    $pref = date('y') . '01';                   // rok + řada, např. 2601; číslo faktury = 260101, 260102, …
+    $year = (int) $pref;                        // klíč počítadla (každý rok se řada začíná znovu od 01)
     $db = bb_db();
     if ($db) {
         $db->prepare('INSERT INTO bb_cislovani (rok, posledni) VALUES (?, LAST_INSERT_ID(1)) ON DUPLICATE KEY UPDATE posledni = LAST_INSERT_ID(posledni + 1)')->execute([$year]);
@@ -297,7 +298,7 @@ function bb_next_invoice_no(array $cfg, string $dataDir): string
         flock($fh, LOCK_UN);
         fclose($fh);
     }
-    return 'FA' . str_pad((string) $seq, 2, '0', STR_PAD_LEFT);
+    return $pref . str_pad((string) $seq, 2, '0', STR_PAD_LEFT);
 }
 
 /* ---------- PDF faktura ---------- */
@@ -1068,7 +1069,7 @@ function bb_random_code(string $dataDir): string
 
 /*
  * Kód poukazu = variabilní symbol (rok + 4 náhodné číslice, vzniká při vystavení faktury),
- * takže z něj nejde poznat pořadí objednávek. Číslo faktury (FA01, FA02, …) je souvislá řada.
+ * takže z něj nejde poznat pořadí objednávek. Číslo faktury (260101, 260102, …) je souvislá řada.
  */
 function bb_ensure_voucher(array $cfg, string $dataDir, array &$o): string
 {
