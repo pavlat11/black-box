@@ -1050,9 +1050,9 @@ function bb_list_orders(string $dataDir): array
 }
 
 /*
- * Kód poukazu je stejné číslo jako variabilní symbol (VS) – u faktury se tedy
- * poukaz pozná podle čísla faktury/VS. U osobního odběru (bez faktury) se mu
- * přidělí další číslo ze stejné řady, takže formát je vždy stejný – jen číslice.
+ * Kód poukazu odeslaného e-mailem: rok + 4 náhodné číslice (např. 20264817), aby z něj
+ * nešlo poznat pořadí objednávek. Variabilní symbol faktury zůstává souvislá řada.
+ * Kód je vždy jedinečný (kontrola proti všem existujícím poukazům).
  */
 function bb_ensure_voucher(array $cfg, string $dataDir, array &$o): string
 {
@@ -1062,9 +1062,16 @@ function bb_ensure_voucher(array $cfg, string $dataDir, array &$o): string
     if (empty($o['vs'])) {
         $o['vs'] = preg_replace('/\D/', '', bb_next_invoice_no($cfg, $dataDir));
     }
-    $code = $o['vs'];
-    if (bb_find_voucher($dataDir, $code, (string) ($o['id'] ?? ''))) {   // číslo už někdo dostal ručně (poukaz poštou)
-        $code .= '-E';
+    $year = date('Y');
+    for ($i = 0; $i < 200; $i++) {
+        $code = $year . random_int(1000, 9999);
+        if (!bb_find_voucher($dataDir, $code, (string) ($o['id'] ?? ''))) {
+            break;
+        }
+        $code = '';
+    }
+    if ($code === '') {                       // prakticky nemožné (vyčerpaná řada) – záloha s příponou
+        $code = $year . random_int(10000, 99999);
     }
     $o['voucher'] = $code;
     return $o['voucher'];
