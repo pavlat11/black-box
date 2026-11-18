@@ -274,8 +274,8 @@ function bb_qr_png(string $data, int $scale = 8): ?string
 /** Pořadové číslo faktury: prefix + rok + 4 číslice (v databázi atomicky, jinak zamčený soubor) */
 function bb_next_invoice_no(array $cfg, string $dataDir): string
 {
-    $pref = date('y') . '0101';                 // rok + prefix, např. 260101; číslo = 260101001, 260101002, …
-    $year = (int) $pref;                        // klíč počítadla (každý rok se řada začíná znovu od 001)
+    $pref = date('y') . '01';                   // rok + řada, např. 2601; číslo = 260101, 260102, …
+    $year = (int) $pref;                        // klíč počítadla (každý rok se řada začíná znovu od 01)
     $db = bb_db();
     if ($db) {
         $db->prepare('INSERT INTO bb_cislovani (rok, posledni) VALUES (?, LAST_INSERT_ID(1)) ON DUPLICATE KEY UPDATE posledni = LAST_INSERT_ID(posledni + 1)')->execute([$year]);
@@ -298,7 +298,7 @@ function bb_next_invoice_no(array $cfg, string $dataDir): string
         flock($fh, LOCK_UN);
         fclose($fh);
     }
-    return $pref . str_pad((string) $seq, 3, '0', STR_PAD_LEFT);
+    return $pref . str_pad((string) $seq, 2, '0', STR_PAD_LEFT);     // od 100. objednávky v roce má číslo o číslici víc (2601100)
 }
 
 /* ---------- PDF faktura ---------- */
@@ -1051,8 +1051,8 @@ function bb_list_orders(string $dataDir): array
 }
 
 /*
- * Číslo faktury, variabilní symbol a kód poukazu jsou jedno číslo (260101001, 260101002, …):
- * rok + prefix 0101 + pořadí na 3 číslice. U osobního odběru (bez faktury) se kód přidělí z téže řady.
+ * Číslo faktury, variabilní symbol a kód poukazu jsou jedno číslo (260101, 260102, …):
+ * rok + řada 01 + pořadí (od 100. objednávky v roce o číslici delší). U osobního odběru (bez faktury) se kód přidělí z téže řady.
  */
 function bb_ensure_voucher(array $cfg, string $dataDir, array &$o): string
 {
