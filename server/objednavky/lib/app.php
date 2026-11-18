@@ -1050,26 +1050,9 @@ function bb_list_orders(string $dataDir): array
     return $list;
 }
 
-/** Náhodný jedinečný kód: rok + 4 číslice (např. 20264817). Nepoužitý jako VS ani jako kód poukazu. */
-function bb_random_code(string $dataDir): string
-{
-    $used = [];
-    foreach (bb_list_orders($dataDir) as $x) {
-        foreach ([(string) ($x['vs'] ?? ''), bb_norm_code((string) ($x['voucher'] ?? ''))] as $c) {
-            if ($c !== '') $used[$c] = 1;
-        }
-    }
-    $year = date('Y');
-    for ($i = 0; $i < 300; $i++) {
-        $code = $year . random_int(1000, 9999);
-        if (!isset($used[$code])) return $code;
-    }
-    return $year . random_int(10000, 99999);    // řada roku vyčerpána – delší kód
-}
-
 /*
- * Kód poukazu = variabilní symbol (rok + 4 náhodné číslice, vzniká při vystavení faktury),
- * takže z něj nejde poznat pořadí objednávek. Číslo faktury (260101, 260102, …) je souvislá řada.
+ * Číslo faktury, variabilní symbol a kód poukazu jsou jedno číslo (260101, 260102, …):
+ * rok + řada 01 + pořadí. U osobního odběru (bez faktury) se kód přidělí z téže řady.
  */
 function bb_ensure_voucher(array $cfg, string $dataDir, array &$o): string
 {
@@ -1077,11 +1060,11 @@ function bb_ensure_voucher(array $cfg, string $dataDir, array &$o): string
         return $o['voucher'];
     }
     if (empty($o['vs'])) {
-        $o['vs'] = bb_random_code($dataDir);
+        $o['vs'] = preg_replace('/\D/', '', bb_next_invoice_no($cfg, $dataDir));
     }
     $code = $o['vs'];
-    if (bb_find_voucher($dataDir, $code, (string) ($o['id'] ?? ''))) {   // kód už někdo dostal ručně (poukaz poštou)
-        $code = bb_random_code($dataDir);
+    if (bb_find_voucher($dataDir, $code, (string) ($o['id'] ?? ''))) {   // číslo už někdo dostal ručně (poukaz poštou)
+        $code .= '-E';
     }
     $o['voucher'] = $code;
     return $o['voucher'];
@@ -1384,7 +1367,7 @@ function bb_issue_invoice(array $cfg, string $dataDir, array $o, string $iban): 
     $issued = time();
     $o = array_merge($o, [
         'no' => $no,
-        'vs' => $test ? preg_replace('/\D/', '', $no) : bb_random_code($dataDir),   // VS = kód poukazu: rok + 4 náhodné číslice
+        'vs' => preg_replace('/\D/', '', $no),     // číslo faktury = VS = kód poukazu
         'issued' => $issued,
         'token' => $o['token'] ?? bin2hex(random_bytes(16)),
         'due' => strtotime('+' . bb_due_days($cfg) . ' days', $issued),
