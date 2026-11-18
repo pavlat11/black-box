@@ -274,7 +274,7 @@ function bb_qr_png(string $data, int $scale = 8): ?string
 /** Pořadové číslo faktury: prefix + rok + 4 číslice (v databázi atomicky, jinak zamčený soubor) */
 function bb_next_invoice_no(array $cfg, string $dataDir): string
 {
-    $year = (int) date('Y');
+    $year = 0;                                  // jedna souvislá řada FA01, FA02, … (klíč 0 = bez ohledu na rok)
     $db = bb_db();
     if ($db) {
         $db->prepare('INSERT INTO bb_cislovani (rok, posledni) VALUES (?, LAST_INSERT_ID(1)) ON DUPLICATE KEY UPDATE posledni = LAST_INSERT_ID(posledni + 1)')->execute([$year]);
@@ -297,7 +297,7 @@ function bb_next_invoice_no(array $cfg, string $dataDir): string
         flock($fh, LOCK_UN);
         fclose($fh);
     }
-    return ($cfg['invoice_prefix'] ?? '') . $year . str_pad((string) $seq, 4, '0', STR_PAD_LEFT);
+    return 'FA' . str_pad((string) $seq, 2, '0', STR_PAD_LEFT);
 }
 
 /* ---------- PDF faktura ---------- */
@@ -1049,10 +1049,26 @@ function bb_list_orders(string $dataDir): array
     return $list;
 }
 
+/** Náhodný jedinečný kód: rok + 4 číslice (např. 20264817). Nepoužitý jako VS ani jako kód poukazu. */
+function bb_random_code(string $dataDir): string
+{
+    $used = [];
+    foreach (bb_list_orders($dataDir) as $x) {
+        foreach ([(string) ($x['vs'] ?? ''), bb_norm_code((string) ($x['voucher'] ?? ''))] as $c) {
+            if ($c !== '') $used[$c] = 1;
+        }
+    }
+    $year = date('Y');
+    for ($i = 0; $i < 300; $i++) {
+        $code = $year . random_int(1000, 9999);
+        if (!isset($used[$code])) return $code;
+    }
+    return $year . random_int(10000, 99999);    // řada roku vyčerpána – delší kód
+}
+
 /*
- * Kód poukazu odeslaného e-mailem: rok + 4 náhodné číslice (např. 20264817), aby z něj
- * nešlo poznat pořadí objednávek. Variabilní symbol faktury zůstává souvislá řada.
- * Kód je vždy jedinečný (kontrola proti všem existujícím poukazům).
+ * Kód poukazu = variabilní symbol (rok + 4 náhodné číslice, vzniká při vystavení faktury),
+ * takže z něj nejde poznat pořadí objednávek. Číslo faktury (FA01, FA02, …) je souvislá řada.
  */
 function bb_ensure_voucher(array $cfg, string $dataDir, array &$o): string
 {
@@ -1060,18 +1076,11 @@ function bb_ensure_voucher(array $cfg, string $dataDir, array &$o): string
         return $o['voucher'];
     }
     if (empty($o['vs'])) {
-        $o['vs'] = preg_replace('/\D/', '', bb_next_invoice_no($cfg, $dataDir));
+        $o['vs'] = bb_random_code($dataDir);
     }
-    $year = date('Y');
-    for ($i = 0; $i < 200; $i++) {
-        $code = $year . random_int(1000, 9999);
-        if (!bb_find_voucher($dataDir, $code, (string) ($o['id'] ?? ''))) {
-            break;
-        }
-        $code = '';
-    }
-    if ($code === '') {                       // prakticky nemožné (vyčerpaná řada) – záloha s příponou
-        $code = $year . random_int(10000, 99999);
+    $code = $o['vs'];
+    if (bb_find_voucher($dataDir, $code, (string) ($o['id'] ?? ''))) {   // kód už někdo dostal ručně (poukaz poštou)
+        $code = bb_random_code($dataDir);
     }
     $o['voucher'] = $code;
     return $o['voucher'];
@@ -1374,7 +1383,7 @@ function bb_issue_invoice(array $cfg, string $dataDir, array $o, string $iban): 
     $issued = time();
     $o = array_merge($o, [
         'no' => $no,
-        'vs' => preg_replace('/\D/', '', $no),
+        'vs' => $test ? preg_replace('/\D/', '', $no) : bb_random_code($dataDir),   // VS = kód poukazu: rok + 4 náhodné číslice
         'issued' => $issued,
         'token' => $o['token'] ?? bin2hex(random_bytes(16)),
         'due' => strtotime('+' . bb_due_days($cfg) . ' days', $issued),
