@@ -274,31 +274,22 @@ function bb_qr_png(string $data, int $scale = 8): ?string
 /** Pořadové číslo faktury: prefix + rok + 4 číslice (v databázi atomicky, jinak zamčený soubor) */
 function bb_next_invoice_no(array $cfg, string $dataDir): string
 {
-    $pref = date('y') . '01';                   // rok + řada, např. 2601; číslo = 2601001, 2601002, …
-    $year = (int) $pref;                        // klíč počítadla (každý rok se řada začíná znovu od 001)
-    $db = bb_db();
-    if ($db) {
-        $db->prepare('INSERT INTO bb_cislovani (rok, posledni) VALUES (?, LAST_INSERT_ID(1)) ON DUPLICATE KEY UPDATE posledni = LAST_INSERT_ID(posledni + 1)')->execute([$year]);
-        $seq = (int) $db->query('SELECT LAST_INSERT_ID()')->fetchColumn();
-    } else {
-        $file = $dataDir . '/cislovani-faktur.json';
-        $fh = fopen($file, 'c+');
-        if (!$fh) {
-            throw new RuntimeException('Nelze zapisovat do složky data – zkontrolujte práva (chmod 755/777).');
+    /* Číslo = rok + řada 01 + 3 náhodné číslice (např. 2601483), aby nešlo poznat pořadí objednávek.
+       Je jedinečné mezi všemi čísly faktur, VS i kódy poukazů; po vyčerpání 900 čísel se prodlouží. */
+    $pref = date('y') . '01';
+    $used = [];
+    foreach (bb_list_orders($dataDir) as $x) {
+        foreach ([(string) ($x['no'] ?? ''), (string) ($x['vs'] ?? ''), bb_norm_code((string) ($x['voucher'] ?? ''))] as $c) {
+            if ($c !== '') $used[$c] = 1;
         }
-        flock($fh, LOCK_EX);
-        $raw = stream_get_contents($fh);
-        $st = $raw ? (json_decode($raw, true) ?: []) : [];
-        $seq = (int) ($st[$year] ?? 0) + 1;
-        $st[$year] = $seq;
-        ftruncate($fh, 0);
-        rewind($fh);
-        fwrite($fh, json_encode($st));
-        fflush($fh);
-        flock($fh, LOCK_UN);
-        fclose($fh);
     }
-    return $pref . str_pad((string) $seq, 3, '0', STR_PAD_LEFT);     // od 1000. objednávky v roce má číslo o číslici víc
+    foreach ([[100, 999], [1000, 9999], [10000, 99999]] as [$lo, $hi]) {
+        for ($i = 0; $i < 300; $i++) {
+            $n = $pref . random_int($lo, $hi);
+            if (!isset($used[$n])) return $n;
+        }
+    }
+    throw new RuntimeException('Nelze přidělit číslo faktury.');
 }
 
 /* ---------- PDF faktura ---------- */
@@ -1051,8 +1042,7 @@ function bb_list_orders(string $dataDir): array
 }
 
 /*
- * Číslo faktury, variabilní symbol a kód poukazu jsou jedno číslo (2601001, 2601002, …):
- * rok + řada 01 + pořadí na 3 číslice. U osobního odběru (bez faktury) se kód přidělí z téže řady.
+ * Číslo faktury, variabilní symbol a kód poukazu jsou jedno číslo (např. 2601483): rok + řada 01 + 3 náhodné číslice. U osobního odběru (bez faktury) se kód přidělí z téže řady.
  */
 function bb_ensure_voucher(array $cfg, string $dataDir, array &$o): string
 {
