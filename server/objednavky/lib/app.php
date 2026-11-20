@@ -272,10 +272,48 @@ function bb_qr_png(string $data, int $scale = 8): ?string
 }
 
 /** Pořadové číslo faktury: prefix + rok + 4 číslice (v databázi atomicky, jinak zamčený soubor) */
+/**
+ * Atomická rezervace čísla (faktura = VS = poukaz). Vrací true, jen když je číslo volné
+ * (u $new = true výhradně, při přidělování nového čísla) nebo už patří téže objednávce. Databáze: PRIMARY KEY; bez databáze: výhradní vytvoření souboru.
+ * Díky tomu se číslo nikdy nepřidělí dvakrát, ani když dvě objednávky přijdou ve stejné vteřině.
+ */
+function bb_reserve_number(string $dataDir, string $num, string $owner, bool $new = false): bool
+{
+    $num = bb_norm_code($num);
+    if ($num === '') {
+        return false;
+    }
+    if ($db = bb_db()) {
+        $st = $db->prepare('INSERT IGNORE INTO bb_cisla (cislo, objednavka) VALUES (?, ?)');
+        $st->execute([$num, $owner]);
+        if ($st->rowCount() === 1) {
+            return true;
+        }
+        if ($new) {
+            return false;
+        }
+        $q = $db->prepare('SELECT objednavka FROM bb_cisla WHERE cislo = ?');
+        $q->execute([$num]);
+        return (string) $q->fetchColumn() === $owner;
+    }
+    $dir = $dataDir . '/cisla';
+    if (!is_dir($dir)) {
+        @mkdir($dir, 0755, true);
+    }
+    $f = $dir . '/' . $num . '.txt';
+    if ($fh = @fopen($f, 'x')) {                // 'x' = vytvořit jen když neexistuje (atomicky)
+        fwrite($fh, $owner);
+        fclose($fh);
+        return true;
+    }
+    return !$new && is_file($f) && trim((string) file_get_contents($f)) === $owner;
+}
+
 function bb_next_invoice_no(array $cfg, string $dataDir): string
 {
     /* Číslo = rok + řada 01 + 3 náhodné číslice (např. 2601483), aby nešlo poznat pořadí objednávek.
-       Je jedinečné mezi všemi čísly faktur, VS i kódy poukazů; po vyčerpání 900 čísel se prodlouží. */
+       Je jedinečné mezi všemi čísly faktur, VS i kódy poukazů (včetně ručně zadaných) a rezervuje se
+       atomicky; po vyčerpání 900 čísel se prodlouží. */
     $pref = date('y') . '01';
     $used = [];
     foreach (bb_list_orders($dataDir) as $x) {
@@ -286,7 +324,7 @@ function bb_next_invoice_no(array $cfg, string $dataDir): string
     foreach ([[100, 999], [1000, 9999], [10000, 99999]] as [$lo, $hi]) {
         for ($i = 0; $i < 300; $i++) {
             $n = $pref . random_int($lo, $hi);
-            if (!isset($used[$n])) return $n;
+            if (!isset($used[$n]) && bb_reserve_number($dataDir, $n, $n, true)) return $n;   // vlastník = číslo faktury (id objednávky)
         }
     }
     throw new RuntimeException('Nelze přidělit číslo faktury.');
@@ -849,7 +887,7 @@ function bb_mailer(array $cfg): PHPMailer
 
 /** Připojení k MySQL podle config.php ('db'). Při prvním připojení vytvoří tabulky a převezme starší data ze souborů. */
 /** Zvýšit při změně tabulek v bb_db_install() – kontrola schématu se pak jednou provede znovu. */
-const BB_SCHEMA_VERSION = 2;
+const BB_SCHEMA_VERSION = 3;
 
 function bb_db(): ?PDO
 {
@@ -925,6 +963,11 @@ function bb_db_install(PDO $db): void
         KEY k_navstevnik (navstevnik),
         KEY k_den_udalost (den, udalost)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Black Box – návštěvnost webu (bez cookies, anonymně)'");
+    $db->exec("CREATE TABLE IF NOT EXISTS bb_cisla (
+        cislo      VARCHAR(24) NOT NULL PRIMARY KEY,
+        objednavka VARCHAR(40) NOT NULL,
+        vytvoreno  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Black Box – přidělená čísla faktur, VS a poukazů (nikdy se neopakují)'");
     $db->exec("CREATE TABLE IF NOT EXISTS bb_cislovani (
         rok      INT NOT NULL PRIMARY KEY,
         posledni INT NOT NULL
@@ -1053,8 +1096,9 @@ function bb_ensure_voucher(array $cfg, string $dataDir, array &$o): string
         $o['vs'] = preg_replace('/\D/', '', bb_next_invoice_no($cfg, $dataDir));
     }
     $code = $o['vs'];
-    if (bb_find_voucher($dataDir, $code, (string) ($o['id'] ?? ''))) {   // číslo už někdo dostal ručně (poukaz poštou)
-        $code .= '-E';
+    $owner = (string) ($o['id'] ?? $code);
+    if (bb_find_voucher($dataDir, $code, $owner) || !bb_reserve_number($dataDir, $code, $owner)) {   // číslo už někdo dostal (např. ručně u poukazu poštou)
+        $code = bb_next_invoice_no($cfg, $dataDir);
     }
     $o['voucher'] = $code;
     return $o['voucher'];

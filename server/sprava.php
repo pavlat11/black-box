@@ -1499,6 +1499,9 @@ if ($isPost) {
                 if ($dup = bb_find_voucher($DATA, $code, $o['id'])) {
                     throw new RuntimeException("Poukaz $code už je přidělený k jiné objednávce (" . bb_who($dup) . (!empty($dup['no']) ? ', faktura ' . $dup['no'] : '') . ').');
                 }
+                if (!bb_reserve_number($DATA, $code, (string) $o['id'])) {
+                    throw new RuntimeException("Číslo $code je už přidělené (faktura, VS nebo jiný poukaz). Zadejte jiné.");
+                }
                 $o['voucher'] = $code;
                 $msg = "Číslo poukazu $code uloženo.";
                 if ($sent && empty($o['voucher_sent_at'])) {
