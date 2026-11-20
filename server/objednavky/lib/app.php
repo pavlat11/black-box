@@ -1712,20 +1712,6 @@ function bb_cron_run(array $cfg, string $dataDir, string $src): array
         bb_setting_set('cron_last', ['t' => time(), 'src' => $src] + $stat);
     } catch (Throwable $e) {
     }
-    /* DOČASNĚ: e-mail po každém běhu denní úlohy (ověření cronu). Adresu nastavuje majitel ve správě → E-maily; prázdná = nic se neposílá. */
-    try {
-        $to = trim((string) (bb_setting_get('cron_notify')['komu'] ?? ''));
-        if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
-            return $stat;
-        }
-        $m = bb_mailer($cfg);
-        $m->addAddress($to);
-        $m->Subject = 'Black Box: denní úloha proběhla (' . date('j. n. Y H:i') . ')';
-        $m->isHTML(false);
-        $m->Body = "Denní úloha (připomínky a storno) právě proběhla.\nSpuštění: " . ($src === 'cron' ? 'příkaz' : 'adresa/cron hostingu') . "\nOdeslané připomínky: {$stat['pripominka']}\nStornované objednávky: {$stat['storno']}\nChyby: {$stat['chyby']}\n";
-        $m->send();
-    } catch (Throwable $e) {
-    }
     return $stat;
 }
 

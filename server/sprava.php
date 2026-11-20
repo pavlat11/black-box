@@ -624,16 +624,6 @@ if (isset($_GET['emaily'])) {
     if ($isPost) {
         try {
             csrf_ok();
-            if (isset($_POST['oznameni_cron'])) {            // adresa pro oznámení o běhu denní úlohy (prázdná = vypnuto)
-                $nt = trim((string) ($_POST['oznamit'] ?? ''));
-                if ($nt !== '' && !filter_var($nt, FILTER_VALIDATE_EMAIL)) {
-                    throw new RuntimeException('Zadejte platnou e-mailovou adresu, nebo pole nechte prázdné.');
-                }
-                bb_setting_set('cron_notify', ['komu' => $nt]);
-                $_SESSION['flash'] = ['ok', $nt === '' ? 'Oznámení o běhu denní úlohy je vypnuté.' : 'Po každém běhu denní úlohy pošleme e-mail na ' . $nt . '.'];
-                header('Location: ' . $self . '?emaily=1');
-                exit;
-            }
             $to = trim((string) ($_POST['komu'] ?? ''));
             if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
                 throw new RuntimeException('Zadejte platnou e-mailovou adresu.');
@@ -677,9 +667,6 @@ if (isset($_GET['emaily'])) {
 <ol><li>Den před splatností přijde zákazníkovi připomínka s QR kódem.</li>
 <li>První den po splatnosti (teď ' . $dd . ' dní od vystavení) se nezaplacená objednávka sama stornuje a zákazník dostane e-mail. Kopie přijde i Vám.</li>
 <li>Objednávku, kterou ručně obnovíte ze storna, už systém znovu nezruší.</li></ol>
-<form method="post" style="margin:14px 0 4px">' . $csrfIn . '<input type="hidden" name="oznameni_cron" value="1">
-<label>Posílat e-mail po každém běhu úlohy na (prázdné = nic)<input type="email" name="oznamit" value="' . $h((string) (bb_setting_get('cron_notify')['komu'] ?? '')) . '" placeholder="vas@email.cz"></label>
-<button class="btn" type="submit">Uložit</button></form>
 <p class="meta" style="margin-top:14px">Aby to běželo samo, nastavte v administraci hostingu úlohu (cron) <b>jednou denně, nejlépe v 9:00</b>. Stačí jedna z možností:</p>
 <p class="meta">A) volání adresy (URL):</p><code>' . $h($url) . '</code>
 <p class="meta">B) příkaz:</p><code>php ' . $h($BASE) . '/cron.php</code>
